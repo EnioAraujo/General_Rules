@@ -1,0 +1,5 @@
+Join Type	                  Mantém registros da Tabela1	    Mantém registros da Tabela2
+JoinKind.Inner -          ✅ Se houver correspondência - ✅ Se houver correspondência
+JoinKind.LeftOuter -   ✅ SEMPRE -                             ✅ Se houver correspondência
+JoinKind.RightOuter - ✅ Se houver correspondência - ✅ SEMPRE
+JoinKind.FullOuter -   ✅ SEMPRE -                             ✅ SEMPRE

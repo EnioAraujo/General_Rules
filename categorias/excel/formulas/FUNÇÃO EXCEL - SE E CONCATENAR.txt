@@ -1,0 +1,4 @@
+=SE(SOMA([@DIF]/D2)>0;TEXTO(SOMA([@DIF]/D2);"0%")&" a mais que "&C2)
+
+
+=SE(SOMA([@DIF]/D2)>0;TEXTO(SOMA([@DIF]/D2);"0%")&"▲";TEXTO(SOMA([@DIF]/D2);"0%")&"▼")

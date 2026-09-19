@@ -1,0 +1,6 @@
+SharePoint.Contents(#"SHP (2)", [ApiVersion = 15])//SHP é o parametro que guarda o caminho do sharepoint
+    {[Name = "Shared Documents"]}[Content] // filtra na coluna Name a pasta Shared Documents e abro a pasta com o comando content
+    {[Name = "General"]}[Content] // filtra na coluna name a pasta General e abro a pasta com o comando content
+    {[Name = "Fill Rate M3"]}[Content] // filtra na coluna name a pasta Fill Rate M3 e abro a pasta com o comando content
+    {[Name = "Comboio"]}[Content] // filtra na coluna name a pasta Comboio e abro a pasta com o comando content
+    {[Name =  "Controle_Comboio_2025"]}[Content]

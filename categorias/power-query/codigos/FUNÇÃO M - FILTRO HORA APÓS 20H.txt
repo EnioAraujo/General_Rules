@@ -1,0 +1,4 @@
+filtro = Table.SelectRows(
+    Fonte, 
+    each Time.From([Horario Apresentação Portaria]) >= #time(20,1,0) or
+   Time.From([Horario Apresentação Portaria]) <= #time(8,0,0)

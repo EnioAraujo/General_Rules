@@ -1,0 +1,27 @@
+// Média simples de horas
+Media_Horas = 
+AVERAGE('Tabela'[Coluna_Horas])
+
+// Média de horas considerando horas como decimal
+Media_Horas_Decimal = 
+AVERAGEX(
+    'Tabela',
+    HOUR('Tabela'[Coluna_Horas]) +
+    MINUTE('Tabela'[Coluna_Horas])/60 +
+    SECOND('Tabela'[Coluna_Horas])/3600
+)
+
+// Converter média decimal de volta para formato de hora
+Media_Horas_Formatada = 
+VAR MediaDecimal = [Media_Horas_Decimal]
+VAR Horas = INT(MediaDecimal)
+VAR Minutos = INT((MediaDecimal - Horas) * 60)
+VAR Segundos = INT(((MediaDecimal - Horas) * 60 - Minutos) * 60)
+RETURN
+TIME(Horas, Minutos, Segundos)
+
+// Média ponderada de horas (caso necessite um peso)
+Media_Horas_Ponderada = 
+SUMX('Tabela', 
+    'Tabela'[Coluna_Horas] * 'Tabela'[Peso]
+) / SUM('Tabela'[Peso])

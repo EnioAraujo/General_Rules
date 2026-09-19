@@ -1,0 +1,4 @@
+FUNÇÃO M - CONCATENAR DATA E TEXTO:
+
+Text.Combine({Text.From(Date.Day(Date.From(DateTime.LocalNow())),"pt-BR"),"_PKG_ANTECIPADO"})
+

@@ -1,0 +1,154 @@
+let
+    Fonte = Table.Buffer(#"dw tab_situacao_nota_logi_v2"),
+    RemoveColunas = Table.RemoveColumns(Fonte,{"NOTA_FISCAL", "SERIE", "VALOR", "VALOR_PEDIDO", "FILIAL", "NOME_FILIAL", "COD_FORNECEDOR", "RAZ_SOCIAL_REDUZ", "VOLUME_M3", "QTDE_VOLUME", "REFERENCIA", "PESO_BRUTO", "PESO_LIQUIDO", "EMISSAO", "REC_PEDIDO", "REC_XML", "TRANPORTADORA", "CHAVE_NFE", "KEYDW", "ROWHASH", "cancelado", "DESTINATARIO", "QTD_PALETE", "CESV"}),
+    TipoAlterado = Table.TransformColumnTypes(RemoveColunas,{{"EXPEDIDO", type datetime}, {"EMB_FINALIZADO", type datetime}, {"CON_SEPARACAO", type datetime}, {"FIM_CONFERENCIA", type datetime}, {"INI_CONFERENCIA", type datetime}, {"FIM_SEPARACAO", type datetime}, {"INI_SEPARACAO", type datetime}, {"ACOLHIDO", type datetime}, {"INCONSISTENTE", type datetime}, {"DAT_INCLUSAO", type datetime},{"PLANO_GERADO", type datetime}, {"ONDA_GERADA", type datetime}}),
+    ColunaPedidoAbrev = Table.AddColumn(
+        TipoAlterado,
+          "PEDIDO_ABREV", each 
+               if  Text.Start([PEDIDO],3) = "470" 
+               or
+                   Text.Start([PEDIDO],2) = "47"
+               then "CIGARRO-HUB" 
+               else if 
+                   Text.Start([PEDIDO],3) = "687" then "PARCERIA-HUB"
+               else if
+                   Text.Start([PEDIDO],3) = "ISD" then "EMB-ISD"   
+               else if
+                   Text.Start([PEDIDO],3) = "COD" then "EMB-COD"
+               else if
+                   Text.Start([PEDIDO],3) = "R_6" then "REVENDA-COD"
+               else if
+                   Text.Start([PEDIDO],3) = "TES" then "TESTE"
+               else if
+                   [PEDIDO] = null or 
+                   Text.Start([PEDIDO],3) = "MER" or
+                   Text.Contains([PEDIDO],"MER") or
+                   Text.Contains([PEDIDO],"P155") or
+                   Text.Contains([PEDIDO],"P15") or
+                   Text.Contains([PEDIDO],"BAIXA") or
+                   Text.Contains([PEDIDO],"MERCHAN")                
+                   then "MERCHANDISING" 
+                else if
+                   
+                   Text.Contains([PEDIDO],"AJUSTE") 
+                   then "AJUSTE ESTOQUE"
+                
+                else if 
+                   Text.Start([PEDIDO],3) = "686" then "PARCERIA-HUB"                   
+
+               else "-", 
+                   type text
+
+                 ),
+    LinhasFiltradas = let
+    Hoje = Date.From(DateTime.LocalNow()),
+    Ontem = Date.AddDays(Hoje, -10),
+    
+    Filtro = Table.SelectRows(
+        ColunaPedidoAbrev, 
+        each 
+            (
+                Date.From([DAT_INCLUSAO]) >= Ontem
+            )
+            and 
+            (
+                Text.Contains([PEDIDO_ABREV], "HUB")
+                or Text.Contains([PEDIDO_ABREV], "hub")
+            ) and 
+           ([PEDIDO_ABREV] = "CIGARRO-HUB") 
+    )
+
+
+
+in
+    Filtro,
+    Personalizar3 = Table.AddColumn(LinhasFiltradas,
+        "PEDIDO_SEM_LETRA",
+             each Text.Start([PEDIDO],10), type text),
+    ColFimTextoPedido = Table.AddColumn(Personalizar3, "TEXTO_FIM_PEDIDO", each Text.Trim(Text.Middle([PEDIDO], 10, 4)), type text),
+    JoinComTiposPedidos = let 
+A = Table.NestedJoin(ColFimTextoPedido, {"TEXTO_FIM_PEDIDO"}, DIM_TB_TIPOS_PEDIDOS, {"TIPO"}, "DIM_TB_TIPOS_PEDIDOS", JoinKind.LeftOuter),
+B = Table.ExpandTableColumn(A, "DIM_TB_TIPOS_PEDIDOS", {"DESC_TIPO"}, {"DESC_TIP_PEDIDO"}),
+C = Table.ReplaceValue(B, null, "NORMAL",Replacer.ReplaceValue,{"DESC_TIP_PEDIDO"} )
+in
+C,
+    ColEmbarqueFinalizado = let // DUPLICA A COLUNA ACOLHIDO
+ColEmbarqueFinalizadoDuplicado = Table.DuplicateColumn(JoinComTiposPedidos, "EMB_FINALIZADO", "HORA-EMB_FINALIZADO"),
+// TRANFORMA A COLUNA ACOLHIDO EM SOMENTE DATA
+ColEmbarqueFinalizadoParaData = Table.TransformColumnTypes(ColEmbarqueFinalizadoDuplicado, {{"EMB_FINALIZADO", Date.Type }} ),
+// EXTRAI A HORA/MINUTO/SEGUNDO E CRIA UMA NOVA COLUNA CHAMADA HORA-ACOLHIDO
+ColHoraEmbarqueFinalizado = Table.TransformColumns(ColEmbarqueFinalizadoParaData, {{"HORA-EMB_FINALIZADO", each DateTime.Time(_), type time }} )
+
+in
+ColHoraEmbarqueFinalizado,
+    ColHoraAcolhido = let // DUPLICA A COLUNA ACOLHIDO
+ColAcolhidoDuplicado = Table.DuplicateColumn(ColEmbarqueFinalizado, "ACOLHIDO", "HORA-ACOLHIDO"),
+// TRANFORMA A COLUNA ACOLHIDO EM SOMENTE DATA
+ColAcolhidoParaData = Table.TransformColumnTypes(ColAcolhidoDuplicado, {{"ACOLHIDO", Date.Type }} ),
+// EXTRAI A HORA/MINUTO/SEGUNDO E CRIA UMA NOVA COLUNA CHAMADA HORA-ACOLHIDO
+ColHoraAcolhido = Table.TransformColumns(ColAcolhidoParaData, {{"HORA-ACOLHIDO", each DateTime.Time(_), type time }} )
+
+in
+ColHoraAcolhido,
+    ColHoraIniSeparacao = let // DUPLICA A COLUNA ACOLHIDO
+ColAcolhidoDuplicado1 = Table.DuplicateColumn(ColHoraAcolhido, "INI_SEPARACAO", "HORA-INI_SEPARACAO"),
+// TRANFORMA A COLUNA INI_SEPARACAO EM SOMENTE DATA
+ColAcolhidoParaData1 = Table.TransformColumnTypes(ColAcolhidoDuplicado1, {{"INI_SEPARACAO", Date.Type }} ),
+// EXTRAI A HORA/MINUTO/SEGUNDO E CRIA UMA NOVA COLUNA CHAMADA HORA-INI_SEPARACAO
+ColHoraAcolhido1 = Table.TransformColumns(ColAcolhidoParaData1, {{"HORA-INI_SEPARACAO", each DateTime.Time(_), type time }} )
+in
+ColHoraAcolhido1,
+    ColHoraFimSeparacao = let // DUPLICA A COLUNA FIM_SEPARACAO
+ColAcolhidoDuplicado2 = Table.DuplicateColumn(ColHoraIniSeparacao, "FIM_SEPARACAO", "HORA-FIM_SEPARACAO"),
+// TRANFORMA A COLUNA FIM_SEPARACAO EM SOMENTE DATA
+ColAcolhidoParaData2 = Table.TransformColumnTypes(ColAcolhidoDuplicado2, {{"FIM_SEPARACAO", Date.Type }} ),
+// EXTRAI A HORA/MINUTO/SEGUNDO E CRIA UMA NOVA COLUNA CHAMADA HORA-FIM_SEPARACAO
+ColHoraAcolhido2 = Table.TransformColumns(ColAcolhidoParaData2, {{"HORA-FIM_SEPARACAO", each DateTime.Time(_), type time }} )
+in
+ColHoraAcolhido2,
+    ColHoraPlanoGerado = let // DUPLICA A COLUNA PLANO_GERADO
+ColPlanoGeradoDuplicado3 = Table.DuplicateColumn(ColHoraFimSeparacao, "PLANO_GERADO", "HORA-PLANO_GERADO"),
+// TRANFORMA A COLUNA PLANO_GERADO EM SOMENTE DATA
+ColPlanoGeradoParaData3 = Table.TransformColumnTypes(ColPlanoGeradoDuplicado3, {{"PLANO_GERADO", Date.Type }} ),
+// EXTRAI A HORA/MINUTO/SEGUNDO E CRIA UMA NOVA COLUNA CHAMADA HORA-PLANO_GERADO
+ColHoraPlanoGerado3 = Table.TransformColumns(ColPlanoGeradoParaData3, {{"HORA-PLANO_GERADO", each DateTime.Time(_), type time }} )
+in
+ColHoraPlanoGerado3,
+    ColHoraOndaGerada = let // DUPLICA A COLUNA ONDA_GERADA
+ColOndaGeradaDuplicado = Table.DuplicateColumn(ColHoraPlanoGerado, "ONDA_GERADA", "HORA-ONDA_GERADA"),
+// TRANFORMA A COLUNA ONDA_GERADA EM SOMENTE DATA
+ColOndaGeradaParaData = Table.TransformColumnTypes(ColOndaGeradaDuplicado, {{"ONDA_GERADA", Date.Type }} ),
+// EXTRAI A HORA/MINUTO/SEGUNDO E CRIA UMA NOVA COLUNA CHAMADA HORA-ONDA_GERADA
+ColHoraOndaGerada = Table.TransformColumns(ColOndaGeradaParaData, {{"HORA-ONDA_GERADA", each DateTime.Time(_), type time }} )
+in
+ColHoraOndaGerada,
+    ColHoraIniConferencia = let // DUPLICA A COLUNA INI_CONFERENCIA
+ColIniConferenciaDuplicado = Table.DuplicateColumn(ColHoraOndaGerada, "INI_CONFERENCIA", "HORA-INI_CONFERENCIA"),
+// TRANFORMA A COLUNA INI_CONFERENCIA EM SOMENTE DATA
+ColIniConferenciaParaData = Table.TransformColumnTypes(ColIniConferenciaDuplicado, {{"INI_CONFERENCIA", Date.Type }} ),
+// EXTRAI A HORA/MINUTO/SEGUNDO E CRIA UMA NOVA COLUNA CHAMADA HORA-INI_CONFERENCIA
+ColIniConferencia = Table.TransformColumns(ColIniConferenciaParaData, {{"HORA-INI_CONFERENCIA", each DateTime.Time(_), type time }} )
+in
+ColIniConferencia,
+    ColHoraFimConferencia = let // DUPLICA A COLUNA FIM_CONFERENCIA
+ColFimConferenciaDuplicado = Table.DuplicateColumn(ColHoraIniConferencia, "FIM_CONFERENCIA", "HORA-FIM_CONFERENCIA"),
+// TRANFORMA A COLUNA INI_CONFERENCIA EM SOMENTE DATA
+ColFimConferenciaParaData = Table.TransformColumnTypes(ColFimConferenciaDuplicado, {{"FIM_CONFERENCIA", Date.Type }} ),
+// EXTRAI A HORA/MINUTO/SEGUNDO E CRIA UMA NOVA COLUNA CHAMADA HORA-INI_CONFERENCIA
+ColFimConferencia = Table.TransformColumns(ColFimConferenciaParaData, {{"HORA-FIM_CONFERENCIA", each DateTime.Time(_), type time }} )
+in
+ColFimConferencia,
+    ColHoraExpedido = let // DUPLICA A COLUNA EXPEDIDO
+ColExpedidoDuplicado = Table.DuplicateColumn(ColHoraFimConferencia, "EXPEDIDO", "HORA-EXPEDIDO"),
+// TRANFORMA A COLUNA EXPEDIDO EM SOMENTE DATA
+ColExpedidoParaData = Table.TransformColumnTypes(ColExpedidoDuplicado, {{"EXPEDIDO", Date.Type }} ),
+// EXTRAI A HORA/MINUTO/SEGUNDO E CRIA UMA NOVA COLUNA CHAMADA HORA-EXPEDIDO
+ColExpedido = Table.TransformColumns(ColExpedidoParaData, {{"HORA-EXPEDIDO", each DateTime.Time(_), type time }} )
+in
+ColExpedido,
+    HoraAgora = Time.ToText(Time.From(DateTime.LocalNow()), "hh:mm:ss"),
+    ReplaceValoresNull = Table.ReplaceValue(ColHoraExpedido, null,#time(0,0,0),Replacer.ReplaceValue,{"HORA-FIM_CONFERENCIA"}),
+    ColunasRemovidas = Table.Distinct(Table.RemoveColumns(ReplaceValoresNull,{"ACOLHIDO", "PLANO_GERADO", "ONDA_GERADA", "INI_SEPARACAO", "FIM_SEPARACAO", "INI_CONFERENCIA", "FIM_CONFERENCIA", "PER_CONF", "INI_CHECKOUT", "FIM_CHECKOUT", "USU_CHECKOUT", "CON_SEPARACAO", "EMB_FINALIZADO", "EXPEDIDO", "INCONSISTENTE"})),
+    LimparTexto = Table.TransformColumns(ColunasRemovidas, {{"PEDIDO", Text.TrimEnd}})
+in
+    LimparTexto

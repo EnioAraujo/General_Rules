@@ -1,0 +1,43 @@
+= let
+D = Table.AddColumn(Fonte,"DIA",each Text.Start([Name],2)),
+M = Table.AddColumn(D,"MES",each Text.Middle([Name],2,2)),
+A = Table.AddColumn(M,"ANO",each Text.End([Name],2)),
+Coldata = Table.AddColumn(A,"Data", each Text.Combine({[DIA],[MES],[ANO]},"/"),type nullable date),
+Removecols = Table.RemoveColumns(Coldata,{"DIA","MES","ANO"})
+in
+Removecols
+
+
+= let
+colinicialname = Table.AddColumn(ArquivosComNome,"InicialName", each Text.Start([Name],8)),
+filtra = Table.SelectRows(colinicialname, each [InicialName] = "VL06O_CO" ),
+removecol = Table.RemoveColumns(filtra,{"InicialName"}),
+transform = List.Transform(removecol, each Excel.Workbook(_[Content],true))
+in
+transform
+
+
+
+
+
+= let
+colinicialname = Table.AddColumn(ArquivosComNome,"InicialName", each Text.Start([Name],8)),
+filtra = Table.SelectRows(colinicialname, each [InicialName] = "VL06O_CO" ),
+removecol = Table.RemoveColumns(filtra,{"InicialName"}),
+cont = removecol[Content],
+transftable = List.Transform(cont,each Excel.Workbook(_[Data]))
+in
+transftable
+
+
+
+
+= let
+renamedata = Table.TransformColumnTypes(alteratipo,{"Name", type text}),
+colinicialname = Table.AddColumn(renamedata,"InicialName", each Text.Start([Name],8)),
+filtra = Table.SelectRows(colinicialname, each [InicialName] = "VL06O_CO" ),
+removecol = Table.RemoveColumns(filtra,{"InicialName"})
+in
+removecol
+
+

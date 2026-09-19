@@ -1,0 +1,42 @@
+let
+    // Acesso à fonte no SharePoint
+    Fonte = SharePoint.Contents(OPERACAOBAT, [ApiVersion = 15])
+        {[Name = "Documentos Compartilhados"]}[Content]
+        {[Name = "CONCILIACAO DE ESTOQUE"]}[Content]
+        {[Name = "2025"]}[Content]
+        {[Name = "02_HUB BRASIL"]}[Content],
+
+    // Seleciona as colunas relevantes: Content (binário do Excel) e Name
+    SelectColls = Table.SelectColumns(Fonte, {"Content", "Name"}),
+
+    // Mescla com a tabela MESES com base no nome do arquivo
+    ConsultasMescladas = Table.NestedJoin(SelectColls, {"Name"}, MESES, {"MÊS"}, "MESES", JoinKind.LeftOuter),
+    
+    // Expande a coluna mesclada para trazer os dias
+    MESESExpandido = Table.ExpandTableColumn(ConsultasMescladas, "MESES", {"DIAS"}, {"DIAS"}),
+
+    // Filtra as linhas para manter apenas as que têm a data atual no mês
+    LinhasFiltradas = Table.SelectRows(MESESExpandido, each Date.IsInCurrentMonth([DIAS]))[Content]{0},
+    
+    // Substitui .xlsx pela data do ano, acrescentado o prefixo "-"
+    ValorSubstituído = Table.ReplaceValue(LinhasFiltradas,".xlsx","-2025",Replacer.ReplaceText,{"Name"}),
+    
+    Datadosarquivos =
+// 05 - Reordena as colunas, pega coluna Name e aloca como a segunda coluna da tabela
+Table.ReorderColumns(    
+// 04 - Altero o nome da coluna Data01, para Name, a intenção é que o próprio nome do srquivo seja sua data 
+Table.RenameColumns(
+// 03 - Remove a coluna Name, onde Name era o nome do arquivo
+Table.RemoveColumns(
+// 02 - Altera o tipo de dados da coluna nova, para tipo data
+Table.TransformColumnTypes(
+// 01 - adiciono a coluna Data01 com as datas de cada arquivo
+Table.AddColumn(ValorSubstituído, "Data01", 
+each Text.BetweenDelimiters([Name],"Conciliação Logix vs SAP - ", ".xlsx"), type text),
+{{"Data01", Date.Type}}),{"Name"}),{{"Data01","Name"}}),
+{"Content", "Name", "Extension", "Date accessed", "Date modified", "Date created", "Attributes", "Folder Path"}),
+    
+    Buffer = Table.Buffer(Datadosarquivos)[Content]
+    
+in
+   Buffer

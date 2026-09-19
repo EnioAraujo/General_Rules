@@ -1,0 +1,280 @@
+Cards_geral_estoque = -- ╔══════════════════════════════════════════════════════════════════╗
+-- ║                  🎨 PAINEL DE CONTROLE VISUAL                   ║
+-- ║   Ajuste os parâmetros abaixo sem mexer na lógica da medida      ║
+-- ╚══════════════════════════════════════════════════════════════════╝
+
+VAR EscalaCardPercentual = 150
+VAR FatorEscalaCard = DIVIDE(EscalaCardPercentual, 100)
+
+-- ──────────────────────────────────────────────────────────────────
+-- 🔤 FONTES GLOBAIS
+-- ──────────────────────────────────────────────────────────────────
+VAR fonte_titulos    = "Segoe UI, Arial, sans-serif"
+VAR fonte_subtitulos = "Segoe UI, Arial, sans-serif"
+VAR fonte_valores    = "DIN, DIN Alternate, DIN Next, Roboto Condensed, Arial, sans-serif"
+
+-- ──────────────────────────────────────────────────────────────────
+-- 📦 CARD / CONTAINER
+-- ──────────────────────────────────────────────────────────────────
+VAR cor_fundo_card  = "#FFFFFF"
+VAR raio_borda_card = ROUND(10 * FatorEscalaCard, 0) & "px"
+VAR sombra_card     = "0 1px 4px rgba(33,43,54,.06)"
+
+-- ──────────────────────────────────────────────────────────────────
+-- 🎨 CORES GERAIS
+-- ──────────────────────────────────────────────────────────────────
+VAR cor_dark   = "#212B36"
+VAR cor_muted  = "#637381"
+VAR cor_border = "#DFE3E8"
+
+VAR cor_red    = "#B71C1C"
+VAR cor_orange = "#F37E38"
+VAR cor_amber  = "#B76E00"
+VAR cor_green  = "#1B7A4E"
+
+VAR bg_chip_red    = "#FDEDED"
+VAR bg_chip_orange = "#FFF4EC"
+VAR bg_chip_green  = "#E8F5EE"
+
+-- ──────────────────────────────────────────────────────────────────
+-- 🔝 CABEÇALHO
+-- ──────────────────────────────────────────────────────────────────
+VAR padding_head = ROUND(16 * FatorEscalaCard, 0) & "px "
+                 & ROUND(22 * FatorEscalaCard, 0) & "px "
+                 & ROUND(12 * FatorEscalaCard, 0) & "px"
+
+VAR tamanho_nome = ROUND(22 * FatorEscalaCard, 0) & "px"
+VAR peso_nome    = "800"
+VAR cor_nome     = cor_dark
+
+VAR tamanho_pct  = ROUND(26 * FatorEscalaCard, 0) & "px"
+VAR peso_pct     = "800"
+
+VAR padding_chip = ROUND(3 * FatorEscalaCard, 0) & "px "
+                 & ROUND(9 * FatorEscalaCard, 0) & "px"
+VAR tamanho_chip = ROUND(11 * FatorEscalaCard, 0) & "px"
+VAR peso_chip    = "700"
+VAR raio_chip    = ROUND(4 * FatorEscalaCard, 0) & "px"
+
+-- ──────────────────────────────────────────────────────────────────
+-- 📊 BARRA PRINCIPAL
+-- ──────────────────────────────────────────────────────────────────
+VAR altura_track  = ROUND(8 * FatorEscalaCard, 0) & "px"
+VAR raio_track    = ROUND(4 * FatorEscalaCard, 0) & "px"
+
+-- ──────────────────────────────────────────────────────────────────
+-- 🔢 KPIs
+-- ──────────────────────────────────────────────────────────────────
+VAR padding_kpis = ROUND(12 * FatorEscalaCard, 0) & "px "
+                 & ROUND(22 * FatorEscalaCard, 0) & "px "
+                 & ROUND(16 * FatorEscalaCard, 0) & "px"
+
+VAR tamanho_kpi_val = ROUND(22 * FatorEscalaCard, 0) & "px"
+VAR peso_kpi_val    = "700"
+VAR cor_kpi_cap     = cor_dark
+VAR cor_kpi_vaz     = cor_dark
+
+VAR tamanho_kpi_lbl = ROUND(11 * FatorEscalaCard, 0) & "px"
+VAR cor_kpi_lbl     = cor_muted
+
+-- ╔══════════════════════════════════════════════════════════════════╗
+-- ║                   ⚙️ LÓGICA DE NEGÓCIO                          ║
+-- ╚══════════════════════════════════════════════════════════════════╝
+
+-- 🏭 HUB BRASIL
+VAR hub_cap  = CALCULATE([Contagem_dEndereco],   'TB_CAPACIDADE'[TP_ESTOQUE] = "HUB BRASIL", 'TB_CAPACIDADE'[CAT_POSICAO] <> "INATIVO", 'TB_CAPACIDADE'[TP_POSICAO] = "ARMAZEM 3",'TB_CAPACIDADE'[CAT_POSICAO] <> "DOCA_REC_HUB")
+
+VAR hub_ocup = CALCULATE([Enderecos_Ocupados_2], 'TB_CAPACIDADE'[TP_ESTOQUE] = "HUB BRASIL", 'TB_CAPACIDADE'[CAT_POSICAO] <> "INATIVO", 'TB_CAPACIDADE'[TP_POSICAO] = "ARMAZEM 3", 'TB_CAPACIDADE'[CAT_POSICAO] <> "DOCA_REC_HUB")
+
+VAR hub_vaz  = hub_cap - hub_ocup
+VAR hub_pct  = DIVIDE(hub_ocup, hub_cap, 0)
+VAR hub_pw   = SUBSTITUTE(FORMAT(MIN(hub_pct * 100, 100), "0.0"), ",", ".")
+VAR hub_status = SWITCH(TRUE(), hub_pct >= 0.75, "high", hub_pct >= 0.50, "mid", "low")
+VAR hub_cor    = SWITCH(hub_status, "high", cor_red,      "mid", cor_orange,    "low", cor_green)
+VAR hub_amb    = SWITCH(hub_status, "high", cor_red,      "mid", cor_amber,     "low", cor_green)
+VAR hub_bg     = SWITCH(hub_status, "high", bg_chip_red,  "mid", bg_chip_orange,"low", bg_chip_green)
+VAR hub_ico    = SWITCH(hub_status, "high", "▲ NÍVEL ALTO", "mid", "▶ NÍVEL MÉDIO", "low", "✔ NÍVEL BAIXO")
+
+VAR hub_card =
+    "<div style='
+        flex:1;
+        background:" & cor_fundo_card & ";
+        border:1px solid " & cor_border & ";
+        border-radius:" & raio_borda_card & ";
+        box-shadow:" & sombra_card & ";
+        overflow:hidden;
+        display:flex;
+        flex-direction:column;
+    '>" &
+        "<div style='
+            padding:" & padding_head & ";
+            display:flex;
+            align-items:flex-start;
+            justify-content:space-between;
+        '>" &
+            "<div>" &
+                "<div style='font-family:" & fonte_titulos & "; font-size:" & tamanho_nome & "; font-weight:" & peso_nome & "; letter-spacing:-0.2px; color:" & cor_nome & "'>HUB BRASIL</div>" &
+            "</div>" &
+            "<div style='text-align:right'>" &
+                "<div style='font-family:" & fonte_valores & "; font-size:" & tamanho_pct & "; font-weight:" & peso_pct & "; line-height:1; color:" & hub_cor & "'>" & FORMAT(hub_pct, "0.0%") & "</div>" &
+                "<div style='font-family:" & fonte_subtitulos & "; font-size:" & tamanho_chip & "; font-weight:" & peso_chip & "; display:inline-block; padding:" & padding_chip & "; border-radius:" & raio_chip & "; margin-top:5px; background:" & hub_bg & "; color:" & hub_amb & "'>" & hub_ico & "</div>" &
+            "</div>" &
+        "</div>" &
+        "<div style='padding: 0 22px 10px 22px;'>" &
+            "<div style='height:" & altura_track & "; background:" & cor_border & "; border-radius:" & raio_track & "; overflow:hidden'>" &
+                "<div style='height:100%; border-radius:" & raio_track & "; background:" & hub_cor & "; width:" & hub_pw & "%'></div>" &
+            "</div>" &
+        "</div>" &
+        "<div style='display:grid; grid-template-columns:1fr 1fr 1fr; padding:" & padding_kpis & "; border-top:1px solid " & cor_border & ";'>" &
+            "<div style='text-align:center; border-right:1px solid " & cor_border & "'>" &
+                "<div style='font-family:" & fonte_valores & "; font-size:" & tamanho_kpi_val & "; font-weight:" & peso_kpi_val & "; color:" & cor_kpi_cap & "'>" & FORMAT(hub_cap, "#,##0") & "</div>" &
+                "<div style='font-family:" & fonte_subtitulos & "; font-size:" & tamanho_kpi_lbl & "; color:" & cor_kpi_lbl & "; text-transform:uppercase; letter-spacing:0.7px; margin-top:3px'>Capacidade</div>" &
+            "</div>" &
+            "<div style='text-align:center; border-right:1px solid " & cor_border & "'>" &
+                "<div style='font-family:" & fonte_valores & "; font-size:" & tamanho_kpi_val & "; font-weight:" & peso_kpi_val & "; color:" & hub_cor & "'>" & FORMAT(hub_ocup, "#,##0") & "</div>" &
+                "<div style='font-family:" & fonte_subtitulos & "; font-size:" & tamanho_kpi_lbl & "; color:" & cor_kpi_lbl & "; text-transform:uppercase; letter-spacing:0.7px; margin-top:3px'>Ocupados</div>" &
+            "</div>" &
+            "<div style='text-align:center'>" &
+                "<div style='font-family:" & fonte_valores & "; font-size:" & tamanho_kpi_val & "; font-weight:" & peso_kpi_val & "; color:" & cor_kpi_vaz & "'>" & FORMAT(hub_vaz, "#,##0") & "</div>" &
+                "<div style='font-family:" & fonte_subtitulos & "; font-size:" & tamanho_kpi_lbl & "; color:" & cor_kpi_lbl & "; text-transform:uppercase; letter-spacing:0.7px; margin-top:3px'>Vazios</div>" &
+            "</div>" &
+        "</div>" &
+    "</div>"
+
+-- 📦 COD UDI
+//VAR cod_cap  = CALCULATE([Contagem_dEndereco],   'TB_CAPACIDADE'[TP_ESTOQUE] = "COD UDI", 'TB_CAPACIDADE'[CAT_POSICAO] <> "INATIVO", 'TB_CAPACIDADE'[TP_POSICAO] = "ARMAZEM 3", 'FAT_SALDO_DE_ESTOQUE'[DES_FUNCAO] = "ARMAZEM", ////'TB_CAPACIDADE'[RUA] <> "GEL")
+
+VAR cod_cap  = CALCULATE([Contagem_dEndereco],   'TB_CAPACIDADE'[TP_ESTOQUE] = "COD UDI", 'TB_CAPACIDADE'[CAT_POSICAO] <> "INATIVO", 'TB_CAPACIDADE'[TP_POSICAO] = "ARMAZEM 3", 'TB_CAPACIDADE'[RUA] <> "GEL", NOT('TB_CAPACIDADE'[CODIGO_ENDERECO] IN CALCULATETABLE(VALUES('FAT_SALDO_DE_ESTOQUE'[ENDERECO]), 'FAT_SALDO_DE_ESTOQUE'[DES_FUNCAO] = "PICKING")))
+
+
+
+
+VAR cod_ocup = CALCULATE([Enderecos_Ocupados_2], 'TB_CAPACIDADE'[TP_ESTOQUE] = "COD UDI", 'TB_CAPACIDADE'[CAT_POSICAO] <> "INATIVO", 'TB_CAPACIDADE'[TP_POSICAO] = "ARMAZEM 3", 'FAT_SALDO_DE_ESTOQUE'[DES_FUNCAO] = "ARMAZEM", 'TB_CAPACIDADE'[RUA] <> "GEL")
+
+VAR cod_vaz  = cod_cap - cod_ocup
+VAR cod_pct  = DIVIDE(cod_ocup, cod_cap, 0)
+VAR cod_pw   = SUBSTITUTE(FORMAT(MIN(cod_pct * 100, 100), "0.0"), ",", ".")
+VAR cod_status = SWITCH(TRUE(), cod_pct >= 0.75, "high", cod_pct >= 0.50, "mid", "low")
+VAR cod_cor    = SWITCH(cod_status, "high", cor_red,      "mid", cor_orange,    "low", cor_green)
+VAR cod_amb    = SWITCH(cod_status, "high", cor_red,      "mid", cor_amber,     "low", cor_green)
+VAR cod_bg     = SWITCH(cod_status, "high", bg_chip_red,  "mid", bg_chip_orange,"low", bg_chip_green)
+VAR cod_ico    = SWITCH(cod_status, "high", "▲ NÍVEL ALTO", "mid", "▶ NÍVEL MÉDIO", "low", "✔ NÍVEL BAIXO")
+
+VAR cod_card =
+    "<div style='
+        flex:1;
+        background:" & cor_fundo_card & ";
+        border:1px solid " & cor_border & ";
+        border-radius:" & raio_borda_card & ";
+        box-shadow:" & sombra_card & ";
+        overflow:hidden;
+        display:flex;
+        flex-direction:column;
+    '>" &
+        "<div style='
+            padding:" & padding_head & ";
+            display:flex;
+            align-items:flex-start;
+            justify-content:space-between;
+        '>" &
+            "<div>" &
+                "<div style='font-family:" & fonte_titulos & "; font-size:" & tamanho_nome & "; font-weight:" & peso_nome & "; letter-spacing:-0.2px; color:" & cor_nome & "'>COD UDI</div>" &
+            "</div>" &
+            "<div style='text-align:right'>" &
+                "<div style='font-family:" & fonte_valores & "; font-size:" & tamanho_pct & "; font-weight:" & peso_pct & "; line-height:1; color:" & cod_cor & "'>" & FORMAT(cod_pct, "0.0%") & "</div>" &
+                "<div style='font-family:" & fonte_subtitulos & "; font-size:" & tamanho_chip & "; font-weight:" & peso_chip & "; display:inline-block; padding:" & padding_chip & "; border-radius:" & raio_chip & "; margin-top:5px; background:" & cod_bg & "; color:" & cod_amb & "'>" & cod_ico & "</div>" &
+            "</div>" &
+        "</div>" &
+        "<div style='padding: 0 22px 10px 22px;'>" &
+            "<div style='height:" & altura_track & "; background:" & cor_border & "; border-radius:" & raio_track & "; overflow:hidden'>" &
+                "<div style='height:100%; border-radius:" & raio_track & "; background:" & cod_cor & "; width:" & cod_pw & "%'></div>" &
+            "</div>" &
+        "</div>" &
+        "<div style='display:grid; grid-template-columns:1fr 1fr 1fr; padding:" & padding_kpis & "; border-top:1px solid " & cor_border & ";'>" &
+            "<div style='text-align:center; border-right:1px solid " & cor_border & "'>" &
+                "<div style='font-family:" & fonte_valores & "; font-size:" & tamanho_kpi_val & "; font-weight:" & peso_kpi_val & "; color:" & cor_kpi_cap & "'>" & FORMAT(cod_cap, "#,##0") & "</div>" &
+                "<div style='font-family:" & fonte_subtitulos & "; font-size:" & tamanho_kpi_lbl & "; color:" & cor_kpi_lbl & "; text-transform:uppercase; letter-spacing:0.7px; margin-top:3px'>Capacidade</div>" &
+            "</div>" &
+            "<div style='text-align:center; border-right:1px solid " & cor_border & "'>" &
+                "<div style='font-family:" & fonte_valores & "; font-size:" & tamanho_kpi_val & "; font-weight:" & peso_kpi_val & "; color:" & cod_cor & "'>" & FORMAT(cod_ocup, "#,##0") & "</div>" &
+                "<div style='font-family:" & fonte_subtitulos & "; font-size:" & tamanho_kpi_lbl & "; color:" & cor_kpi_lbl & "; text-transform:uppercase; letter-spacing:0.7px; margin-top:3px'>Ocupados</div>" &
+            "</div>" &
+            "<div style='text-align:center'>" &
+                "<div style='font-family:" & fonte_valores & "; font-size:" & tamanho_kpi_val & "; font-weight:" & peso_kpi_val & "; color:" & cor_kpi_vaz & "'>" & FORMAT(cod_vaz, "#,##0") & "</div>" &
+                "<div style='font-family:" & fonte_subtitulos & "; font-size:" & tamanho_kpi_lbl & "; color:" & cor_kpi_lbl & "; text-transform:uppercase; letter-spacing:0.7px; margin-top:3px'>Vazios</div>" &
+            "</div>" &
+        "</div>" &
+    "</div>"
+
+-- 🏪 AG NORMAL
+VAR ag_cap  = CALCULATE([Contagem_dEndereco],   'TB_CAPACIDADE'[TP_ESTOQUE] = "AG NORMAL", 'TB_CAPACIDADE'[CAT_POSICAO] <> "INATIVO", 'TB_CAPACIDADE'[TP_POSICAO] = "BLOCADO", 'FAT_SALDO_DE_ESTOQUE'[DES_FUNCAO] = "ARMAZEM")
+VAR ag_ocup = CALCULATE([Enderecos_Ocupados_2], 'TB_CAPACIDADE'[TP_ESTOQUE] = "AG NORMAL", 'TB_CAPACIDADE'[CAT_POSICAO] <> "INATIVO", 'TB_CAPACIDADE'[TP_POSICAO] = "BLOCADO", 'FAT_SALDO_DE_ESTOQUE'[DES_FUNCAO] = "ARMAZEM")
+VAR ag_vaz  = ag_cap - ag_ocup
+VAR ag_pct  = DIVIDE(ag_ocup, ag_cap, 0)
+VAR ag_pw   = SUBSTITUTE(FORMAT(MIN(ag_pct * 100, 100), "0.0"), ",", ".")
+VAR ag_status = SWITCH(TRUE(), ag_pct >= 0.75, "high", ag_pct >= 0.50, "mid", "low")
+VAR ag_cor    = SWITCH(ag_status, "high", cor_red,      "mid", cor_orange,    "low", cor_green)
+VAR ag_amb    = SWITCH(ag_status, "high", cor_red,      "mid", cor_amber,     "low", cor_green)
+VAR ag_bg     = SWITCH(ag_status, "high", bg_chip_red,  "mid", bg_chip_orange,"low", bg_chip_green)
+VAR ag_ico    = SWITCH(ag_status, "high", "▲ NÍVEL ALTO", "mid", "▶ NÍVEL MÉDIO", "low", "✔ NÍVEL BAIXO")
+
+VAR ag_card =
+    "<div style='
+        flex:1;
+        background:" & cor_fundo_card & ";
+        border:1px solid " & cor_border & ";
+        border-radius:" & raio_borda_card & ";
+        box-shadow:" & sombra_card & ";
+        overflow:hidden;
+        display:flex;
+        flex-direction:column;
+    '>" &
+        "<div style='
+            padding:" & padding_head & ";
+            display:flex;
+            align-items:flex-start;
+            justify-content:space-between;
+        '>" &
+            "<div>" &
+                "<div style='font-family:" & fonte_titulos & "; font-size:" & tamanho_nome & "; font-weight:" & peso_nome & "; letter-spacing:-0.2px; color:" & cor_nome & "'>AG NORMAL</div>" &
+            "</div>" &
+            "<div style='text-align:right'>" &
+                "<div style='font-family:" & fonte_valores & "; font-size:" & tamanho_pct & "; font-weight:" & peso_pct & "; line-height:1; color:" & ag_cor & "'>" & FORMAT(ag_pct, "0.0%") & "</div>" &
+                "<div style='font-family:" & fonte_subtitulos & "; font-size:" & tamanho_chip & "; font-weight:" & peso_chip & "; display:inline-block; padding:" & padding_chip & "; border-radius:" & raio_chip & "; margin-top:5px; background:" & ag_bg & "; color:" & ag_amb & "'>" & ag_ico & "</div>" &
+            "</div>" &
+        "</div>" &
+        "<div style='padding: 0 22px 10px 22px;'>" &
+            "<div style='height:" & altura_track & "; background:" & cor_border & "; border-radius:" & raio_track & "; overflow:hidden'>" &
+                "<div style='height:100%; border-radius:" & raio_track & "; background:" & ag_cor & "; width:" & ag_pw & "%'></div>" &
+            "</div>" &
+        "</div>" &
+        "<div style='display:grid; grid-template-columns:1fr 1fr 1fr; padding:" & padding_kpis & "; border-top:1px solid " & cor_border & ";'>" &
+            "<div style='text-align:center; border-right:1px solid " & cor_border & "'>" &
+                "<div style='font-family:" & fonte_valores & "; font-size:" & tamanho_kpi_val & "; font-weight:" & peso_kpi_val & "; color:" & cor_kpi_cap & "'>" & FORMAT(ag_cap, "#,##0") & "</div>" &
+                "<div style='font-family:" & fonte_subtitulos & "; font-size:" & tamanho_kpi_lbl & "; color:" & cor_kpi_lbl & "; text-transform:uppercase; letter-spacing:0.7px; margin-top:3px'>Capacidade</div>" &
+            "</div>" &
+            "<div style='text-align:center; border-right:1px solid " & cor_border & "'>" &
+                "<div style='font-family:" & fonte_valores & "; font-size:" & tamanho_kpi_val & "; font-weight:" & peso_kpi_val & "; color:" & ag_cor & "'>" & FORMAT(ag_ocup, "#,##0") & "</div>" &
+                "<div style='font-family:" & fonte_subtitulos & "; font-size:" & tamanho_kpi_lbl & "; color:" & cor_kpi_lbl & "; text-transform:uppercase; letter-spacing:0.7px; margin-top:3px'>Ocupados</div>" &
+            "</div>" &
+            "<div style='text-align:center'>" &
+                "<div style='font-family:" & fonte_valores & "; font-size:" & tamanho_kpi_val & "; font-weight:" & peso_kpi_val & "; color:" & cor_kpi_vaz & "'>" & FORMAT(ag_vaz, "#,##0") & "</div>" &
+                "<div style='font-family:" & fonte_subtitulos & "; font-size:" & tamanho_kpi_lbl & "; color:" & cor_kpi_lbl & "; text-transform:uppercase; letter-spacing:0.7px; margin-top:3px'>Vazios</div>" &
+            "</div>" &
+        "</div>" &
+    "</div>"
+
+-- ╔══════════════════════════════════════════════════════════════════╗
+-- ║                   🧱 MONTAGEM DO HTML                           ║
+-- ╚══════════════════════════════════════════════════════════════════╝
+
+RETURN
+"<div style='
+    display:flex;
+    gap:12px;
+    padding:4px;
+'>" &
+    hub_card &
+    cod_card &
+    ag_card &
+"</div>"

@@ -1,0 +1,4 @@
+ColConversao = Table.AddColumn(ParadosEstoque,"CONVERSAO",each [SALDO_DISPONIVEL]/[MENOR_UNIDADE_MULTIPLO],type number ),
+        ColCaixas = Table.AddColumn(ColConversao, "CAIXAS", each Int64.From(Text.BeforeDelimiter(Text.From([CONVERSAO]/[QTD_BASE_CX]), ",")), type number),
+        ColPacotes = Table.AddColumn(ColCaixas, "PACOTES", each Int64.From(Text.BeforeDelimiter(Text.From((([CONVERSAO]/[QTD_BASE_CX]) - [CAIXAS]) * [QTD_PACOTE_CX]), ",")), type number),
+        ColMacos = Table.AddColumn(ColPacotes, "MÇS/UND", each Int64.From(Text.BeforeDelimiter(Text.From(((([CONVERSAO]/[QTD_BASE_CX]) - [CAIXAS]) * [QTD_PACOTE_CX] - [PACOTES]) * [QTD_UN_PACOTE]), ",")), type number),

@@ -1,0 +1,115 @@
+Sub GerarTabelaPosicoes()
+    Dim wsLista As Worksheet, wsSaldo As Worksheet, wsResultado As Worksheet
+    Dim pedidoItem As String, descricaoItem As String
+    Dim pedidoQtd As Double
+    Dim saldoItem As String
+    Dim saldoQtd As Double
+    Dim ultimaLinhaLista As Long, ultimaLinhaSaldo As Long
+    Dim i As Long, j As Long, k As Long
+    Dim qtdNecessaria As Double
+    Dim linhaResultado As Long
+    Dim arrSaldos() As Variant
+
+    ' Definir as planilhas
+    Set wsLista = ThisWorkbook.Sheets("CONSOLIDADO_VL06")
+    Set wsSaldo = ThisWorkbook.Sheets("SALDO_ESTOQUE")
+    
+    ' Criar ou limpar a planilha de resultados
+    On Error Resume Next
+    Set wsResultado = ThisWorkbook.Sheets("Reservado")
+    If wsResultado Is Nothing Then
+        Set wsResultado = ThisWorkbook.Sheets.Add
+        wsResultado.Name = "Reservado"
+    Else
+        wsResultado.Cells.Clear
+    End If
+    On Error GoTo 0
+    
+    ' Configurar cabeçalhos na planilha de resultados
+    wsResultado.Cells(1, 1).Value = "Posição"
+    wsResultado.Cells(1, 2).Value = "Item"
+    wsResultado.Cells(1, 3).Value = "Descrição Item" ' Novo cabeçalho
+    wsResultado.Cells(1, 4).Value = "Saldo"
+    
+    linhaResultado = 2 ' Iniciar na linha 2 para resultados
+    
+    ' Obter a última linha preenchida em cada planilha
+    ultimaLinhaLista = wsLista.Cells(wsLista.Rows.Count, "A").End(xlUp).Row
+    ultimaLinhaSaldo = wsSaldo.Cells(wsSaldo.Rows.Count, "A").End(xlUp).Row
+    
+    ' Percorrer cada item na lista de pedidos
+    For i = 2 To ultimaLinhaLista
+        pedidoItem = wsLista.Cells(i, 1).Value
+        descricaoItem = wsLista.Cells(i, 3).Value ' Ler a nova coluna "DESCRICAO_ITEM"
+        pedidoQtd = wsLista.Cells(i, 2).Value
+        qtdNecessaria = pedidoQtd
+        
+        ' Criar uma matriz temporária para armazenar as posições e seus respectivos saldos
+        ReDim arrSaldos(1 To ultimaLinhaSaldo - 1, 1 To 2)
+        k = 0
+        
+        ' Armazenar posições e saldos em uma matriz temporária
+        For j = 2 To ultimaLinhaSaldo
+            saldoItem = wsSaldo.Cells(j, 5).Value ' Coluna "ITEM" na planilha "SALDO_ESTOQUE"
+            saldoQtd = wsSaldo.Cells(j, 6).Value ' Coluna "SALDO" na planilha "SALDO_ESTOQUE"
+            
+            If saldoItem = pedidoItem And saldoQtd > 0 Then
+                k = k + 1
+                arrSaldos(k, 1) = wsSaldo.Cells(j, 4).Value  ' Posição
+                arrSaldos(k, 2) = saldoQtd                   ' Saldo
+            End If
+        Next j
+        
+        ' Ordenar a matriz pelo saldo em ordem decrescente
+        If k > 0 Then
+            Call BubbleSort(arrSaldos, k)
+        End If
+        
+        ' Alocar o saldo a partir da posição com maior saldo
+        For j = 1 To k
+            quantidadeUsada = Application.Min(arrSaldos(j, 2), qtdNecessaria)
+            
+            ' Registrar a posição, item, descrição e saldo na planilha de resultados
+            wsResultado.Cells(linhaResultado, 1).Value = arrSaldos(j, 1)
+            wsResultado.Cells(linhaResultado, 2).Value = pedidoItem
+            wsResultado.Cells(linhaResultado, 3).Value = descricaoItem ' Adicionar "DESCRICAO_ITEM"
+            wsResultado.Cells(linhaResultado, 4).Value = Format(quantidadeUsada, "0.00")
+            linhaResultado = linhaResultado + 1
+            
+            ' Reduzir a quantidade necessária
+            qtdNecessaria = qtdNecessaria - quantidadeUsada
+            
+            If qtdNecessaria <= 0 Then Exit For
+        Next j
+    Next i
+    
+    ' Criar uma tabela formatada
+    Dim tbl As ListObject
+    Set tbl = wsResultado.ListObjects.Add(xlSrcRange, wsResultado.Range("A1:D" & linhaResultado - 1), , xlYes)
+    tbl.Name = "Lista"
+    tbl.TableStyle = "TableStyleLight9"
+    
+    ' Formatar coluna "Saldo" para números decimais
+    wsResultado.Range("D2:D" & linhaResultado - 1).NumberFormat = "0.00"
+    
+    MsgBox "Tabela gerada com sucesso!", vbInformation
+End Sub
+
+Sub BubbleSort(arr As Variant, n As Long)
+    Dim i As Long, j As Long
+    Dim tempPos As Variant, tempQtd As Variant
+    
+    For i = 1 To n - 1
+        For j = 1 To n - i
+            If arr(j, 2) < arr(j + 1, 2) Then
+                ' Trocar posição
+                tempPos = arr(j, 1)
+                tempQtd = arr(j, 2)
+                arr(j, 1) = arr(j + 1, 1)
+                arr(j, 2) = arr(j + 1, 2)
+                arr(j + 1, 1) = tempPos
+                arr(j + 1, 2) = tempQtd
+            End If
+        Next j
+    Next i
+End Sub

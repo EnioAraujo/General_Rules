@@ -1,0 +1,22 @@
+Media_Horas = //Media_Horas_Decimal: Converte as horas para formato decimal antes de calcular a média
+
+
+VAR MED1 = AVERAGEX( 
+    PRD_2024,
+    HOUR(PRD_2024[TMP_TOTAL]) + // Horas: Extrai a parte inteira do número decimal (horas completas)
+    MINUTE(PRD_2024[TMP_TOTAL])/60 + // Minutos: Calcula os minutos multiplicando a parte decimal por 60
+    SECOND(PRD_2024[TMP_TOTAL])/3600 // Segundos: Calcula os segundos a partir do resto dos minutos
+)
+
+
+VAR MediaDecimal = MED1
+VAR Horas = INT(MediaDecimal)
+VAR Minutos = INT((MediaDecimal - Horas) * 60)
+VAR Segundos = INT(((MediaDecimal - Horas) * 60 - Minutos) * 60)
+
+VAR TM = TIME(Horas, Minutos, Segundos)
+
+
+RETURN
+
+TM

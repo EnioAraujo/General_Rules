@@ -1,0 +1,180 @@
+Sub RECLASSIFICAÇÃO_COM_DISTRIBUICAO()
+
+    ' Declaração de variáveis para armazenar referências de planilha, contadores de linhas, e informações
+    Dim wb As Workbook ' Variável para armazenar a referência do arquivo Excel atual
+    Dim wsAnalise As Worksheet ' Planilha "PICKING_ESTEIRA_COMPL" onde será feita a análise
+    Dim wsBase As Worksheet ' Planilha "SALDO LOGIX AGRUPADO" que contém os dados de base para comparação
+    Dim lastRowAnalise As Long ' Última linha com dados da planilha de análise
+    Dim lastRowBase As Long ' Última linha com dados da planilha base
+    Dim i As Long, j As Long ' Contadores para percorrer as linhas
+    Dim maiorSaldo As Double ' Variável para armazenar o maior saldo encontrado
+    Dim itemCorrespondente01 As String ' Armazena o item correspondente com maior saldo
+    Dim descricaoCorrespondente01 As String ' Armazena a descrição do item correspondente
+    Dim salditemcorrespondente01 As Double ' Armazena o saldo do item correspondente
+
+    ' Arrays para controle de itens repetidos e distribuição de saldo
+    Dim qtdRepetidos As Long
+    Dim totalSaldos As Double
+    
+    ' Variáveis para armazenar informações dos itens repetidos
+    Dim saldosRepetidos As Collection
+    Dim item As Variant
+    Dim idx As Long
+    Dim saldoItem As Double
+    Dim melhorItem As Long
+    Dim melhorSaldo As Double
+    
+    ' Atribui o workbook atual à variável wb
+    Set wb = ThisWorkbook
+
+    ' Define as planilhas
+    Set wsAnalise = wb.Sheets("PICKING_ESTEIRA_COMPL")
+    Set wsBase = wb.Sheets("SALDO LOGIX AGRUPADO")
+
+    ' Insere títulos para novas colunas na planilha de análise
+    wsAnalise.Cells(2, 18).Value = "EAN_PARA_01"
+    wsAnalise.Cells(2, 19).Value = "RECLASS_PARA_01"
+    wsAnalise.Cells(2, 20).Value = "DESCRICAO_PARA_01"
+    wsAnalise.Cells(2, 21).Value = "SALDO_ITEM_PARA_01"
+
+    ' Calcula a última linha preenchida nas planilhas
+    lastRowAnalise = wsAnalise.Cells(wsAnalise.Rows.Count, "A").End(xlUp).Row
+    lastRowBase = wsBase.Cells(wsBase.Rows.Count, "A").End(xlUp).Row
+
+    ' Loop para percorrer cada linha da planilha de análise
+    For i = 3 To lastRowAnalise
+        Dim eanReduz As String ' Armazena o valor do EAN reduzido
+        Dim diferenca As Double ' Armazena a diferença (necessidade)
+
+        ' Pega o valor do EAN e da diferença na planilha de análise
+        eanReduz = wsAnalise.Cells(i, 13).Value ' Coluna M: EAN reduzido
+        diferenca = wsAnalise.Cells(i, 16).Value ' Coluna P: diferença
+
+        ' Reseta os valores
+        maiorSaldo = -1
+        eanrdzCorrespondente01 = ""
+        itemCorrespondente01 = ""
+        descricaoCorrespondente01 = ""
+        salditemcorrespondente01 = 0
+
+        ' Inicializa coleção para armazenar itens repetidos
+        Set saldosRepetidos = New Collection
+
+        ' Primeiro loop para identificar todos os itens com o mesmo EAN
+        qtdRepetidos = 0
+        totalSaldos = 0
+        
+        ' Conta e coleta informações dos itens repetidos
+        For j = 2 To lastRowBase
+            If wsBase.Cells(j, 4).Value = eanReduz Then
+                qtdRepetidos = qtdRepetidos + 1
+                totalSaldos = totalSaldos + wsBase.Cells(j, 10).Value
+                saldosRepetidos.Add Array(j, wsBase.Cells(j, 10).Value, wsBase.Cells(j, 6).Value, wsBase.Cells(j, 7).Value)
+            End If
+        Next j
+
+        ' Se tem apenas um item ou saldo total insuficiente, usa a lógica original
+        If qtdRepetidos <= 1 Then
+            ' Lógica original para item único
+            For j = 2 To lastRowBase
+                If wsBase.Cells(j, 4).Value = eanReduz Then
+                    Dim saldo As Double
+                    saldo = wsBase.Cells(j, 10).Value
+                    
+                    If saldo >= diferenca And saldo > maiorSaldo Then
+                        maiorSaldo = saldo
+                        itemCorrespondente01 = wsBase.Cells(j, 6).Value
+                        descricaoCorrespondente01 = wsBase.Cells(j, 7).Value
+                        salditemcorrespondente01 = wsBase.Cells(j, 10).Value
+                    End If
+                End If
+            Next j
+        Else
+            ' Lógica avançada para distribuição entre itens repetidos
+            Dim saldoTotal As Double
+            
+            ' Calcula o saldo total disponível
+            saldoTotal = 0
+            For Each item In saldosRepetidos
+                saldoTotal = saldoTotal + item(1)
+            Next item
+            
+            ' Se o saldo total é suficiente para atender a necessidade
+            If saldoTotal >= diferenca Then
+                ' Prioriza o item com maior saldo individual que atende a necessidade
+                melhorItem = 0
+                melhorSaldo = -1
+                
+                For Each item In saldosRepetidos
+                    idx = item(0)
+                    saldoItem = item(1)
+                    
+                    ' Seleciona o item com maior saldo que atende a necessidade
+                    If saldoItem >= diferenca And saldoItem > melhorSaldo Then
+                        melhorSaldo = saldoItem
+                        melhorItem = idx
+                    End If
+                Next item
+                
+                ' Se encontrou item que atende individualmente
+                If melhorItem > 0 Then
+                    eanrdzCorrespondente01 = wsBase.Cells(melhorItem, 4).Value
+                    itemCorrespondente01 = wsBase.Cells(melhorItem, 6).Value
+                    descricaoCorrespondente01 = wsBase.Cells(melhorItem, 7).Value
+                    salditemcorrespondente01 = wsBase.Cells(melhorItem, 10).Value
+                Else
+                    ' Se nenhum item individual atende, usa o de maior saldo
+                    melhorSaldo = -1
+                    melhorItem = 0
+                    
+                    For Each item In saldosRepetidos
+                        idx = item(0)
+                        saldoItem = item(1)
+                        
+                        If saldoItem > melhorSaldo Then
+                            melhorSaldo = saldoItem
+                            melhorItem = idx
+                        End If
+                    Next item
+                    
+                    If melhorItem > 0 Then
+                        eanrdzCorrespondente01 = wsBase.Cells(melhorItem, 4).Value
+                        itemCorrespondente01 = wsBase.Cells(melhorItem, 6).Value
+                        descricaoCorrespondente01 = wsBase.Cells(melhorItem, 7).Value
+                        salditemcorrespondente01 = wsBase.Cells(melhorItem, 10).Value
+                    End If
+                End If
+            Else
+                ' Saldo total insuficiente, usa o item com maior saldo
+                melhorSaldo = -1
+                melhorItem = 0
+                
+                For Each item In saldosRepetidos
+                    idx = item(0)
+                    saldoItem = item(1)
+                    
+                    If saldoItem > melhorSaldo Then
+                        melhorSaldo = saldoItem
+                        melhorItem = idx
+                    End If
+                Next item
+                
+                If melhorItem > 0 Then
+                    eanrdzCorrespondente01 = wsBase.Cells(melhorItem, 4).Value
+                    itemCorrespondente01 = wsBase.Cells(melhorItem, 6).Value
+                    descricaoCorrespondente01 = wsBase.Cells(melhorItem, 7).Value
+                    salditemcorrespondente01 = wsBase.Cells(melhorItem, 10).Value
+                End If
+            End If
+        End If
+
+        ' Insere os valores na planilha de análise
+        wsAnalise.Cells(i, 18).Value = eanrdzCorrespondente01
+        wsAnalise.Cells(i, 19).Value = itemCorrespondente01
+        wsAnalise.Cells(i, 20).Value = descricaoCorrespondente01
+        wsAnalise.Cells(i, 21).Value = salditemcorrespondente01
+    Next i
+    
+    MsgBox "Processo de reclassificação concluído com distribuição de saldo!", vbInformation, "Reclassificação"
+
+End Sub

@@ -1,0 +1,17 @@
+"Segue reporte:<br><br>" &
+"<b>Data e Hora do Ocorrido:</b> " &'Hora do Ocorrido_DataCard3'.Default & "<br>" &
+"<b>Cidade | Unidade do Ocorrido:</b> " &'Cidade/Unidade do Ocorrido_DataCard2'.Default & "<br>" &
+"<b>Local da Ocorrência:</b> " & Local_DataCard1.Default & "<br>" &
+"<b>Supervisor/Responsável pela Operação:</b> " & Supervisor_DataCard4.Default & "<br>" &
+"<b>Causa provável do ocorrido:</b> " & Causaprováveldoocorrido_DataCard3.Default & "<br>" &
+"<b>Classificação-Tipo da Ocorrência:</b> " & ClassificaçãoTipodaOcorrência_DataCard1.Default & "<br>" &
+"<b>Descrição breve do ocorrido:</b> " & 'Descrição breve_DataCard3'.Default & "<br>" &
+"<b>Empressa:</b> " & Empresa_DataCard1.Default & "<br>" &
+"<b>Matrícula do Colaborador:</b> " & Matrícula_DataCard3.Default & "<br>" &
+"<b>Nome do colaborador:</b> " & 'Nome do colaborador_DataCard3'.Default & "<br>" &
+"<b>Função do Colaborador:</b> " & 'Função do Colaborador_DataCard3'.Default & "<br>" &
+"<b>Tempo de Empresa:</b> " & 'Tempodeempresa(Anos,Meses,Dias)_DataCard1'.Default & "<br>" &
+"<b>Idade do Colaborador:</b> " & IdadedoColaborador_DataCard1.Default & "<br>" &
+"<b>Dias de Afastamento(Se Houver):</b> " & DiasdeAfastamentoquandohouver_DataCard1.Default & "<br>" &
+"<b>Possível Causa Raiz:</b> " & 'Possível Causa Raiz_DataCard3'.Default & "<br><br>" &
+"<b>Observação:</b> " & Observação_DataCard1.Default & "<br><br>" &

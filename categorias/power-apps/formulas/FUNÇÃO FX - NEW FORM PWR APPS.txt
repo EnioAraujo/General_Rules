@@ -1,0 +1,5 @@
+NewForm(EditForm1);;Navigate(EditScreen1; ScreenTransition.None)
+
+Como funciona a combinação das funções?
+NewForm(EditForm1) prepara o formulário chamado EditForm1 para adicionar um novo registro.
+Navigate(EditScreen1, ScreenTransition.None) leva o usuário para a tela EditScreen1, onde o formulário EditForm1 está localizado.

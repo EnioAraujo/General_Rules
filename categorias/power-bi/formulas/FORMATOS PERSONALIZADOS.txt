@@ -1,0 +1,57 @@
+// MILHÕES
+FORMAT(SELECTEDMEASURE(), "#.#,# Mi")        // 1.2 Mi
+FORMAT(SELECTEDMEASURE(), "#,##0.0 Mi")      // 1,234.5 Mi
+FORMAT(SELECTEDMEASURE(), "R$ #.#,# Mi")     // R$ 1.2 Mi
+
+// MILHARES
+FORMAT(SELECTEDMEASURE(), "#,##0K")          // 1,234K
+FORMAT(SELECTEDMEASURE(), "#,##0.0K")        // 1,234.5K
+FORMAT(SELECTEDMEASURE(), "R$ #,##0K")       // R$ 1,234K
+
+// PERCENTUAIS
+FORMAT(SELECTEDMEASURE(), "0.0%")            // 12.3%
+FORMAT(SELECTEDMEASURE(), "0.00%")           // 12.34%
+FORMAT(SELECTEDMEASURE(), "+0.0%;-0.0%")     // +12.3% ou -12.3%
+
+// MOEDA
+FORMAT(SELECTEDMEASURE(), "R$ #,##0.00")     // R$ 1,234.56
+FORMAT(SELECTEDMEASURE(), "$#,##0.00")       // $1,234.56
+FORMAT(SELECTEDMEASURE(), "€ #,##0.00")      // € 1,234.56
+
+// NÚMEROS INTEIROS
+FORMAT(SELECTEDMEASURE(), "#,##0")           // 1,235
+FORMAT(SELECTEDMEASURE(), "000000")          // 001235
+FORMAT(SELECTEDMEASURE(), "0,0")             // 1,2
+
+// DECIMAIS
+FORMAT(SELECTEDMEASURE(), "#,##0.00")        // 1,234.56
+FORMAT(SELECTEDMEASURE(), "0.000")           // 1.234
+FORMAT(SELECTEDMEASURE(), "#,##0.0#")        // 1,234.5
+
+// PERSONALIZADOS COM TEXTO
+FORMAT(SELECTEDMEASURE(), "#,##0 un")        // 1,234 un
+FORMAT(SELECTEDMEASURE(), "#,##0 items")     // 1,234 items
+FORMAT(SELECTEDMEASURE(), "# dias")          // 1,234 dias
+
+// NÚMEROS POSITIVOS/NEGATIVOS
+FORMAT(SELECTEDMEASURE(), "+#,##0;-#,##0")   // +1,234 ou -1,234
+FORMAT(SELECTEDMEASURE(), "#,##0;(#,##0)")   // 1,234 ou (1,234)
+FORMAT(SELECTEDMEASURE(), "↑#,##0;↓#,##0")   // ↑1,234 ou ↓1,234
+
+// CORES
+FORMAT(SELECTEDMEASURE(), 
+    "[Green]+#,##0;[Red]-#,##0")            // Verde para positivos, Vermelho para negativos
+
+// CONDICIONAIS
+FORMAT(
+    SELECTEDMEASURE(), 
+    "[>1000000]#.#,# Mi;[>1000]#,##0K;0"
+)                                           // Usa Mi, K ou número normal baseado no valor
+
+// CIENTÍFICO
+FORMAT(SELECTEDMEASURE(), "0.00E+00")       // 1.23E+03
+
+// COMBINADOS
+FORMAT(SELECTEDMEASURE(), 
+    "[>1000000]R$ #.#,# Mi;[>1000]R$ #,##0K;R$ #,##0.00"
+)                                           // Combina moeda com escalas diferentes

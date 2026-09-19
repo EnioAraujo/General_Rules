@@ -1,0 +1,357 @@
+HTML_PRESENCA_VS_ORCADO_TOOLTIP = // HTML_PRESENCA_VS_ORCADO_TOOLTIP
+VAR _maxDataControle =
+    IF ( HASONEVALUE ( 'CONTROLE_PRESENCA'[Data] ), MAX ( 'CONTROLE_PRESENCA'[Data] ), BLANK () )
+VAR _maxDataSupp =
+    IF ( HASONEVALUE ( 'FAT_SUPP_PRESENÇAS_DIA'[Data] ), MAX ( 'FAT_SUPP_PRESENÇAS_DIA'[Data] ), BLANK () )
+VAR _maxDataTercOnly =
+    IF ( HASONEVALUE ( 'FAT_TERCEIROS_UDI'[DATA_PRESENCA] ), MAX ( 'FAT_TERCEIROS_UDI'[DATA_PRESENCA] ), BLANK () )
+VAR _maxDataCal =
+    IF ( HASONEVALUE ( 'DIM_CALENDARIO_EQUIPES_2026'[DATA] ), MAX ( 'DIM_CALENDARIO_EQUIPES_2026'[DATA] ), BLANK () )
+VAR _datas_slicer = DISTINCT ( 'CONTROLE_PRESENCA'[Data] )
+VAR _maxDataTryT =
+    CALCULATE ( MAX ( 'FAT_SUPP_PRESENÇAS_DIA'[Data] ), TREATAS ( _datas_slicer, 'FAT_SUPP_PRESENÇAS_DIA'[Data] ) )
+VAR _maxData =
+    COALESCE ( _maxDataControle, _maxDataSupp, _maxDataTercOnly, _maxDataCal, _maxDataTryT )
+
+VAR _diaInt = IF ( ISBLANK ( _maxData ), BLANK (), INT ( DATE ( YEAR ( _maxData ), MONTH ( _maxData ), DAY ( _maxData ) ) ) )
+
+VAR _usarSupp =
+    COALESCE (
+        CALCULATE (
+            COUNTROWS ( 'FAT_SUPP_PRESENÇAS_DIA' ),
+            FILTER ( ALL ( 'FAT_SUPP_PRESENÇAS_DIA' ), INT ( 'FAT_SUPP_PRESENÇAS_DIA'[Data] ) = _diaInt )
+        ),
+        0
+    ) > 0
+
+VAR _terc_n =
+    IF (
+        ISBLANK ( _diaInt ),
+        0,
+        IF (
+            ISBLANK ( CALCULATE ( [QTD_TERCEIROS], FILTER ( ALL ( 'FAT_TERCEIROS_UDI' ), INT ( 'FAT_TERCEIROS_UDI'[DATA_PRESENCA] ) = _diaInt ) ) ),
+            0,
+            CALCULATE ( [QTD_TERCEIROS], FILTER ( ALL ( 'FAT_TERCEIROS_UDI' ), INT ( 'FAT_TERCEIROS_UDI'[DATA_PRESENCA] ) = _diaInt ) )
+        )
+    )
+
+VAR _dados = ADDCOLUMNS(
+    SUMMARIZE('DIM_ORCADOS', 'DIM_ORCADOS'[Área]),
+    "ORC",    [QTDE_ORCADOS],
+    "REAL",   [QTDE_REAL],
+    "DIF_HC", [DIF],
+    "ESCAL",
+        VAR _a = 'DIM_ORCADOS'[Área]
+        RETURN IF(
+            _usarSupp,
+            CALCULATE(SUM('FAT_SUPP_PRESENÇAS_DIA'[Contagem]),
+                'FAT_SUPP_PRESENÇAS_DIA'[Status] IN { "ESCALADO", "-" },
+                INT ( 'FAT_SUPP_PRESENÇAS_DIA'[Data] ) = _diaInt,
+                'FAT_SUPP_PRESENÇAS_DIA'[AREA] = _a),
+            CALCULATE(SUM('CONTROLE_PRESENCA'[NUM]),
+                'CONTROLE_PRESENCA'[Status] IN { "ESCALADO", "-", "P" },
+                INT ( 'CONTROLE_PRESENCA'[Data] ) = _diaInt,
+                'CONTROLE_PRESENCA'[AREA] = _a)
+        ),
+    "FOLGA_N",
+        VAR _a = 'DIM_ORCADOS'[Área]
+        RETURN IF(
+            _usarSupp,
+            CALCULATE(SUM('FAT_SUPP_PRESENÇAS_DIA'[Contagem]),
+                'FAT_SUPP_PRESENÇAS_DIA'[Status] = "FOLGA",
+                INT ( 'FAT_SUPP_PRESENÇAS_DIA'[Data] ) = _diaInt,
+                'FAT_SUPP_PRESENÇAS_DIA'[AREA] = _a),
+            CALCULATE(SUM('CONTROLE_PRESENCA'[NUM]),
+                'CONTROLE_PRESENCA'[Status] = "FOLGA",
+                INT ( 'CONTROLE_PRESENCA'[Data] ) = _diaInt,
+                'CONTROLE_PRESENCA'[AREA] = _a)
+        ),
+    "ATE_N",
+        VAR _a = 'DIM_ORCADOS'[Área]
+        RETURN IF(
+            _usarSupp,
+            CALCULATE(SUM('FAT_SUPP_PRESENÇAS_DIA'[Contagem]),
+                'FAT_SUPP_PRESENÇAS_DIA'[Status] = "ATE",
+                INT ( 'FAT_SUPP_PRESENÇAS_DIA'[Data] ) = _diaInt,
+                'FAT_SUPP_PRESENÇAS_DIA'[AREA] = _a),
+            CALCULATE(SUM('CONTROLE_PRESENCA'[NUM]),
+                'CONTROLE_PRESENCA'[Status] = "ATE",
+                INT ( 'CONTROLE_PRESENCA'[Data] ) = _diaInt,
+                'CONTROLE_PRESENCA'[AREA] = _a)
+        ),
+    "FER_N",
+        VAR _a = 'DIM_ORCADOS'[Área]
+        RETURN IF(
+            _usarSupp,
+            CALCULATE(SUM('FAT_SUPP_PRESENÇAS_DIA'[Contagem]),
+                'FAT_SUPP_PRESENÇAS_DIA'[Status] = "FÉRIAS",
+                INT ( 'FAT_SUPP_PRESENÇAS_DIA'[Data] ) = _diaInt,
+                'FAT_SUPP_PRESENÇAS_DIA'[AREA] = _a),
+            CALCULATE(SUM('CONTROLE_PRESENCA'[NUM]),
+                'CONTROLE_PRESENCA'[Status] = "FÉRIAS",
+                INT ( 'CONTROLE_PRESENCA'[Data] ) = _diaInt,
+                'CONTROLE_PRESENCA'[AREA] = _a)
+        ),
+    "DESL_N",
+        VAR _a = 'DIM_ORCADOS'[Área]
+        RETURN IF(
+            _usarSupp,
+            CALCULATE(SUM('FAT_SUPP_PRESENÇAS_DIA'[Contagem]),
+                'FAT_SUPP_PRESENÇAS_DIA'[Status] = "DESL",
+                INT ( 'FAT_SUPP_PRESENÇAS_DIA'[Data] ) = _diaInt,
+                'FAT_SUPP_PRESENÇAS_DIA'[AREA] = _a),
+            CALCULATE(SUM('CONTROLE_PRESENCA'[NUM]),
+                'CONTROLE_PRESENCA'[Status] = "DESL",
+                INT ( 'CONTROLE_PRESENCA'[Data] ) = _diaInt,
+                'CONTROLE_PRESENCA'[AREA] = _a)
+        ),
+    "AFST_N",
+        VAR _a = 'DIM_ORCADOS'[Área]
+        RETURN IF(
+            _usarSupp,
+            CALCULATE(SUM('FAT_SUPP_PRESENÇAS_DIA'[Contagem]),
+                'FAT_SUPP_PRESENÇAS_DIA'[Status] = "AFST",
+                INT ( 'FAT_SUPP_PRESENÇAS_DIA'[Data] ) = _diaInt,
+                'FAT_SUPP_PRESENÇAS_DIA'[AREA] = _a),
+            CALCULATE(SUM('CONTROLE_PRESENCA'[NUM]),
+                'CONTROLE_PRESENCA'[Status] = "AFST",
+                INT ( 'CONTROLE_PRESENCA'[Data] ) = _diaInt,
+                'CONTROLE_PRESENCA'[AREA] = _a)
+        ),
+    "SUSP_N",
+        VAR _a = 'DIM_ORCADOS'[Área]
+        RETURN IF(
+            _usarSupp,
+            CALCULATE(SUM('FAT_SUPP_PRESENÇAS_DIA'[Contagem]),
+                'FAT_SUPP_PRESENÇAS_DIA'[Status] = "SUSP",
+                INT ( 'FAT_SUPP_PRESENÇAS_DIA'[Data] ) = _diaInt,
+                'FAT_SUPP_PRESENÇAS_DIA'[AREA] = _a),
+            CALCULATE(SUM('CONTROLE_PRESENCA'[NUM]),
+                'CONTROLE_PRESENCA'[Status] = "SUSP",
+                INT ( 'CONTROLE_PRESENCA'[Data] ) = _diaInt,
+                'CONTROLE_PRESENCA'[AREA] = _a)
+        ),
+    "COMP_N",
+        VAR _a = 'DIM_ORCADOS'[Área]
+        RETURN IF(
+            _usarSupp,
+            CALCULATE(SUM('FAT_SUPP_PRESENÇAS_DIA'[Contagem]),
+                'FAT_SUPP_PRESENÇAS_DIA'[Status] = "COMP",
+                INT ( 'FAT_SUPP_PRESENÇAS_DIA'[Data] ) = _diaInt,
+                'FAT_SUPP_PRESENÇAS_DIA'[AREA] = _a),
+            CALCULATE(SUM('CONTROLE_PRESENCA'[NUM]),
+                'CONTROLE_PRESENCA'[Status] = "COMP",
+                INT ( 'CONTROLE_PRESENCA'[Data] ) = _diaInt,
+                'CONTROLE_PRESENCA'[AREA] = _a)
+        ),
+    "DAYOFF_N",
+        VAR _a = 'DIM_ORCADOS'[Área]
+        RETURN IF(
+            _usarSupp,
+            CALCULATE(SUM('FAT_SUPP_PRESENÇAS_DIA'[Contagem]),
+                'FAT_SUPP_PRESENÇAS_DIA'[Status] = "DAY-OFF",
+                INT ( 'FAT_SUPP_PRESENÇAS_DIA'[Data] ) = _diaInt,
+                'FAT_SUPP_PRESENÇAS_DIA'[AREA] = _a),
+            CALCULATE(SUM('CONTROLE_PRESENCA'[NUM]),
+                'CONTROLE_PRESENCA'[Status] = "DAY-OFF",
+                INT ( 'CONTROLE_PRESENCA'[Data] ) = _diaInt,
+                'CONTROLE_PRESENCA'[AREA] = _a)
+        )
+)
+
+VAR _filtrado = FILTER(_dados, NOT ISBLANK([ORC]) || NOT ISBLANK([REAL]))
+
+VAR _tot_orc   = SUMX(_filtrado, [ORC])
+VAR _tot_real  = SUMX(_filtrado, [REAL])
+VAR _tot_dif   = SUMX(_filtrado, [DIF_HC])
+VAR _tot_escal = SUMX(_filtrado, IF(ISBLANK([ESCAL]),  0, [ESCAL]))
+VAR _tot_op    = _tot_escal + _terc_n
+VAR _tot_cov   = DIVIDE(_tot_op, _tot_escal, 0)
+
+VAR _col  = "<colgroup><col style='width:24%'><col style='width:8%'><col style='width:8%'><col style='width:7%'><col style='width:7%'><col style='width:9%'><col style='width:9%'><col style='width:9%'><col style='width:19%'></colgroup>"
+VAR _td   = "padding:9px 14px;font-size:22px;"
+VAR _thl  = "padding:8px 14px;font-size:18px;font-weight:400;letter-spacing:1.5px;text-transform:uppercase;color:#F37E38;"
+
+VAR _tercBaseByArea =
+    ADDCOLUMNS (
+        SUMMARIZE ( _filtrado, 'DIM_ORCADOS'[Área] ),
+        "TB",
+            VAR _a = 'DIM_ORCADOS'[Área]
+            RETURN
+                IF (
+                    ISBLANK ( _diaInt ),
+                    0,
+                    COALESCE (
+                        CALCULATE (
+                            SUM ( 'FAT_TERCEIROS_UDI'[NUM] ),
+                            FILTER (
+                                ALL ( 'FAT_TERCEIROS_UDI' ),
+                                INT ( 'FAT_TERCEIROS_UDI'[DATA_PRESENCA] ) = _diaInt
+                                    && (
+                                        'FAT_TERCEIROS_UDI'[UNIDADE] = _a
+                                        || 'FAT_TERCEIROS_UDI'[CENTRO CUSTO] = _a
+                                    )
+                            )
+                        ),
+                        0
+                    )
+                )
+    )
+VAR _sumTercAlloc = SUMX ( _tercBaseByArea, [TB] )
+VAR _tercGap = _terc_n - _sumTercAlloc
+VAR _gapTargetArea =
+    IF ( COUNTROWS ( FILTER ( _filtrado, 'DIM_ORCADOS'[Área] = "HUB" ) ) > 0, "HUB", MINX ( _filtrado, 'DIM_ORCADOS'[Área] ) )
+VAR _linhas = CONCATENATEX(
+    TOPN(50, _filtrado, [ORC], DESC),
+    VAR _area = [Área]
+    VAR _orc     = IF(ISBLANK([ORC]),     0, [ORC])
+    VAR _real    = IF(ISBLANK([REAL]),    0, [REAL])
+    VAR _dif     = IF(ISBLANK([DIF_HC]),  0, [DIF_HC])
+    VAR _escal   = IF(ISBLANK([ESCAL]),   0, [ESCAL])
+    VAR _folga   = IF(ISBLANK([FOLGA_N]), 0, [FOLGA_N])
+    VAR _ate     = IF(ISBLANK([ATE_N]),   0, [ATE_N])
+    VAR _fer     = IF(ISBLANK([FER_N]),   0, [FER_N])
+    VAR _desl    = IF(ISBLANK([DESL_N]),  0, [DESL_N])
+    VAR _afst    = IF(ISBLANK([AFST_N]),  0, [AFST_N])
+    VAR _susp    = IF(ISBLANK([SUSP_N]),  0, [SUSP_N])
+    VAR _comp    = IF(ISBLANK([COMP_N]),  0, [COMP_N])
+    VAR _dayoff  = IF(ISBLANK([DAYOFF_N]),0, [DAYOFF_N])
+    
+    VAR _terc_base = COALESCE ( MAXX ( FILTER ( _tercBaseByArea, 'DIM_ORCADOS'[Área] = _area ), [TB] ), 0 )
+    VAR _terc_row = _terc_base + IF ( _area = _gapTargetArea && _tercGap > 0, _tercGap, 0 )
+    VAR _op      = _escal + _terc_row
+    VAR _cov     = DIVIDE(_op, _escal, 0)
+    VAR _cpct    = FORMAT(_cov * 100, "0") & "%"
+    VAR _ccor    = IF(_cov >= 0.9, "#29C46B", IF(_cov >= 0.75, "#FBBF24", "#F04438"))
+    VAR _bw      = FORMAT(ROUND(MIN(1.0, _cov) * 60, 0), "0") & "px"
+    VAR _dcor    = IF(_dif > 0, "#FFC000", IF(_dif < 0, "#F04438", "rgba(255,255,255,0.45)"))
+    VAR _dbg     = IF(_dif > 0, "rgba(255,192,0,.12)", IF(_dif < 0, "rgba(240,68,56,.12)", "rgba(255,255,255,.06)"))
+    VAR _dtxt    = IF(_dif = 0, "0", IF(_dif > 0, "+" & FORMAT(_dif,"0"), FORMAT(_dif,"0")))
+    VAR _dot     = IF(_cov > 0 && _cov < 0.75, "#F04438", "#F37E38")
+    VAR _hc_pct  = DIVIDE(_real, _orc, 0)
+
+    VAR _tt_orc = "<b>Or&ccedil;ado por Cargo:</b>" & CONCATENATEX(TOPN(20, FILTER(CALCULATETABLE(ADDCOLUMNS(SUMMARIZE('DIM_ORCADOS', 'DIM_ORCADOS'[Cargo]), "V", CALCULATE(SUM('DIM_ORCADOS'[QTDE_ORCADO]))), 'DIM_ORCADOS'[Área] = _area), [V] > 0), [V], DESC), 'DIM_ORCADOS'[Cargo] & ": " & FORMAT([V], "0"), "<br>", [V], DESC)
+    VAR _tt_real = "<b>Real por Cargo:</b>" & CONCATENATEX(TOPN(20, FILTER(CALCULATETABLE(ADDCOLUMNS(SUMMARIZE('DIM_ORCADOS', 'DIM_ORCADOS'[Cargo]), "V", CALCULATE(SUM('DIM_ORCADOS'[REAL]))), 'DIM_ORCADOS'[Área] = _area), [V] > 0), [V], DESC), 'DIM_ORCADOS'[Cargo] & ": " & FORMAT([V], "0"), "<br>", [V], DESC)
+    VAR _tt_escal = "<b>Escalados por Cargo:</b>" & CONCATENATEX(TOPN(20, FILTER(CALCULATETABLE(ADDCOLUMNS(SUMMARIZE('CONTROLE_PRESENCA', 'CONTROLE_PRESENCA'[CARGO]), "V", CALCULATE(SUM('CONTROLE_PRESENCA'[NUM]))), INT ( 'CONTROLE_PRESENCA'[Data] ) = _diaInt, 'CONTROLE_PRESENCA'[Status] IN { "ESCALADO", "-" }, 'CONTROLE_PRESENCA'[AREA] = _area), [V] > 0), [V], DESC), 'CONTROLE_PRESENCA'[CARGO] & ": " & FORMAT([V], "0"), "<br>", [V], DESC)
+
+                VAR _tt_folga = IF(_folga > 0, "<b>Folga por Cargo:</b><br>" & CONCATENATEX(TOPN(15, FILTER(CALCULATETABLE(ADDCOLUMNS(SUMMARIZE('CONTROLE_PRESENCA', 'CONTROLE_PRESENCA'[CARGO]), "V", CALCULATE(SUM('CONTROLE_PRESENCA'[NUM])), "Nomes", CALCULATE(CONCATENATEX('CONTROLE_PRESENCA', 'CONTROLE_PRESENCA'[NOME], ", "))), INT ( 'CONTROLE_PRESENCA'[Data] ) = _diaInt, 'CONTROLE_PRESENCA'[Status] = "FOLGA", 'CONTROLE_PRESENCA'[AREA] = _area), [V] > 0), [V], DESC), 'CONTROLE_PRESENCA'[CARGO] & ": " & FORMAT([V], "0") & " <span style='font-size:13px;color:rgba(255,255,255,0.5);font-style:italic;'>(" & [Nomes] & ")</span>", "<br>", [V], DESC), " ")
+    VAR _tt_ate   = IF(_ate > 0, "<b>Atestado por Cargo:</b><br>" & CONCATENATEX(TOPN(15, FILTER(CALCULATETABLE(ADDCOLUMNS(SUMMARIZE('CONTROLE_PRESENCA', 'CONTROLE_PRESENCA'[CARGO]), "V", CALCULATE(SUM('CONTROLE_PRESENCA'[NUM])), "Nomes", CALCULATE(CONCATENATEX('CONTROLE_PRESENCA', 'CONTROLE_PRESENCA'[NOME], ", "))), INT ( 'CONTROLE_PRESENCA'[Data] ) = _diaInt, 'CONTROLE_PRESENCA'[Status] = "ATE", 'CONTROLE_PRESENCA'[AREA] = _area), [V] > 0), [V], DESC), 'CONTROLE_PRESENCA'[CARGO] & ": " & FORMAT([V], "0") & " <span style='font-size:13px;color:rgba(255,255,255,0.5);font-style:italic;'>(" & [Nomes] & ")</span>", "<br>", [V], DESC), " ")
+    VAR _tt_fer   = IF(_fer > 0, "<b>F&eacute;rias por Cargo:</b><br>" & CONCATENATEX(TOPN(15, FILTER(CALCULATETABLE(ADDCOLUMNS(SUMMARIZE('CONTROLE_PRESENCA', 'CONTROLE_PRESENCA'[CARGO]), "V", CALCULATE(SUM('CONTROLE_PRESENCA'[NUM])), "Nomes", CALCULATE(CONCATENATEX('CONTROLE_PRESENCA', 'CONTROLE_PRESENCA'[NOME], ", "))), INT ( 'CONTROLE_PRESENCA'[Data] ) = _diaInt, 'CONTROLE_PRESENCA'[Status] = "FÉRIAS", 'CONTROLE_PRESENCA'[AREA] = _area), [V] > 0), [V], DESC), 'CONTROLE_PRESENCA'[CARGO] & ": " & FORMAT([V], "0") & " <span style='font-size:13px;color:rgba(255,255,255,0.5);font-style:italic;'>(" & [Nomes] & ")</span>", "<br>", [V], DESC), " ")
+    VAR _tt_afst  = IF(_afst > 0, "<b>Afastado por Cargo:</b><br>" & CONCATENATEX(TOPN(15, FILTER(CALCULATETABLE(ADDCOLUMNS(SUMMARIZE('CONTROLE_PRESENCA', 'CONTROLE_PRESENCA'[CARGO]), "V", CALCULATE(SUM('CONTROLE_PRESENCA'[NUM])), "Nomes", CALCULATE(CONCATENATEX('CONTROLE_PRESENCA', 'CONTROLE_PRESENCA'[NOME], ", "))), INT ( 'CONTROLE_PRESENCA'[Data] ) = _diaInt, 'CONTROLE_PRESENCA'[Status] = "AFST", 'CONTROLE_PRESENCA'[AREA] = _area), [V] > 0), [V], DESC), 'CONTROLE_PRESENCA'[CARGO] & ": " & FORMAT([V], "0") & " <span style='font-size:13px;color:rgba(255,255,255,0.5);font-style:italic;'>(" & [Nomes] & ")</span>", "<br>", [V], DESC), " ")
+    VAR _tt_susp  = IF(_susp > 0, "<b>Suspens&atilde;o por Cargo:</b><br>" & CONCATENATEX(TOPN(15, FILTER(CALCULATETABLE(ADDCOLUMNS(SUMMARIZE('CONTROLE_PRESENCA', 'CONTROLE_PRESENCA'[CARGO]), "V", CALCULATE(SUM('CONTROLE_PRESENCA'[NUM])), "Nomes", CALCULATE(CONCATENATEX('CONTROLE_PRESENCA', 'CONTROLE_PRESENCA'[NOME], ", "))), INT ( 'CONTROLE_PRESENCA'[Data] ) = _diaInt, 'CONTROLE_PRESENCA'[Status] = "SUSP", 'CONTROLE_PRESENCA'[AREA] = _area), [V] > 0), [V], DESC), 'CONTROLE_PRESENCA'[CARGO] & ": " & FORMAT([V], "0") & " <span style='font-size:13px;color:rgba(255,255,255,0.5);font-style:italic;'>(" & [Nomes] & ")</span>", "<br>", [V], DESC), " ")
+    VAR _tt_comp  = IF(_comp > 0, "<b>Compensa&ccedil;&atilde;o por Cargo:</b><br>" & CONCATENATEX(TOPN(15, FILTER(CALCULATETABLE(ADDCOLUMNS(SUMMARIZE('CONTROLE_PRESENCA', 'CONTROLE_PRESENCA'[CARGO]), "V", CALCULATE(SUM('CONTROLE_PRESENCA'[NUM])), "Nomes", CALCULATE(CONCATENATEX('CONTROLE_PRESENCA', 'CONTROLE_PRESENCA'[NOME], ", "))), INT ( 'CONTROLE_PRESENCA'[Data] ) = _diaInt, 'CONTROLE_PRESENCA'[Status] = "COMP", 'CONTROLE_PRESENCA'[AREA] = _area), [V] > 0), [V], DESC), 'CONTROLE_PRESENCA'[CARGO] & ": " & FORMAT([V], "0") & " <span style='font-size:13px;color:rgba(255,255,255,0.5);font-style:italic;'>(" & [Nomes] & ")</span>", "<br>", [V], DESC), " ")
+    VAR _tt_dayoff= IF(_dayoff > 0, "<b>Day-Off por Cargo:</b><br>" & CONCATENATEX(TOPN(15, FILTER(CALCULATETABLE(ADDCOLUMNS(SUMMARIZE('CONTROLE_PRESENCA', 'CONTROLE_PRESENCA'[CARGO]), "V", CALCULATE(SUM('CONTROLE_PRESENCA'[NUM])), "Nomes", CALCULATE(CONCATENATEX('CONTROLE_PRESENCA', 'CONTROLE_PRESENCA'[NOME], ", "))), INT ( 'CONTROLE_PRESENCA'[Data] ) = _diaInt, 'CONTROLE_PRESENCA'[Status] = "DAY-OFF", 'CONTROLE_PRESENCA'[AREA] = _area), [V] > 0), [V], DESC), 'CONTROLE_PRESENCA'[CARGO] & ": " & FORMAT([V], "0") & " <span style='font-size:13px;color:rgba(255,255,255,0.5);font-style:italic;'>(" & [Nomes] & ")</span>", "<br>", [V], DESC), " ")
+    VAR _tt_desl  = IF(_desl > 0, "<b>Desligado por Cargo:</b><br>" & CONCATENATEX(TOPN(15, FILTER(CALCULATETABLE(ADDCOLUMNS(SUMMARIZE('CONTROLE_PRESENCA', 'CONTROLE_PRESENCA'[CARGO]), "V", CALCULATE(SUM('CONTROLE_PRESENCA'[NUM])), "Nomes", CALCULATE(CONCATENATEX('CONTROLE_PRESENCA', 'CONTROLE_PRESENCA'[NOME], ", "))), INT ( 'CONTROLE_PRESENCA'[Data] ) = _diaInt, 'CONTROLE_PRESENCA'[Status] = "DESL", 'CONTROLE_PRESENCA'[AREA] = _area), [V] > 0), [V], DESC), 'CONTROLE_PRESENCA'[CARGO] & ": " & FORMAT([V], "0") & " <span style='font-size:13px;color:rgba(255,255,255,0.5);font-style:italic;'>(" & [Nomes] & ")</span>", "<br>", [V], DESC), " ")
+
+    VAR _pills  = 
+        IF(_folga  > 0, "<div class='tt'><span style='font-size:15px;font-weight:500;padding:2px 7px;border-radius:2px;background:rgba(251,191,36,.12);color:#FBBF24;margin-right:4px;'>FOLGA &times;" & FORMAT(_folga,"0") & "</span><span class='ttt'>" & _tt_folga & "</span></div>", " ") &
+        IF(_ate    > 0, "<div class='tt'><span style='font-size:15px;font-weight:500;padding:2px 7px;border-radius:2px;background:rgba(240,68,56,.12);color:#F04438;margin-right:4px;'>ATESTADO &times;" & FORMAT(_ate,"0") & "</span><span class='ttt'>" & _tt_ate & "</span></div>", " ") &
+        IF(_fer    > 0, "<div class='tt'><span style='font-size:15px;font-weight:500;padding:2px 7px;border-radius:2px;background:rgba(99,179,237,.12);color:#63B3ED;margin-right:4px;'>F&Eacute;RIAS &times;" & FORMAT(_fer,"0") & "</span><span class='ttt'>" & _tt_fer & "</span></div>", " ") &
+        IF(_afst   > 0, "<div class='tt'><span style='font-size:15px;font-weight:500;padding:2px 7px;border-radius:2px;background:rgba(167,139,250,.12);color:#A78BFA;margin-right:4px;'>AFASTADO &times;" & FORMAT(_afst,"0") & "</span><span class='ttt'>" & _tt_afst & "</span></div>", " ") &
+        IF(_susp   > 0, "<div class='tt'><span style='font-size:15px;font-weight:500;padding:2px 7px;border-radius:2px;background:rgba(249,115,22,.12);color:#F97316;margin-right:4px;'>SUSPENS&Atilde;O &times;" & FORMAT(_susp,"0") & "</span><span class='ttt'>" & _tt_susp & "</span></div>", " ") &
+        IF(_comp   > 0, "<div class='tt'><span style='font-size:15px;font-weight:500;padding:2px 7px;border-radius:2px;background:rgba(34,211,238,.12);color:#22D3EE;margin-right:4px;'>COMP &times;" & FORMAT(_comp,"0") & "</span><span class='ttt'>" & _tt_comp & "</span></div>", " ") &
+        IF(_dayoff > 0, "<div class='tt'><span style='font-size:15px;font-weight:500;padding:2px 7px;border-radius:2px;background:rgba(251,191,36,.08);color:#FDE68A;margin-right:4px;'>DAY-OFF &times;" & FORMAT(_dayoff,"0") & "</span><span class='ttt'>" & _tt_dayoff & "</span></div>", " ") &
+        IF(_desl   > 0, "<div class='tt'><span style='font-size:15px;font-weight:500;padding:2px 7px;border-radius:2px;background:rgba(255,255,255,.06);color:#8CA0B3;margin-right:4px;'>DESL &times;" & FORMAT(_desl,"0") & "</span><span class='ttt'>" & _tt_desl & "</span></div>", " ")
+    VAR _terc_cell = IF(_terc_row > 0, "<span style='display:inline-block;padding:3px 9px;border-radius:3px;border:1px solid rgba(243,126,56,.25);background:rgba(243,126,56,.12);color:#F37E38;font-weight:700;font-size:24px;'>+" & FORMAT(_terc_row,"0") & "</span>", "<span style='color:rgba(255,255,255,.22);'>&#8211;</span>")
+
+    RETURN
+    "<tr style='border-bottom:1px solid rgba(46,61,79,.7);' onmouseover=""this.style.background='rgba(243,126,56,.04)'"" onmouseout=""this.style.background=''"">" &
+        "<td style='" & _td & "text-align:left;'>" &
+            "<div style='display:flex;align-items:flex-start;gap:9px;'>" &
+                "<span style='width:7px;height:7px;border-radius:50%;background:" & _dot & ";flex-shrink:0;margin-top:8px;display:inline-block;'></span>" &
+                "<div>" &
+                    "<div style='color:#FFFFFF;font-size:22px;font-weight:600;letter-spacing:.3px;'>" & _area & "</div>" &
+                    IF(LEN(_pills) > 0, "<div style='margin-top:4px;'>" & _pills & "</div>", "") &
+                "</div>" &
+            "</div>" &
+        "</td>" &
+        "<td style='" & _td & "text-align:center;color:rgba(255,255,255,.5);'><div class='tt'>" & FORMAT(_orc,  "0") & "<span class='ttt'>" & _tt_orc & "</span></div></td>" &
+        "<td style='" & _td & "text-align:center;color:#FFFFFF;'><div class='tt'>" & FORMAT(_real, "0") & "<span class='ttt'>" & _tt_real & "</span></div></td>" &
+        "<td style='" & _td & "text-align:center;'><span style='display:inline-block;padding:2px 8px;border-radius:3px;background:" & _dbg & ";color:" & _dcor & ";font-weight:700;font-size:20px;'>" & _dtxt & "</span></td>" &
+        "<td style='" & _td & "text-align:center;color:#FFFFFF;font-weight:400;'>" & FORMAT(_hc_pct, "0%") & "</td>" &
+        "<td style='" & _td & "text-align:center;color:#FFFFFF;font-weight:700;'>" & IF(_escal = 0, "<span style='color:rgba(255,255,255,.2);'>&#8211;</span>", "<div class='tt'>" & FORMAT(_escal,"0") & "<span class='ttt'>" & _tt_escal & "</span></div>") & "</td>" &
+        "<td style='" & _td & "text-align:center;'>" & _terc_cell & "</td>" &
+        "<td style='" & _td & "text-align:center;color:#FFFFFF;font-weight:700;'>" & FORMAT(_op, "0") & "</td>" &
+        "<td style='" & _td & "text-align:right;padding-right:18px;'>" &
+            "<div style='display:flex;align-items:center;justify-content:flex-end;gap:8px;'>" &
+                "<div style='width:60px;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;'>" &
+                    "<div style='width:" & _bw & ";height:4px;background:" & _ccor & ";border-radius:2px;'></div></div>" &
+                "<span style='font-size:22px;font-weight:500;color:" & _ccor & ";min-width:44px;text-align:right;'>" & _cpct & "</span>" &
+            "</div>" &
+        "</td>" &
+    "</tr>",
+    "", [ORC], DESC
+)
+
+VAR _tcpct  = FORMAT(_tot_cov * 100, "0") & "%"
+VAR _tccor  = IF(_tot_cov >= 0.9, "#29C46B", IF(_tot_cov >= 0.75, "#FBBF24", "#F04438"))
+VAR _tbw    = FORMAT(ROUND(MIN(1.0, _tot_cov) * 60, 0), "0") & "px"
+VAR _tdtxt  = IF(_tot_dif = 0, "0", IF(_tot_dif > 0, "+" & FORMAT(_tot_dif,"0"), FORMAT(_tot_dif,"0")))
+VAR _tdcor  = IF(_tot_dif > 0, "#FFC000", IF(_tot_dif < 0, "#F04438", "#F37E38"))
+VAR _tot_hc_pct = DIVIDE(_tot_real, _tot_orc, 0)
+
+RETURN
+IF(
+    ISBLANK(_tot_orc),
+    "<div style='font-family:Segoe UI;background:#212B36;height:100vh;display:flex;align-items:center;justify-content:center;'>" &
+    "<span style='color:rgba(255,255,255,0.3);font-size:24px;'>Sem dados</span></div>",
+
+    "<style>*{box-sizing:border-box;margin:0;padding:0;}html,body{height:100vh;overflow:hidden;}.tt{position:static;display:inline-block;cursor:pointer;}.tt .ttt{visibility:hidden;width:400px;max-height:80vh;overflow-y:auto;background:#1A2330;color:#fff;text-align:left;border-radius:12px;padding:20px;position:fixed;z-index:99999;top:50%;left:50%;transform:translate(-50%, -50%);opacity:0;transition:opacity .2s,visibility .2s;border:1px solid #F37E38;font-size:17px;font-weight:500;box-shadow:0 15px 40px rgba(0,0,0,0.9), 0 0 0 3000px rgba(15,23,42,0.85);line-height:1.6;pointer-events:none;}.tt .ttt b{color:#F37E38;text-transform:uppercase;font-size:16px;letter-spacing:1px;display:block;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.15);padding-bottom:6px;}.tt:hover .ttt{visibility:visible;opacity:1;}</style>" &
+    "<div style='font-family:Segoe UI,sans-serif;background:#212B36 linear-gradient(90deg, transparent 54%, rgba(243,126,56,0.4) 54%, rgba(243,126,56,0.4) calc(54% + 2px), transparent calc(54% + 2px));height:100vh;display:flex;flex-direction:column;'>" &
+
+        "<div style='flex-shrink:0;background:transparent;border-bottom:1px solid rgba(46,61,79,.9);'>" &
+            "<table style='width:100%;border-collapse:collapse;table-layout:fixed;'>" & _col &
+            "<thead>" &
+                "<tr>" &
+                    "<th rowspan='2' style='text-align:left;padding:8px 14px 0;color:rgba(255,255,255,.35);font-size:16px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;vertical-align:bottom;border-right:1px solid rgba(46,61,79,.7);'>&#193;rea</th>" &
+                    "<th colspan='4' style='text-align:center;padding:6px 14px 4px;color:#F37E38;font-size:16px;font-weight:500;letter-spacing:2px;text-transform:uppercase;border-bottom:2px solid #F37E38;'>Head Count</th>" &
+                    "<th colspan='3' style='text-align:center;padding:6px 14px 4px;color:#F37E38;font-size:16px;font-weight:500;letter-spacing:2px;text-transform:uppercase;border-bottom:2px solid #F37E38;border-right:1px solid rgba(46,61,79,.7);'>Opera&ccedil;&atilde;o Hoje</th>" &
+                    "<th rowspan='2' style='text-align:right;padding:8px 18px 0 14px;color:rgba(255,255,255,.35);font-size:16px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;vertical-align:bottom;line-height:1.3;'>Cobertura<br>vs Escalados</th>" &
+                "</tr>" &
+                "<tr>" &
+                    "<th style='" & _thl & "text-align:center;border-right:1px solid rgba(46,61,79,.4);'>Or&ccedil;ado</th>" &
+                    "<th style='" & _thl & "text-align:center;border-right:1px solid rgba(46,61,79,.4);'>Real HC</th>" &
+                    "<th style='" & _thl & "text-align:center;border-right:1px solid rgba(46,61,79,.4);'>&Delta; HC</th>" &
+                    "<th style='" & _thl & "text-align:center;'>% HC</th>" &
+                    "<th style='" & _thl & "text-align:center;border-right:1px solid rgba(46,61,79,.4);'>Escalados</th>" &
+                    "<th style='" & _thl & "text-align:center;border-right:1px solid rgba(46,61,79,.4);'>Terceiros</th>" &
+                    "<th style='" & _thl & "text-align:center;border-right:1px solid rgba(46,61,79,.7);'>Total</th>" &
+                "</tr>" &
+            "</thead>" &
+            "</table>" &
+        "</div>" &
+
+        "<div style='flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;'>" &
+            "<table style='width:100%;border-collapse:collapse;table-layout:fixed;'>" & _col &
+            "<tbody>" & _linhas & "</tbody>" &
+            "</table>" &
+        "</div>" &
+
+        "<div style='flex-shrink:0;border-top:2px solid #F37E38;background:transparent;'>" &
+            "<table style='width:100%;border-collapse:collapse;table-layout:fixed;'>" & _col &
+            "<tfoot><tr>" &
+                "<td style='" & _td & "text-align:left;color:#FFFFFF;font-weight:500;font-size:20px;letter-spacing:1px;text-transform:uppercase;'>Total Geral</td>" &
+                "<td style='" & _td & "text-align:center;color:#FFFFFF;font-weight:400;font-size:20px;'>" & FORMAT(_tot_orc,  "0") & "</td>" &
+                "<td style='" & _td & "text-align:center;color:#FFFFFF;font-weight:400;font-size:20px;'>" & FORMAT(_tot_real, "0") & "</td>" &
+                "<td style='" & _td & "text-align:center;'><span style='display:inline-block;padding:2px 8px;border-radius:3px;font-weight:700;font-size:22px;background:rgba(240,68,56,.12);color:" & _tdcor & ";'>" & _tdtxt & "</span></td>" &
+                "<td style='" & _td & "text-align:center;color:#FFFFFF;font-weight:700;font-size:20px;'>" & FORMAT(_tot_hc_pct, "0%") & "</td>" &
+                "<td style='" & _td & "text-align:center;color:#F37E38;font-weight:400;font-size:20px;'>" & FORMAT(_tot_escal,"0") & "</td>" &
+                "<td style='" & _td & "text-align:center;'>" &
+                    IF(_terc_n > 0,
+                        "<span style='display:inline-block;padding:3px 9px;border-radius:3px;border:1px solid rgba(243,126,56,.25);background:rgba(243,126,56,.12);color:#F37E38;font-weight:400;font-size:24px;'>+" & FORMAT(_terc_n,"0") & "</span>",
+                        "<span style='color:rgba(255,255,255,.22);'>&#8211;</span>") &
+                "</td>" &
+                "<td style='" & _td & "text-align:center;color:#F37E38;font-weight:400;font-size:20px;'>" & FORMAT(_tot_op, "0") & "</td>" &
+                "<td style='" & _td & "text-align:right;padding-right:18px;'>" &
+                    "<div style='display:flex;align-items:center;justify-content:flex-end;gap:8px;'>" &
+                        "<div style='width:60px;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;'>" &
+                            "<div style='width:" & _tbw & ";height:4px;background:" & _tccor & ";border-radius:2px;'></div></div>" &
+                        "<span style='font-size:24px;font-weight:400;color:" & _tccor & ";'>" & _tcpct & "</span>" &
+                    "</div>" &
+                "</td>" &
+            "</tr></tfoot>" &
+            "</table>" &
+        "</div>" &
+
+    "</div>"
+)

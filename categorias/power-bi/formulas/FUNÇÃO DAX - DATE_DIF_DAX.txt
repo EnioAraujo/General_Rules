@@ -1,0 +1,16 @@
+
+// ESTA FUNÇÃO TRAZ A DIFERENÇA EM DIAS, ENTRE DUAS DATAS, EXEMPLO:
+
+VAR DIFDATA = //VARIAVEL DE NOME DIFDATA
+                         DATEDIF(
+                                SALDO[DATARECEBIMENTO] (EX:= "01/11/2024"), //DATA RECEBIMENTO
+                                SALDO[DATAVENCIMENTO] (EX: = "10/11/2024"), //DATA VALIDADE
+                                DAY // RESULTADO SERÁ EM DIAS
+                                        ) //VARIAVEL DIFDATA ARMAZENA ESTA FUNÇÃO
+                          
+                          RETURN // RETORNA O RESULTADO DA FUNÇÃO DATEDIF 
+
+                                 DIFDATA // A FUNÇÃO RETURN, PRECISA DO NOME DA VARIALVEL PARA 
+                                               //IMPRIMIR O RESULTADO
+
+                                 O RESULTADO DA DIFERENÇA ENTRE AS DUAS DATAS É 9 DIAS

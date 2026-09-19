@@ -1,0 +1,14 @@
+= let
+// LOGIC AGRUPA AS QUANTIDADES DE FORNECIMENTO
+logic = Table.Buffer(Table.Group(TpDeCaixa,{"Fornecimento"},{"QTD_REMESSA",
+each List.Sum([CAIXAS_MIL]), Int64.Type})),
+// REV CRIA UMA COLUNA CHAMADA REVENDA, SE QTD TOTAL DA REMESSA  FOR MAIOR IGUAL A 100( 10 CAIXAS) TRAZ REVENDA, SENÃO NÃO É REVENDA
+rev = Table.AddColumn(logic, "REVENDA",each if [QTD_REMESSA] >= 100 then "SIM" else "NÃO", type text),
+// ESTA ETAPA FAZ UMA MESCLA COM A ULTIMA ETAPA TpDeCaixa( que gera uma tabela) TRAZENDO TODOS QUASE TODAS AS COLUNAS
+// ASSIM SE CONSEGUE IDENTIFICAR O QUE É REVENDA E O QUE NÃO É  
+Join = Table.NestedJoin(rev, {"Fornecimento"}, TpDeCaixa, {"Fornecimento"}, "REV", JoinKind.LeftOuter)
+
+
+
+in
+Join

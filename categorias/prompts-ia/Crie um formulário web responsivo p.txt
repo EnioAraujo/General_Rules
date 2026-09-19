@@ -1,0 +1,38 @@
+Crie um formulário web responsivo para controle de recebimento de cargas para a área de logística. O formulário deve conter os seguintes campos, utilizando as especificações detalhadas abaixo. O foco deve ser na usabilidade e clareza, facilitando o preenchimento rápido e preciso dos dados. Utilize elementos HTML5 apropriados para cada tipo de dado (e.g., input type="date", select, input type="number").
+
+Campos do Formulário:
+
+DATA: Campo para seleção de data (calendário).
+MES: Campo para seleção de mês (lista suspensa com os meses do ano).
+DIA_SEMANA: Campo apenas para visualização (calculado automaticamente a partir da 'DATA', sem necessidade de input manual). Não crie um campo editável para isso.
+HORA CHEGADA: Campo de texto livre (para observações sobre a chegada da carga).
+QTD NF: Campo numérico (input type="number").
+TIPO CARGA: Menu suspenso (select) com as opções: Batida, Paletizada, Mista.
+TIPO DE ESTOQUE: Menu suspenso (select) com as opções: HUB BRASIL, COD UDI.
+CESV: Campo de texto livre.
+CARGA SEM CESV: Campo de texto livre.
+VOLUMETRIA: Campo numérico (input type="number").
+CARRETA: Campo de texto livre.
+CAVALO: Campo de texto livre.
+QTD DE SKUS: Campo numérico (input type="number").
+DOCA: Menu suspenso (select) com as opções de 1 a 30: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30.
+TURNO: Campo de texto livre.
+DATA INICIO DESCARGA: Campo para seleção de data (calendário).
+HORA INICIO DESCARGA: Campo para seleção de hora (input type="time").
+HORA PAUSA INÍCIO: Campo para seleção de hora (input type="time").
+HORA RETORNO PAUSA: Campo para seleção de hora (input type="time").
+PAUSA TOTAL: Campo numérico (input type="number") – Este campo pode ser calculado automaticamente com base nos campos 'HORA PAUSA INÍCIO' e 'HORA RETORNO PAUSA', mas também deve permitir entrada manual.
+VAO DESCARREGADO: Menu suspenso (select) com as opções: 1, 2, 3, 4, 5, 6.
+DATA TÉRMINO DESCARGA: Campo para seleção de data (calendário).
+HORA TERMINO DESCARGA: Campo para seleção de hora (input type="time").
+TEMPO DE DESCARGA: Campo numérico (input type="number") – Este campo pode ser calculado automaticamente com base nos campos 'DATA INICIO DESCARGA', 'HORA INICIO DESCARGA' e 'HORA TERMINO DESCARGA', mas também deve permitir entrada manual.
+PERCENT DESCARGA: Campo numérico (input type="number") – Exibir em porcentagem (0-100%).
+STATUS: Menu suspenso (select) com as opções: EM ANDAMENTO, FINALIZADA, esta opção dependerá do 'HORA TERMINO DESCARGA', se  
+É BACKLOG ?: Menu suspenso (select) com as opções: SIM, NÃO.
+Requisitos Adicionais:
+
+Responsividade: O formulário deve se adaptar a diferentes tamanhos de tela (desktop, tablet, mobile).
+Validação: Implementar validação básica nos campos numéricos e obrigatórios.
+Estilo: Utilize um design limpo e profissional. Cores neutras são preferíveis.
+Rotulagem: Todos os campos devem estar claramente rotulados.
+Agrupamento: Considerar agrupar campos relacionados visualmente para facilitar a organização.

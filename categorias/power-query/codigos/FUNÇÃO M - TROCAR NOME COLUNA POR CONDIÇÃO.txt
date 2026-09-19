@@ -1,0 +1,24 @@
+= let
+    TabelaBase = ConsultasMescladas,
+    NomesAtuais = Table.ColumnNames(TabelaBase),
+    
+    // Cria nova lista de nomes baseada em condição
+    NovosNomes = List.Transform(NomesAtuais, each 
+        if _ = "DOCA " then "DOCA" 
+        else if _ = "DOCA" then "DOCA"
+        else if _ = "PREVIA" then "PRÉVIA" 
+        else if _ = "PREVIA " then "PRÉVIA"
+        else if _ = "PRÉVIA" then "PRÉVIA" 
+        else if _ = "Transportadora" then "TRANSPORTADORA" 
+        else if _ = "TRANSPORTADORA" then "TRANSPORTADORA"
+        else _  // mantém o nome original
+    ),
+    
+    TabelaRenomeada = Table.RenameColumns(TabelaBase, List.Zip({NomesAtuais, NovosNomes}))
+in
+    TabelaRenomeada
+
+
+
+
+

@@ -1,0 +1,15 @@
+let
+    Fonte = SharePoint.Files("https://bat.sharepoint.com/sites/FillRate-RedespachobyDataAnalytics", [ApiVersion = 15]),
+    #"Linhas Filtradas" = Table.SelectRows(Fonte, each ([Name] = "01_Controle comboio_012025.xlsx" or [Name] = "12_Controle comboio_122024.xlsx")),
+    #"Arquivos Ocultos Filtrados1" = Table.SelectRows(#"Linhas Filtradas", each [Attributes]?[Hidden]? <> true),
+    #"Invocar Função Personalizada1" = Table.AddColumn(#"Arquivos Ocultos Filtrados1", "Transformar Arquivo (5)", each #"Transformar Arquivo (5)"([Content])),
+    #"Colunas Renomeadas1" = Table.RenameColumns(#"Invocar Função Personalizada1", {"Name", "Nome da Origem"}),
+    #"Outras Colunas Removidas1" = Table.SelectColumns(#"Colunas Renomeadas1", {"Nome da Origem", "Transformar Arquivo (5)"}),
+    #"Coluna de Tabela Expandida1" = Table.ExpandTableColumn(#"Outras Colunas Removidas1", "Transformar Arquivo (5)", Table.ColumnNames(#"Transformar Arquivo (5)"(#"Arquivo de Amostra (5)"))),
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Coluna de Tabela Expandida1",{{"Nome da Origem", type text}, {"Embarque (F.O)", type text}, {"Data Embarque", type date}, {"Destino", type text}, {"Tipo de Embarque", type text}, {"Placa Cavalo", type text}, {"Placa Carreta", type text}, {"STO", type text}, {"NF/Série", type text}, {"Origem NF", type text}, {"Especie Cx", type text}, {"Classificação Produto", type text}, {"Embarcado", type text}}),
+    #"Colunas Removidas" = Table.RemoveColumns(#"Tipo Alterado",{"Chave de Acesso"}),
+    #"Tipo Alterado1" = Table.TransformColumnTypes(#"Colunas Removidas",{{"Quantidde cxs NF", Int64.Type}, {"Peso Bruto", type number}, {"Valor (R$)", Currency.Type}, {"Conversão para caixa de cigarro", Int64.Type}}),
+    #"Valor Substituído" = Table.ReplaceValue(#"Tipo Alterado1",null,0,Replacer.ReplaceValue,{"Conversão para caixa de cigarro"}),
+    #"Tipo Alterado2" = Table.TransformColumnTypes(#"Valor Substituído",{{"Conversão para caixa de cigarro", Int64.Type}})
+in
+    #"Tipo Alterado2"

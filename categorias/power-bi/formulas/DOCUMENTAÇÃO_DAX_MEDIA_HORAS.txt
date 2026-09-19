@@ -1,0 +1,92 @@
+// Documentação: Cálculo de Média de Horas em DAX
+
+// 1. Média Simples de Horas
+```dax
+Media_Horas = AVERAGE('Tabela'[Coluna_Horas])
+```
+//Explicação:
+// AVERAGE: Função que calcula a média aritmética simples
+// 'Tabela': Nome da tabela que contém os dados
+// [Coluna_Horas]: Nome da coluna que contém os valores de hora
+// Esta função soma todos os valores e divide pelo número total de registros
+
+// 2. Média de Horas em Formato Decimal
+```dax
+Media_Horas_Decimal = 
+AVERAGEX(
+    'Tabela',
+    HOUR('Tabela'[Coluna_Horas]) +
+    MINUTE('Tabela'[Coluna_Horas])/60 +
+    SECOND('Tabela'[Coluna_Horas])/3600
+)
+```
+//Explicação:
+// AVERAGEX: Função que calcula a média iterando sobre cada linha
+// HOUR(): Extrai a parte das horas do valor de tempo
+// MINUTE(): Extrai a parte dos minutos do valor de tempo
+// SECOND(): Extrai a parte dos segundos do valor de tempo
+// /60: Converte minutos para horas (divide por 60)
+// /3600: Converte segundos para horas (divide por 3600 = 60*60)
+
+// 3. Conversão para Formato de Hora
+```dax
+Media_Horas_Formatada = 
+VAR MediaDecimal = [Media_Horas_Decimal]
+VAR Horas = INT(MediaDecimal)
+VAR Minutos = INT((MediaDecimal // Horas) * 60)
+VAR Segundos = INT(((MediaDecimal // Horas) * 60 // Minutos) * 60)
+RETURN
+TIME(Horas, Minutos, Segundos)
+```
+//Explicação:
+// VAR: Define variáveis temporárias para armazenar cálculos intermediários
+// INT(): Retorna a parte inteira de um número decimal
+// MediaDecimal: Armazena o resultado do cálculo anterior
+// Horas: Extrai a parte inteira do número decimal (horas completas)
+// Minutos: Calcula os minutos multiplicando a parte decimal por 60
+// Segundos: Calcula os segundos a partir do resto dos minutos
+// TIME(): Função que cria um valor de tempo a partir de horas, minutos e segundos
+
+// 4. Média Ponderada de Horas
+```dax
+Media_Horas_Ponderada = 
+SUMX('Tabela', 
+    'Tabela'[Coluna_Horas] * 'Tabela'[Peso]
+) / SUM('Tabela'[Peso])
+```
+//Explicação:
+// SUMX: Soma o produto de cada hora pelo seu respectivo peso
+// SUM: Soma todos os pesos
+// A divisão final resulta na média ponderada
+// [Peso]: Coluna que contém o peso/importância de cada registro
+
+// Notas Importantes:
+1. Todas as fórmulas assumem que os dados estão em formato de hora válido
+2. A média decimal é útil para cálculos intermediários
+3. A média formatada é melhor para exibição ao usuário final
+4. A média ponderada deve ser usada quando alguns registros têm mais importância que outros
+
+// Exemplos de Uso:
+
+//Exemplo 1: Média simples de horas trabalhadas
+```dax
+Media_Horas_Trabalhadas = AVERAGE('Funcionarios'[Horas_Trabalhadas])
+```
+
+//Exemplo 2: Média ponderada de tempo de atendimento por prioridade
+```dax
+Media_Atendimento_Ponderada = 
+SUMX('Atendimentos', 
+    'Atendimentos'[Tempo_Atendimento] * 'Atendimentos'[Prioridade]
+) / SUM('Atendimentos'[Prioridade])
+```
+
+// Possíveis Problemas e Soluções:
+1. Dados nulos: Use COALESCE() para tratar valores nulos
+2. Formato incorreto: Verifique se as colunas estão no formato correto de hora
+3. Divisão por zero: Adicione verificações usando IF() quando necessário
+
+// Dicas de Performance:
+1. Use variáveis (VAR) para cálculos intermediários
+2. Evite cálculos repetitivos
+3. Considere criar colunas calculadas para cálculos frequentes

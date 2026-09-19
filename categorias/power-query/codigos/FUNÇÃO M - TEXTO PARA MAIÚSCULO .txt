@@ -1,0 +1,1 @@
+= Text.Start(Text.Upper(Date.MonthName(Date.From(DateTimeZone.LocalNow()))),3)

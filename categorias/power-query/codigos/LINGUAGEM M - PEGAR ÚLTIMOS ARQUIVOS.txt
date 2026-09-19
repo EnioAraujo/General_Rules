@@ -1,0 +1,8 @@
+= let
+// a intenção é pegar os dois últimos arquivos, dia anterior e atual
+ordena = Table.Sort(Transformacoes1,{{"Name", Order.Ascending}}),
+
+pegadoisultimos = Table.LastN(ordena,2)
+//pegadoisultimos = Table.SelectRows(ordena,each Date.AddDays([Name],-1))
+in
+pegadoisultimos

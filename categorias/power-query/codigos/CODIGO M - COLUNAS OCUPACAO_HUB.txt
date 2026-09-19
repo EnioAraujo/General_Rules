@@ -1,0 +1,29 @@
+= let 
+B = Table.AddColumn(AgupadosGeral, "OCUPADOS_", each
+let
+join1 = Table.NestedJoin(AgupadosGeral, {"TP_ESTOQUE", "Tip.Estoque", "CATEGORIA_PRODUTO"},AgupadosGeral,{"TP_ESTOQUE", "Tip.Estoque", "CATEGORIA_PRODUTO"},"02",JoinKind.LeftOuter ),
+expandjoin1= Table.ExpandTableColumn(join1, "02", {"BLOCADO"} ,{"BLOCADO"})
+in
+expandjoin1
+ )
+in
+B
+
+
+
+
+
+
+
+
+
+
+
+
+
+= let
+A = Table.SelectRows(Personalizar1, each ([RUA] = "BLO" and [TP_POSICAO] = "ARMAZEM 3")),
+B = Table.Distinct(Table.SelectColumns(A,{"BLOCADO"})),
+C = List.Count(B[BLOCADO])
+in
+C

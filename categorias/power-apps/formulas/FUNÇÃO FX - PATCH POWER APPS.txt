@@ -1,0 +1,25 @@
+If(
+    IsBlank(input_FO.Text) || IsBlank(input_pedido.Text) || IsBlank(input_destino.Text) || IsBlank(input_item.Text) || IsBlank(input_qtd_cx.Text);
+    Notify("Todos os campos obrigatórios devem ser preenchidos."; NotificationType.Error);
+    Patch(
+        'CORTE EXP 2025'; 
+        Defaults('CORTE EXP 2025'); 
+        {
+            SHIP: Value(input_FO.Text);
+            Pedido: input_pedido.Text;
+            Destino: input_destino.Text;
+            Item: Value(input_item.Text);
+            QtdCaixas: Value(input_qtd_cx.Text)
+            Motivo_corte: input_motivo.Text
+        }
+    )
+)
+;;
+    Reset(input_FO);;
+    Reset(input_pedido);;
+    Reset(input_destino);;
+    Reset(input_item);;
+    Reset(input_qtd_cx);;
+    Reset(input_motivo);;
+    Set(varReset;false);;
+    Set(varReset;true)

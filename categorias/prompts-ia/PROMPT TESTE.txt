@@ -1,0 +1,17 @@
+PROJETO PROCESSO BUSCA DE SALDO
+
+Lógica:
+
+Buscar na base de itens e saldos, quantidades de possam suprir as quantidades faltantes para cada item dos pedidos, deverá ser trazido um Item diferente do que está sendo pedido, com saldo suficiente para suprir a falta. 
+
+Regras:
+
+1 - Buscar pelo EAN-13 do Item, pois 1 EAN-13 pode conter diversos Itens.
+2 - Priorizar o valor maior da coluna INIC_ITEM, esta coluna contém os 4 primeiros caracteres do Item, pois quanto maior o valor, mais novo é o Item.
+3 - È indispensável que o item/itens que serão trazidos para suprir as faltas, não seja o mesmo que é solicitado naquela linha.
+4 - deverá ser buscado do maior saldo para menor, até que supra toda a quantidade faltante
+
+
+Resumo:
+
+Agrupa o saldo por EAN, Classifica do maior para o menor, verifica qual saldo do EAN/Item supre a falta, traz o item cujo saldo supre a falta, o item deve corresponder ao EAN cujo INIC_ITEM é o maior (quando possível), mas que seja diferente do Item que está faltando. 

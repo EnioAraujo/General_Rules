@@ -1,0 +1,55 @@
+
+
+01- na medida HTML_PRESENCA_VS_ORCADO_TOOLTIP_II ajuste a quantidade de ESCALADOS,atualmente o calculo esta errado, use a coluna ESCALADOS da tabela FAT_SUPP_PRESENÇAS_DIA para isso.
+
+02 - Na medida HTML_PRESENCA_VS_ORCADO_TOOLTIP_II, adicione as sequintes colunas:
+
+- PRESENTES, entre ESCALADOS e TERCEIROS, esta coluna deve trazer a quantidade relacionada ao
+status "P" ou "p" ( Presente ) para cada Área, com tooltip refletindo os cargos presentes com quantidades.
+
+- ATE, após TERCEIROS, esta coluna deve trazer a quantidade relacionada ao
+status "ATE" ou "ate" ( atestados), quantidade total de atestados para aquele dia, por ÁREA, com tooltip refletindo os cargos com atestados e quantidades.
+
+- FLT, após ATE, esta coluna deve trazer a quantidade relacionada ao
+status FLT ou "flt" ( faltas), quantidade total de faltas para aquele dia, por ÁREA, com tooltip refletindo os cargos com faltas e quantidades.
+
+- VAGAS ABERTAS, coluna após FLT,use a tabela DIM_ORCADOS, coluna VAGAS_ABERTAS para calcular a quantidade vagas estão abertas para cada ÁREA, 
+com tooltip refletindo os cargos e quantidades.
+
+
+
+
+
+Conecte-se ao modelo semantico "PAINEL HEAD COUNT II" aberto no power bi desktop 
+
+PID do msmdsrv.exe: 57220
+Porta Local: 60626
+ID do Banco de Dados Conectado: 004807e4-4eb0-499b-9c49-4354b7b8a6ae
+
+
+
+
+
+
+
+
+
+
+ESCALADOS
+
+se status for diferente de FLT e DESLIGADO, então ESCALADO else NÃO_ESCALADO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

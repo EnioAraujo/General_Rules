@@ -1,0 +1,168 @@
+let
+    Fonte = BASE_VW_POWER_BI_SITUACAO_NOTA,
+    RemoveColunas = Table.RemoveColumns(Fonte,{"NOTA_FISCAL", "SERIE", "VALOR", "VALOR_PEDIDO", "FILIAL", "NOME_FILIAL", "COD_FORNECEDOR", "VOLUME_M3", "QTDE_VOLUME", "REFERENCIA", "PESO_BRUTO", "PESO_LIQUIDO", "EMISSAO", "REC_PEDIDO", "REC_XML", "TRANPORTADORA", "CHAVE_NFE",  "DESTINATARIO", "QTD_PALETE", "CESV"}),
+    TipoAlterado = Table.TransformColumnTypes(RemoveColunas,{{"EXPEDIDO", type datetime}, {"EMB_FINALIZADO", type datetime}, {"CON_SEPARACAO", type datetime}, {"FIM_CONFERENCIA", type datetime}, {"INI_CONFERENCIA", type datetime}, {"FIM_SEPARACAO", type datetime}, {"INI_SEPARACAO", type datetime}, {"ACOLHIDO", type datetime}, {"INCONSISTENTE", type datetime}, {"DAT_INCLUSAO", type datetime},{"PLANO_GERADO", type datetime}, {"ONDA_GERADA", type datetime}}),
+    TipoLastUpdated = Table.TransformColumnTypes(TipoAlterado, {{"last_updated", type datetime}}),
+    ColunaPedidoAbrev = Table.AddColumn(
+        TipoLastUpdated,
+        "PEDIDO_ABREV", each 
+            if  Text.Start([PEDIDO],3) = "470" 
+            or  Text.Start([PEDIDO],2) = "47"
+            then "CIGARRO-HUB" 
+            else if Text.Start([PEDIDO],3) = "687" then "PARCERIA-HUB"
+            else if Text.Start([PEDIDO],3) = "ISD" then "EMB-ISD"   
+            else if Text.Start([PEDIDO],3) = "COD" then "EMB-COD"
+            else if Text.Start([PEDIDO],3) = "R_6" then "REVENDA-COD"
+            else if Text.Start([PEDIDO],3) = "TES" then "TESTE"
+            else if
+                [PEDIDO] = null or 
+                Text.Start([PEDIDO],3) = "MER" or
+                Text.Contains([PEDIDO],"MER") or
+                Text.Contains([PEDIDO],"P155") or
+                Text.Contains([PEDIDO],"P15") or
+                Text.Contains([PEDIDO],"BAIXA") or
+                Text.Contains([PEDIDO],"MERCHAN")                
+                then "MERCHANDISING" 
+            else if Text.Contains([PEDIDO],"AJUSTE") then "AJUSTE ESTOQUE"
+            else if Text.Start([PEDIDO],3) = "686" then "PARCERIA-HUB"                   
+            else "-", 
+        type text
+    ),
+    LinhasFiltradas = let
+        Hoje   = Date.From(DateTime.LocalNow()),
+        Ontem  = Date.AddDays(Hoje, -10),
+        Filtro = Table.SelectRows(
+            ColunaPedidoAbrev, 
+            each 
+                (Date.From([DAT_INCLUSAO]) >= Ontem)
+                and (
+                    Text.Contains([PEDIDO_ABREV], "HUB")
+                    or Text.Contains([PEDIDO_ABREV], "hub")
+                ) 
+                and ([PEDIDO_ABREV] = "CIGARRO-HUB")
+            
+        )
+    in
+        Filtro,
+    Personalizar3 = Table.AddColumn(LinhasFiltradas,
+        "PEDIDO_SEM_LETRA",
+        each Text.Start([PEDIDO],10), type text),
+    ColFimTextoPedido = Table.AddColumn(Personalizar3, "TEXTO_FIM_PEDIDO", each Text.Trim(Text.Middle([PEDIDO], 10, 4)), type text),
+
+    // ── Join com DIM_TB_TIPOS_PEDIDOS ─────────────────────────────────────────
+    JoinComTiposPedidos = let
+        A = Table.NestedJoin(
+                ColFimTextoPedido,
+                {"TEXTO_FIM_PEDIDO"},
+                DIM_TB_TIPOS_PEDIDOS,
+                {"TIPO"},
+                "DIM_TB_TIPOS_PEDIDOS",
+                JoinKind.LeftOuter
+            ),
+        B = Table.ExpandTableColumn(A, "DIM_TB_TIPOS_PEDIDOS", {"DESC_TIPO"}, {"DESC_TIP_PEDIDO"}),
+        C = Table.ReplaceValue(B, null, "NORMAL", Replacer.ReplaceValue, {"DESC_TIP_PEDIDO"})
+    in
+        C,
+
+    ColunasRemovidas = Table.Distinct(
+        Table.RemoveColumns(
+            JoinComTiposPedidos,
+            {
+                "ACOLHIDO", "PLANO_GERADO", "ONDA_GERADA",
+                "INI_SEPARACAO", "FIM_SEPARACAO",
+                "INI_CONFERENCIA", "FIM_CONFERENCIA",
+                "PER_CONF", "INI_CHECKOUT", "FIM_CHECKOUT",
+                "USU_CHECKOUT", "CON_SEPARACAO",
+                "EMB_FINALIZADO", "EXPEDIDO", "INCONSISTENTE",
+                "RAZ_SOCIAL_REDUZ"
+            }
+        )
+    ),
+    LimparTexto  = Table.TransformColumns(ColunasRemovidas, {{"PEDIDO", Text.TrimEnd}}),
+    TruncarDatas = Table.TransformColumnTypes(LimparTexto, {{"DAT_INCLUSAO", type date}}),
+
+    // ── Join com DIM_TB_SITUACAO_PEDIDO para trazer HIERARQUIA ────────────────
+    JoinHierarquia = let
+        A = Table.NestedJoin(
+                TruncarDatas,
+                {"SIT_SOL"},
+                DIM_TB_SITUACAO_PEDIDO,
+                {"SITUACAO"},
+                "DIM_SITUACAO",
+                JoinKind.LeftOuter
+            ),
+        B = Table.ExpandTableColumn(A, "DIM_SITUACAO", {"HIERARQUIA"}, {"HIERARQUIA"})
+    in
+        B,
+
+    // ── Agrupamento por PEDIDO_SEM_LETRA ─────────────────────────────────────
+    // last_updated datetime completo — ordenação precisa por hora/minuto/segundo
+    // HIERARQUIA desempata quando last_updated for exatamente igual
+    AgruparPorPedido = Table.Group(
+        JoinHierarquia,
+        {"PEDIDO_SEM_LETRA"},
+        {
+            {
+                "DADOS",
+                each
+                    let
+                        Ordenado = Table.Sort(
+                            _,
+                            {
+                                {"last_updated", Order.Descending},
+                                {"HIERARQUIA",   Order.Descending}
+                            }
+                        )
+                    in
+                        Table.FirstN(Ordenado, 1)
+            }
+        }
+    ),
+    ExpandirAgrupamento = Table.ExpandTableColumn(
+        AgruparPorPedido,
+        "DADOS",
+        {
+            "PEDIDO",
+            "SIT_SOL",
+            "STA_NOTA",
+            "LISTA",
+            "QTDE_ITEM",
+            "SOMA_ITEM",
+            "DAT_INCLUSAO",
+            "last_updated",
+            "DESC_TIP_PEDIDO",
+            "PEDIDO_ABREV",
+            "HIERARQUIA"
+        }
+    ),
+
+    // ── Join com PEDIDO_SHAREPOINT ────────────────────────────────────────────
+    JoinSharepoint = let
+        Fonte    = PEDIDOS_SHAREPOINT_REDE,
+        Colunas  = Table.SelectColumns(
+                       Fonte,
+                       {"Data", "EMBARQUE", "STO", "F.O", "Planta", "Localidade", "TIPO", "Comboio", "Prioridade"}
+                   ),
+        Limpo    = Table.TransformColumns(
+                       Colunas,
+                       {{"STO", each Text.Trim(Text.From(_)), type text}}
+                   ),
+        Join     = Table.NestedJoin(
+                       ExpandirAgrupamento,
+                       {"PEDIDO_SEM_LETRA"},
+                       Limpo,
+                       {"STO"},
+                       "SHAREPOINT",
+                       JoinKind.LeftOuter
+                   ),
+        Expandir = Table.ExpandTableColumn(
+                       Join,
+                       "SHAREPOINT",
+                       {"Data", "EMBARQUE", "F.O", "Planta", "Localidade", "TIPO", "Comboio", "Prioridade"},
+                       {"SP_Data", "SP_EMBARQUE", "SP_FO", "SP_Planta", "SP_Localidade", "SP_TIPO", "SP_Comboio", "SP_Prioridade"}
+                   )
+    in
+        Expandir
+
+in
+    JoinSharepoint

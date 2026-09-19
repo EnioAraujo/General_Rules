@@ -1,0 +1,30 @@
+ConsultasMescladas1 = let
+A = Table.NestedJoin(#"Colunas Removidas", {"SKU"}, TB_BASE_ITENS, {"ITEM"}, "TB_BASE_ITENS", JoinKind.LeftOuter),
+B =  Table.ExpandTableColumn(A, "TB_BASE_ITENS", {"QTD_POR_CAIXA", "QTD_BASE_CX", "QTD_PACOTE_CX", "QTD_UN_PACOTE", "CATEGORIA_ITEM", "SUB_CATEGORIA", "MenorUnidadePCT"}, {"QTD_POR_CAIXA", "QTD_BASE_CX", "QTD_PACOTE_CX", "QTD_UN_PACOTE", "CATEGORIA_ITEM", "SUB_CATEGORIA", "MenorUnidadePCT"})
+in
+Table.Distinct(B),
+    // altera o tipo de dado da coluna MenorUnidadePCT, para tipo número
+    AlteraTipo = Table.TransformColumnTypes(ConsultasMescladas1,
+{{"MenorUnidadePCT",type number},{"QTD",type number}}),
+    ColConversao = Table.AddColumn(AlteraTipo,"CONVERSAO",each ([QTD]/[MenorUnidadePCT]), type number),
+    // Cria a coluna Caixas
+    ColCaixas = Table.AddColumn(ColConversao,
+ "CAIXAS", each Int64.From(Text.BeforeDelimiter(Text.From([CONVERSAO]/[QTD_BASE_CX]), ","))
+
+, type number),
+    
+    // Cria a coluna Pacotes
+    ColPacotes = Table.AddColumn(ColCaixas, "PACOTES", each 
+
+Int64.From(Text.BeforeDelimiter(Text.From((([CONVERSAO]/[QTD_BASE_CX]) - [CAIXAS]) * [QTD_PACOTE_CX]), ","))
+, type number),
+    
+     // Cria a coluna Maços e Unidades
+    ColMacos = Table.Buffer(Table.AddColumn(ColPacotes, "MACOS_UN", each 
+
+Int64.From(Text.BeforeDelimiter(Text.From(((([CONVERSAO]/[QTD_BASE_CX]) - [CAIXAS]) * [QTD_PACOTE_CX] - [PACOTES]) * [QTD_UN_PACOTE]), ","))
+
+,type number))
+
+in
+    ColMacos

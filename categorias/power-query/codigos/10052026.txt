@@ -1,0 +1,202 @@
+chat, preciso agora cruzar as informações abaixo:
+
+
+Essa seria a relação correta:
+
+UNIDADE > CENTRO DE CUSTO > OPERAÇÃO > TURNO > FORNECEDOR > CARGO > PESSOAS
+
+ 
+Um dependente do outro, para filtros, cadastros, lançamentos e fechamentos.
+
+- 
+
+
+
+01 - erro no calculo total do tooltip em dashboard
+02 - Importar registros, primeiro exportar modelo de arquivo, operador do app, preenche e importa para o app
+
+
+
+
+
+
+
+Hierarquia rígida:   UNIDADE → CC → OPERAÇÃO
+Catálogos globais:   TURNO, CARGO, FORNECEDOR
+Pessoa:              FORNECEDOR + CARGO + (Unidade/CC/Operação onde atua) + Turno habitual
+Lançamento:          herda os FKs da Pessoa, mas permite override de turno/CC do dia
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Não preciso de fluxo de aprovação, avalie o impacto real da retirada deste fluxo do app:
+
+6. Fluxo de Aprovação (Status)
+rascunho → enviado → revisao → aprovado
+
+rascunho: editável, valores calculados
+enviado: mandado pro fornecedor conferir
+revisao: fornecedor reportou divergências
+aprovado: valores finais confirmados
+
+___________________
+
+
+
+Plano — Remoção do Fluxo de Aprovação de Fechamento
+Contexto
+O sistema atualmente implementa um ciclo de aprovação de 4 estados (rascunho → enviado → revisao → aprovado) para os fechamentos financeiros por fornecedor. O usuário solicitou a remoção total deste fluxo, sem substituto: fechamentos ficam sempre editáveis e a UI não exibe pills/botões de status.
+
+Estado atual do código: a remoção foi iniciada em 2026-04-25 mas ficou incompleta. Existem migrations que removem a coluna status do banco e o tipo Fechamento em fechamento-utils.ts já não tem o campo. Mas:
+
+FechamentoTab.tsx ainda importa/usa STATUS_COLORS, NEXT_STATUS, FechamentoStatus, STATUS_LABEL_KEY.
+fechamento-utils.ts ainda exporta STATUS_COLORS e NEXT_STATUS (que referenciam um FechamentoStatus que já não está importado naquele arquivo — gera erros TS2304: Cannot find name 'FechamentoStatus').
+api/fechamento.ts ainda mantém o tipo FechamentoStatus, campo status nas interfaces FechamentoInput/FechamentoOutput, e passa p_status para a RPC criar_fechamento (que já não aceita esse parâmetro segundo a migration 20260425_update_criar_fechamento_rpc.sql).
+i18n-translations.ts mantém 7 chaves de status × 2 idiomas (pt-BR + en-US).
+Testes em fechamento-utils.test.ts validam STATUS_COLORS e NEXT_STATUS.
+A intenção desta limpeza é finalizar a remoção iniciada anteriormente, eliminando inconsistências entre código TypeScript, banco de dados e testes.
+
+Etapas (cada uma é independente e não quebra as demais)
+Etapa 1 — Limpar src/lib/fechamento-utils.ts
+Escopo: remover dois exports residuais que referenciam tipo inexistente.
+
+Remover:
+
+Linhas 375-388: bloco // ─── STATUS LABELS ───, incluindo STATUS_COLORS e NEXT_STATUS.
+Pós-etapa: os 3 erros TS2304 desaparecem deste arquivo. Arquivo passa de 388 para ~376 linhas (ainda acima do limite ~200L, mas a divisão é dívida técnica fora deste escopo — sinalizada no final).
+
+Etapa 2 — Limpar src/lib/api/fechamento.ts
+Escopo: remover o tipo de status e o campo status das interfaces e funções da API intermediária.
+
+Remover:
+
+Linha 18: export type FechamentoStatus = "rascunho" | "enviado" | "revisao" | "aprovado";
+Linha 37: campo status: FechamentoStatus; em FechamentoInput.
+Linha 47: campo status: FechamentoStatus; em FechamentoOutput.
+Linha 99: parâmetro p_status: input.status, na chamada supabase.rpc("criar_fechamento", { ... }).
+Linhas 159-164: bloco condicional que adiciona updateData.status = input.status em atualizarFechamento. Se ficar com if (input.valor_total) solitário, simplificar.
+Por que esta etapa é independente: os consumidores da API (FechamentoTab.tsx) só serão alinhados na Etapa 3. Como FechamentoInput é uma interface, remover o campo status causa erro de tipagem em quem passa status: "rascunho" — mas isso é detectado pelo tsc e corrigido na Etapa 3. Para evitar quebra intermediária, Etapas 2 e 3 podem ser aplicadas juntas no mesmo commit (mesmo PR), embora cada uma seja conceitualmente isolada.
+
+Pós-etapa: arquivo passa de 422 para ~408 linhas.
+
+Etapa 3 — Limpar src/components/FechamentoTab.tsx
+Escopo: remover todas as referências de status no componente da tela.
+
+Remover:
+
+Linhas 6 e 10: imports type TranslationKey e type FechamentoStatus (TranslationKey só era usado por STATUS_LABEL_KEY; confirmar com busca se não há outro uso no arquivo antes de remover — se houver, manter o import e remover só FechamentoStatus).
+Linha 16: imports STATUS_COLORS, NEXT_STATUS.
+Linhas 30-35: constante STATUS_LABEL_KEY.
+Linha 145: campo status: "rascunho", ao construir o objeto de fechamento para criação.
+Linhas ~236-247: função avancarStatus() inteira.
+Linhas ~249-256: função "voltar para revisão" (a que atualiza para status: "revisao").
+Linhas 473-475: bloco de UI que renderiza o pill de status do fechamento atual.
+Linhas 512-516: botão "Avançar Status" (renderizado quando NEXT_STATUS[fechamento.status] existe).
+Linhas 517-519: botão "Voltar revisão" (renderizado quando fechamento?.status === "enviado").
+Linhas 556-557: pill de status renderizado para cada item no histórico de fechamentos.
+Verificações antes de editar:
+
+Ler o arquivo inteiro (576 linhas) — exigido pelo AI_RULES.
+Confirmar se TranslationKey é usado em outro lugar no arquivo.
+Conferir se a remoção do botão "Avançar Status" deixa o container vazio; se sim, remover o container também para não sobrar grid quebrado.
+Pós-etapa: o componente passa de 576 para ~485 linhas. Continua acima do limite ~200L; divisão é dívida técnica fora deste escopo.
+
+Etapa 4 — Limpar src/lib/i18n-translations.ts
+Escopo: remover 7 chaves × 2 idiomas (14 linhas no total).
+
+Remover em translations.pt-BR:
+
+Linhas 423-429: fech_status, fech_status_rascunho, fech_status_enviado, fech_status_revisao, fech_status_aprovado, fech_avancar_status, fech_voltar_revisao.
+Remover em translations.en-US:
+
+Linhas 904-910: mesmas chaves traduzidas.
+Verificação: rodar grep -rE "fech_status|fech_avancar|fech_voltar" src/ após remoção — deve retornar zero ocorrências.
+
+Etapa 5 — Limpar testes src/lib/fechamento-utils.test.ts
+Escopo: remover importações e blocos de teste que validam STATUS_COLORS e NEXT_STATUS.
+
+Remover:
+
+Linhas 17-18 do import: STATUS_COLORS, NEXT_STATUS.
+Linha 354: campo status: "rascunho", em mock de objeto Fechamento.
+Linhas ~415-427: bloco describe/it que valida STATUS_COLORS tem 4 status, NEXT_STATUS: rascunho → enviado, NEXT_STATUS: enviado → aprovado, NEXT_STATUS: revisao → enviado (4 testes).
+Pós-etapa: suíte continua passando, sem cobertura órfã de constantes inexistentes.
+
+Etapa 6 — Aplicar migrations no Supabase (manual, fora do código)
+Escopo: rodar no SQL Editor do Supabase (em ordem):
+
+supabase/migrations/20260425_remove_status_from_fechamentos.sql — ALTER TABLE fechamentos DROP COLUMN IF EXISTS status.
+supabase/migrations/20260425_update_criar_fechamento_rpc.sql — recria função RPC sem o parâmetro p_status.
+Pré-requisito: sessão AAL2 (login com MFA) para passar nas políticas RLS.
+
+Riscos:
+
+Se a coluna status ainda for usada em queries não detectadas no código (foi removida em api/fechamento-dashboard.ts, mas é prudente um grep final em SQL e código antes), o DROP causa falha em runtime.
+A migration de DROP é destrutiva. Snapshot recomendado antes de executar.
+Arquivos a criar
+Nenhum.
+
+Arquivos a modificar
+src/lib/fechamento-utils.ts — remover STATUS_COLORS e NEXT_STATUS (Etapa 1).
+src/lib/api/fechamento.ts — remover tipo FechamentoStatus, campo status das interfaces, e propagações em criarFechamento/atualizarFechamento (Etapa 2).
+src/components/FechamentoTab.tsx — remover imports, funções, UI relacionadas a status (Etapa 3).
+src/lib/i18n-translations.ts — remover 7 chaves × 2 idiomas (Etapa 4).
+src/lib/fechamento-utils.test.ts — remover imports, mock field e bloco de testes de status (Etapa 5).
+Arquivos que NÃO devem ser tocados
+src/lib/api/fechamento-dashboard.ts — já está adaptado, não referencia status.
+src/lib/fechamento-multifornecedor-utils.ts — não referencia status.
+src/components/fechamento/FechamentoItensTable.tsx — não referencia status.
+src/components/fechamento/FornecedoresMultiSelect.tsx — não referencia status.
+src/components/Dashboard.tsx — bloco de status já removido antes (linha 243 tem comentário marcando a remoção).
+supabase/migrations/fechamento_tables.sql — esquema original com status; a remoção é feita pela migration posterior 20260425_remove_status_from_fechamentos.sql. Não editar o histórico de migrations.
+supabase/migrations/fechamento_api_rpc.sql — esquema da RPC antiga; substituído pela migration de update.
+Reuso de utilitários existentes
+Nada precisa ser reimplementado — esta entrega é puramente subtrativa. Nenhuma função nova é criada.
+
+Verificação ponta a ponta
+Após aplicar Etapas 1-5 (código), executar na ordem (conforme AI_RULES.md):
+
+TypeScript: npx tsc --noEmit — não deve retornar nenhum dos 3 erros TS2304: Cannot find name 'FechamentoStatus' que existiam antes.
+Build: pnpm build — deve completar sem erros (Vite/esbuild é mais estrito que tsc).
+Testes: pnpm test --run — todos os 189+ testes devem passar (4 testes removidos da suíte de fechamento-utils).
+Grep de verificação: grep -rE "FechamentoStatus|STATUS_COLORS|NEXT_STATUS|STATUS_LABEL_KEY|fech_status|fech_avancar|fech_voltar" src/ — deve retornar zero ocorrências.
+Após aplicar Etapa 6 (banco):
+
+Login E2E: login completo no app (email + senha + TOTP) → acessar aba Fechamento → criar um fechamento de teste em um período curto. Não deve aparecer pill de status, nem botão "Avançar Status", nem "Voltar Revisão". Salvamento deve funcionar sem erro de RLS ou de RPC.
+Inspecionar console do navegador: zero erros relacionados a status ou coluna inexistente.
+Estimativa de Impacto
+Arquivos modificados: 5 (4 src + 1 test).
+Migrations a executar no Supabase: 2 (já criadas, não precisam ser geradas).
+Linhas removidas: aproximadamente 130 (entre imports, funções, UI, traduções e testes).
+Testes afetados: 4 testes deletados; suíte continua verde.
+Riscos / Dependências Críticas
+Migration destrutiva. DROP COLUMN status é irreversível sem backup. Snapshot do banco obrigatório antes da Etapa 6. Risco: se algum cliente externo (BI, planilha, integração não auditada) lê essa coluna, vai quebrar.
+
+Política idx_fechamentos_status. A migration fechamento_api_rpc.sql cria um índice idx_fechamentos_status em fechamentos(status). Após o DROP, o índice é removido pelo PostgreSQL automaticamente, mas vale validar que a migration 20260425_remove_status_from_fechamentos.sql não tenta dropar índice manualmente após dropar a coluna (ler antes de rodar).
+
+Perda funcional aceita. Sem status, fechamentos ficam sempre editáveis para sempre. Não há mais marcador visual indicando "este fechamento já foi enviado/aprovado". O usuário aceitou explicitamente esta perda.
+
+Dashboard "valor pago no mês". A semântica antiga somava só status='aprovado'. A API fechamento-dashboard.ts já foi adaptada para não filtrar por status — então o cálculo atual já considera todos os fechamentos. Validar nos testes que isso continua funcionando.
+
+Ordem entre código e DB. Se a migration rodar antes do deploy do código limpo, o frontend antigo (com status no payload) vai falhar na chamada à RPC. Se o código for deployado antes da migration, queries que ainda tentam ler status vão falhar. Estratégia segura: deploy do código primeiro (que já não envia/lê status), depois rodar a migration.
+
+Dívida técnica pré-existente fora do escopo. Os 3 arquivos principais já passam de 200 linhas. A regra do projeto sugere divisão. Esta entrega não inclui divisão (escopo cirúrgico = só remover status). Sinalizar para próxima entrega:
+
+FechamentoTab.tsx (~485 L pós-limpeza) — candidato a quebrar em FechamentoHeader.tsx + FechamentoSidebarHistorico.tsx + FechamentoTab.tsx orquestrador.
+fechamento-utils.ts (~376 L) — candidato a separar mappers DB/modelo em fechamento-mappers.ts.
+api/fechamento.ts (~408 L) — candidato a separar funções por verbo (criar.ts, buscar.ts, atualizar.ts).
+

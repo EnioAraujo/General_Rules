@@ -1,0 +1,1322 @@
+- Form1:
+    Control: Form@2.4.4
+    Variant: Classic
+    Layout: Vertical
+    Properties:
+      BorderColor: =RGBA(245, 245, 245, 1)
+      DataSource: =[@TB_CTRL_TERCEIROS]
+      DefaultMode: =If(newMode, FormMode.New, editMode, FormMode.Edit, FormMode.View)
+      FillPortions: =0
+      Height: =450
+      Item: =RecordsGallery1.Selected
+      LayoutMinWidth: =300
+      NumberOfColumns: =2
+      OnFailure: =Notify("Não é possível salvar. Verifique se há erros no formulário.", NotificationType.Error)
+      OnSuccess: |-
+        =UpdateContext({ CurrentItem: Self.LastSubmit, editMode: false, newMode: false })
+    Children:
+      - DATA_PRESENCA_DataCard1:
+          Control: TypedDataCard@1.0.7
+          Variant: ClassicDateTimeEdit
+          Properties:
+            BorderColor: =RGBA(245, 245, 245, 1)
+            DataField: ="DATA_PRESENCA"
+            Default: =ThisItem.DATA_PRESENCA
+            DisplayName: =DataSourceInfo([@TB_CTRL_TERCEIROS],DataSourceInfo.DisplayName,DATA_PRESENCA)
+            Required: =true
+            Update: =If(Not IsBlank(DateValue1.SelectedDate), DateTime(Year(DateValue1.SelectedDate), Month(DateValue1.SelectedDate), Day(DateValue1.SelectedDate), Value(HourValue1.Selected.Value), Value(MinuteValue1.Selected.Value), 0))
+            Width: =458
+            X: =0
+            Y: =0
+          Children:
+            - DataCardKey2:
+                Control: Label@2.5.1
+                MetadataKey: FieldName
+                Properties:
+                  AutoHeight: =true
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =34
+                  PaddingLeft: =0
+                  Text: ="Data da Presença"
+                  Width: =Parent.Width - 60
+                  Wrap: =false
+                  X: =30
+                  Y: =10
+            - DateValue1:
+                Control: Classic/DatePicker@2.6.0
+                MetadataKey: DateFieldValue
+                Properties:
+                  BorderColor: =If(IsBlank(Parent.Error), Parent.BorderColor, Color.Red)
+                  Color: =RGBA(50, 49, 48, 1)
+                  DefaultDate: =Parent.Default
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  DisabledFill: =RGBA(242, 242, 241, 0)
+                  DisplayMode: =Parent.DisplayMode
+                  EndYear: =Year(Today())+100
+                  Fill: =RGBA(245, 245, 245, 1)
+                  Font: =Font.'Segoe UI'
+                  IconBackground: =RGBA(244, 111, 2, 100)
+                  IconFill: =RGBA(255, 255, 255, 1)
+                  IsEditable: =true
+                  PaddingBottom: =0
+                  PaddingLeft: |-
+                    =//If(Self.DisplayMode = DisplayMode.Edit; 5; 0)
+                    10
+                  Size: =13
+                  StartYear: =1899
+                  Tooltip: =Parent.DisplayName
+                  Width: =(Parent.Width - 60) / 2
+                  X: =30
+                  Y: =DataCardKey2.Y + DataCardKey2.Height + 5
+            - HourValue1:
+                Control: Classic/DropDown@2.3.1
+                MetadataKey: HourFieldValue
+                Properties:
+                  BorderColor: =If(IsBlank(Parent.Error), Parent.BorderColor, Color.Red)
+                  ChevronBackground: =RGBA(245, 245, 245, 1)
+                  ChevronDisabledBackground: =RGBA(242, 242, 241, 0)
+                  ChevronDisabledFill: =RGBA(161, 159, 157, 1)
+                  ChevronFill: =RGBA(50, 49, 48, 1)
+                  ChevronHoverBackground: =RGBA(245, 245, 245, 1)
+                  ChevronHoverFill: =RGBA(50, 49, 48, 1)
+                  Color: =RGBA(50, 49, 48, 1)
+                  Default: =Text(Hour(Parent.Default),"00")
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  DisabledFill: =RGBA(242, 242, 241, 0)
+                  DisplayMode: =Parent.DisplayMode
+                  Fill: =RGBA(245, 245, 245, 1)
+                  Font: =Font.'Segoe UI'
+                  Height: =DateValue1.Height
+                  HoverBorderColor: =RGBA(250, 155, 112, 1)
+                  HoverColor: =RGBA(50, 49, 48, 1)
+                  HoverFill: =RGBA(245, 245, 245, 1)
+                  Items: =["00","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20","21","22","23"]
+                  Items.Value: =Value
+                  PaddingBottom: =5
+                  PaddingLeft: '=10  '
+                  PaddingRight: =5
+                  PaddingTop: =5
+                  PressedBorderColor: =RGBA(250, 155, 112, 1)
+                  PressedColor: =RGBA(255, 255, 255, 1)
+                  PressedFill: =RGBA(253, 222, 207, 1)
+                  SelectionColor: =RGBA(50, 49, 48, 1)
+                  SelectionFill: =RGBA(251, 188, 159, 1)
+                  Tooltip: =Parent.DisplayName
+                  Visible: =false
+                  Width: =DateValue1.Width / 2 - 10
+                  X: =DateValue1.X + DateValue1.Width + 10
+                  Y: =DateValue1.Y
+            - Separator2:
+                Control: Label@2.5.1
+                MetadataKey: HourMinuteSeparator
+                Properties:
+                  Align: =Align.Center
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Bold
+                  Height: =HourValue1.Height
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Text: =":"
+                  Visible: =false
+                  Width: =10
+                  Wrap: =false
+                  X: =HourValue1.X + HourValue1.Width
+                  Y: =HourValue1.Y
+            - MinuteValue1:
+                Control: Classic/DropDown@2.3.1
+                MetadataKey: MinuteFieldValue
+                Properties:
+                  BorderColor: =If(IsBlank(Parent.Error), Parent.BorderColor, Color.Red)
+                  ChevronBackground: =RGBA(245, 245, 245, 1)
+                  ChevronDisabledBackground: =RGBA(242, 242, 241, 0)
+                  ChevronDisabledFill: =RGBA(161, 159, 157, 1)
+                  ChevronFill: =RGBA(50, 49, 48, 1)
+                  ChevronHoverBackground: =RGBA(245, 245, 245, 1)
+                  ChevronHoverFill: =RGBA(50, 49, 48, 1)
+                  Color: =RGBA(50, 49, 48, 1)
+                  Default: =Text(Minute(Parent.Default),"00")
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  DisabledFill: =RGBA(242, 242, 241, 0)
+                  DisplayMode: =Parent.DisplayMode
+                  Fill: =RGBA(245, 245, 245, 1)
+                  Font: =Font.'Segoe UI'
+                  Height: =HourValue1.Height
+                  HoverBorderColor: =RGBA(250, 155, 112, 1)
+                  HoverColor: =RGBA(50, 49, 48, 1)
+                  HoverFill: =RGBA(245, 245, 245, 1)
+                  Items: =["00","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59"]
+                  Items.Value: =Value
+                  PaddingBottom: =5
+                  PaddingLeft: '=10  '
+                  PaddingTop: =5
+                  PressedBorderColor: =RGBA(250, 155, 112, 1)
+                  PressedColor: =RGBA(255, 255, 255, 1)
+                  PressedFill: =RGBA(253, 222, 207, 1)
+                  SelectionColor: =RGBA(50, 49, 48, 1)
+                  SelectionFill: =RGBA(251, 188, 159, 1)
+                  Tooltip: =Parent.DisplayName
+                  Visible: =false
+                  Width: =HourValue1.Width
+                  X: =HourValue1.X + HourValue1.Width + Separator2.Width
+                  Y: =HourValue1.Y
+            - ErrorMessage2:
+                Control: Label@2.5.1
+                MetadataKey: ErrorMessage
+                Properties:
+                  AutoHeight: =true
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(168, 0, 0, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(168, 0, 0, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =10
+                  Live: =Live.Assertive
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Text: =Parent.Error
+                  Visible: =Parent.DisplayMode=DisplayMode.Edit
+                  Width: =Parent.Width - 60
+                  X: =30
+                  Y: =HourValue1.Y + HourValue1.Height
+            - StarVisible2:
+                Control: Label@2.5.1
+                MetadataKey: FieldRequired
+                Properties:
+                  Align: =Align.Center
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =DataCardKey2.Height
+                  PaddingLeft: =0
+                  Text: ="*"
+                  Visible: =And(Parent.Required, Parent.DisplayMode=DisplayMode.Edit)
+                  Width: =30
+                  Wrap: =false
+                  Y: =DataCardKey2.Y
+      - NOME_COMPLETO_DataCard2:
+          Control: TypedDataCard@1.0.7
+          Variant: ClassicComboBoxMultiSelectEdit
+          Properties:
+            BorderColor: =RGBA(245, 245, 245, 1)
+            DataField: ="NOME_COMPLETO"
+            Default: =ThisItem.NOME_COMPLETO
+            DisplayName: =DataSourceInfo([@TB_CTRL_TERCEIROS],DataSourceInfo.DisplayName,NOME_COMPLETO)
+            Required: =true
+            Update: =DataCardValue1.SelectedItems
+            Width: =458
+            X: =1
+            Y: =0
+          Children:
+            - DataCardKey1:
+                Control: Label@2.5.1
+                MetadataKey: FieldName
+                Properties:
+                  AutoHeight: =true
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =34
+                  PaddingLeft: =0
+                  Text: ="Nome Completo do Colaborador"
+                  Width: =Parent.Width - 60
+                  Wrap: =false
+                  X: =30
+                  Y: =10
+            - DataCardValue1:
+                Control: Classic/ComboBox@2.4.0
+                MetadataKey: FieldValue
+                Properties:
+                  BorderColor: =If(IsBlank(Parent.Error), Parent.BorderColor, Color.Red)
+                  ChevronBackground: =RGBA(245, 245, 245, 1)
+                  ChevronDisabledBackground: =RGBA(242, 242, 241, 0)
+                  ChevronDisabledFill: =RGBA(161, 159, 157, 1)
+                  ChevronFill: =RGBA(50, 49, 48, 1)
+                  ChevronHoverBackground: =RGBA(245, 245, 245, 1)
+                  ChevronHoverFill: =RGBA(50, 49, 48, 1)
+                  Color: =RGBA(50, 49, 48, 1)
+                  DefaultSelectedItems: =Parent.Default
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  DisabledFill: =RGBA(242, 242, 241, 0)
+                  DisplayFields: =["Value"]
+                  DisplayMode: =Parent.DisplayMode
+                  Fill: =RGBA(245, 245, 245, 1)
+                  Font: =Font.'Segoe UI'
+                  HoverBorderColor: =RGBA(16, 110, 190, 1)
+                  HoverColor: =RGBA(50, 49, 48, 1)
+                  HoverFill: =RGBA(245, 245, 245, 1)
+                  Items: =Choices([@TB_CTRL_TERCEIROS].NOME_COMPLETO)
+                  PaddingLeft: =If(Self.DisplayMode = DisplayMode.Edit, 5, 0)
+                  PressedBorderColor: =RGBA(16, 110, 190, 1)
+                  PressedColor: =RGBA(255, 255, 255, 1)
+                  PressedFill: =RGBA(0, 120, 212, 1)
+                  SearchFields: =["Value"]
+                  SelectionColor: =RGBA(255, 255, 255, 1)
+                  SelectionFill: =RGBA(0, 120, 212, 1)
+                  Tooltip: =Parent.DisplayName
+                  Width: =Parent.Width - 60
+                  X: =30
+                  Y: =39
+            - ErrorMessage1:
+                Control: Label@2.5.1
+                MetadataKey: ErrorMessage
+                Properties:
+                  AutoHeight: =true
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(168, 0, 0, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(168, 0, 0, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =10
+                  Live: =Live.Assertive
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Text: =Parent.Error
+                  Visible: =Parent.DisplayMode=DisplayMode.Edit
+                  Width: =Parent.Width - 60
+                  X: =30
+                  Y: =DataCardValue1.Y + DataCardValue1.Height
+            - StarVisible1:
+                Control: Label@2.5.1
+                MetadataKey: FieldRequired
+                Properties:
+                  Align: =Align.Center
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =DataCardKey1.Height
+                  PaddingLeft: =0
+                  Text: ="*"
+                  Visible: =And(Parent.Required, Parent.DisplayMode=DisplayMode.Edit)
+                  Width: =30
+                  Wrap: =false
+                  Y: =DataCardKey1.Y
+      - TURNO_DataCard1:
+          Control: TypedDataCard@1.0.7
+          Variant: ClassicComboBoxEdit
+          Properties:
+            BorderColor: =RGBA(245, 245, 245, 1)
+            DataField: ="TURNO"
+            Default: =ThisItem.TURNO
+            DisplayName: =DataSourceInfo([@TB_CTRL_TERCEIROS],DataSourceInfo.DisplayName,TURNO)
+            Required: =true
+            Update: =DataCardValue2.Selected
+            Width: =458
+            X: =0
+            Y: =1
+          Children:
+            - DataCardKey3:
+                Control: Label@2.5.1
+                MetadataKey: FieldName
+                Properties:
+                  AutoHeight: =true
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =34
+                  PaddingLeft: =0
+                  Text: ="Turno"
+                  Width: =Parent.Width - 60
+                  Wrap: =false
+                  X: =30
+                  Y: =10
+            - DataCardValue2:
+                Control: Classic/ComboBox@2.4.0
+                MetadataKey: FieldValue
+                Properties:
+                  BorderColor: =If(IsBlank(Parent.Error), Parent.BorderColor, Color.Red)
+                  ChevronBackground: =RGBA(245, 245, 245, 1)
+                  ChevronDisabledBackground: =RGBA(242, 242, 241, 0)
+                  ChevronDisabledFill: =RGBA(161, 159, 157, 1)
+                  ChevronFill: =RGBA(50, 49, 48, 1)
+                  ChevronHoverBackground: =RGBA(245, 245, 245, 1)
+                  ChevronHoverFill: =RGBA(50, 49, 48, 1)
+                  Color: =RGBA(50, 49, 48, 1)
+                  DefaultSelectedItems: =Parent.Default
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  DisabledFill: =RGBA(242, 242, 241, 0)
+                  DisplayFields: =["Value"]
+                  DisplayMode: =Parent.DisplayMode
+                  Fill: =RGBA(245, 245, 245, 1)
+                  Font: =Font.'Segoe UI'
+                  HoverBorderColor: =RGBA(250, 155, 112, 1)
+                  HoverColor: =RGBA(50, 49, 48, 1)
+                  HoverFill: =RGBA(245, 245, 245, 1)
+                  InputTextPlaceholder: ="Turno"
+                  Items: =Choices([@TB_CTRL_TERCEIROS].TURNO)
+                  PaddingLeft: =If(Self.DisplayMode = DisplayMode.Edit, 5, 0)
+                  PressedBorderColor: =RGBA(250, 155, 112, 1)
+                  PressedColor: =RGBA(255, 255, 255, 1)
+                  PressedFill: =RGBA(253, 222, 207, 1)
+                  SearchFields: =["Value"]
+                  SelectMultiple: =false
+                  SelectionColor: =RGBA(255, 255, 255, 1)
+                  SelectionFill: =RGBA(250, 155, 112, 1)
+                  Tooltip: =Parent.DisplayName
+                  Width: =Parent.Width - 60
+                  X: =30
+                  Y: =DataCardKey3.Y + DataCardKey3.Height + 5
+            - ErrorMessage3:
+                Control: Label@2.5.1
+                MetadataKey: ErrorMessage
+                Properties:
+                  AutoHeight: =true
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(168, 0, 0, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(168, 0, 0, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =10
+                  Live: =Live.Assertive
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Text: =Parent.Error
+                  Visible: =Parent.DisplayMode=DisplayMode.Edit
+                  Width: =Parent.Width - 60
+                  X: =30
+                  Y: =DataCardValue2.Y + DataCardValue2.Height
+            - StarVisible3:
+                Control: Label@2.5.1
+                MetadataKey: FieldRequired
+                Properties:
+                  Align: =Align.Center
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =DataCardKey3.Height
+                  PaddingLeft: =0
+                  Text: ="*"
+                  Visible: =And(Parent.Required, Parent.DisplayMode=DisplayMode.Edit)
+                  Width: =30
+                  Wrap: =false
+                  Y: =DataCardKey3.Y
+      - UNIDADE_DataCard1:
+          Control: TypedDataCard@1.0.7
+          Variant: ClassicComboBoxEdit
+          Properties:
+            BorderColor: =RGBA(245, 245, 245, 1)
+            DataField: ="UNIDADE"
+            Default: =ThisItem.UNIDADE
+            DisplayName: =DataSourceInfo([@TB_CTRL_TERCEIROS],DataSourceInfo.DisplayName,UNIDADE)
+            Required: =true
+            Update: =DataCardValue4.Selected
+            Width: =458
+            X: =1
+            Y: =1
+          Children:
+            - DataCardKey5:
+                Control: Label@2.5.1
+                MetadataKey: FieldName
+                Properties:
+                  AutoHeight: =true
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =34
+                  PaddingLeft: =0
+                  Text: ="Unidade Supporte"
+                  Width: =Parent.Width - 60
+                  Wrap: =false
+                  X: =30
+                  Y: =10
+            - DataCardValue4:
+                Control: Classic/ComboBox@2.4.0
+                MetadataKey: FieldValue
+                Properties:
+                  BorderColor: =If(IsBlank(Parent.Error), Parent.BorderColor, Color.Red)
+                  ChevronBackground: =RGBA(245, 245, 245, 1)
+                  ChevronDisabledBackground: =RGBA(242, 242, 241, 0)
+                  ChevronDisabledFill: =RGBA(161, 159, 157, 1)
+                  ChevronFill: =RGBA(50, 49, 48, 1)
+                  ChevronHoverBackground: =RGBA(245, 245, 245, 1)
+                  ChevronHoverFill: =RGBA(50, 49, 48, 1)
+                  Color: =RGBA(50, 49, 48, 1)
+                  DefaultSelectedItems: =Parent.Default
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  DisabledFill: =RGBA(242, 242, 241, 0)
+                  DisplayFields: =["Value"]
+                  DisplayMode: =Parent.DisplayMode
+                  Fill: =RGBA(245, 245, 245, 1)
+                  Font: =Font.'Segoe UI'
+                  HoverBorderColor: =RGBA(250, 155, 112, 1)
+                  HoverColor: =RGBA(50, 49, 48, 1)
+                  HoverFill: =RGBA(245, 245, 245, 1)
+                  InputTextPlaceholder: ="Selecione a Unidade Supporte"
+                  Items: =Choices([@TB_CTRL_TERCEIROS].UNIDADE)
+                  PaddingLeft: =If(Self.DisplayMode = DisplayMode.Edit, 5, 0)
+                  PressedBorderColor: =RGBA(250, 155, 112, 1)
+                  PressedColor: =RGBA(255, 255, 255, 1)
+                  PressedFill: =RGBA(253, 222, 207, 1)
+                  SearchFields: =["Value"]
+                  SelectMultiple: =false
+                  SelectionColor: =RGBA(255, 255, 255, 1)
+                  SelectionFill: =RGBA(250, 155, 112, 1)
+                  Tooltip: =Parent.DisplayName
+                  Width: =Parent.Width - 60
+                  X: =30
+                  Y: =42
+            - ErrorMessage5:
+                Control: Label@2.5.1
+                MetadataKey: ErrorMessage
+                Properties:
+                  AutoHeight: =true
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(168, 0, 0, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(168, 0, 0, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =10
+                  Live: =Live.Assertive
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Text: =Parent.Error
+                  Visible: =Parent.DisplayMode=DisplayMode.Edit
+                  Width: =Parent.Width - 60
+                  X: =30
+                  Y: =DataCardValue4.Y + DataCardValue4.Height
+            - StarVisible5:
+                Control: Label@2.5.1
+                MetadataKey: FieldRequired
+                Properties:
+                  Align: =Align.Center
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =DataCardKey5.Height
+                  PaddingLeft: =0
+                  Text: ="*"
+                  Visible: =And(Parent.Required, Parent.DisplayMode=DisplayMode.Edit)
+                  Width: =30
+                  Wrap: =false
+                  Y: =DataCardKey5.Y
+      - OPERACAO_DataCard1:
+          Control: TypedDataCard@1.0.7
+          Variant: ClassicComboBoxEdit
+          Properties:
+            BorderColor: =RGBA(245, 245, 245, 1)
+            DataField: ="OPERACAO"
+            Default: =ThisItem.OPERACAO
+            DisplayName: =DataSourceInfo([@TB_CTRL_TERCEIROS],DataSourceInfo.DisplayName,OPERACAO)
+            Required: =true
+            Update: =DataCardValue5.Selected
+            Width: =458
+            X: =0
+            Y: =2
+          Children:
+            - DataCardKey6:
+                Control: Label@2.5.1
+                MetadataKey: FieldName
+                Properties:
+                  AutoHeight: =true
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =34
+                  PaddingLeft: =0
+                  Text: ="Operação"
+                  Width: =Parent.Width - 60
+                  Wrap: =false
+                  X: =30
+                  Y: =10
+            - DataCardValue5:
+                Control: Classic/ComboBox@2.4.0
+                MetadataKey: FieldValue
+                Properties:
+                  BorderColor: =If(IsBlank(Parent.Error), Parent.BorderColor, Color.Red)
+                  ChevronBackground: =RGBA(245, 245, 245, 1)
+                  ChevronDisabledBackground: =RGBA(242, 242, 241, 0)
+                  ChevronDisabledFill: =RGBA(161, 159, 157, 1)
+                  ChevronFill: =RGBA(50, 49, 48, 1)
+                  ChevronHoverBackground: =RGBA(245, 245, 245, 1)
+                  ChevronHoverFill: =RGBA(50, 49, 48, 1)
+                  Color: =RGBA(50, 49, 48, 1)
+                  DefaultSelectedItems: =Parent.Default
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  DisabledFill: =RGBA(242, 242, 241, 0)
+                  DisplayFields: =["Value"]
+                  DisplayMode: =Parent.DisplayMode
+                  Fill: =RGBA(245, 245, 245, 1)
+                  Font: =Font.'Segoe UI'
+                  HoverBorderColor: =RGBA(250, 155, 112, 1)
+                  HoverColor: =RGBA(50, 49, 48, 1)
+                  HoverFill: =RGBA(245, 245, 245, 1)
+                  InputTextPlaceholder: ="Operação"
+                  Items: =Choices([@TB_CTRL_TERCEIROS].OPERACAO)
+                  PaddingLeft: =If(Self.DisplayMode = DisplayMode.Edit, 5, 0)
+                  PressedBorderColor: =RGBA(250, 155, 112, 1)
+                  PressedColor: =RGBA(255, 255, 255, 1)
+                  PressedFill: =RGBA(253, 222, 207, 1)
+                  SearchFields: =["Value"]
+                  SelectMultiple: =false
+                  SelectionColor: =RGBA(255, 255, 255, 1)
+                  SelectionFill: =RGBA(250, 155, 112, 1)
+                  Tooltip: =Parent.DisplayName
+                  Width: =Parent.Width - 60
+                  X: =30
+                  Y: =42
+            - ErrorMessage6:
+                Control: Label@2.5.1
+                MetadataKey: ErrorMessage
+                Properties:
+                  AutoHeight: =true
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(168, 0, 0, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(168, 0, 0, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =10
+                  Live: =Live.Assertive
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Text: =Parent.Error
+                  Visible: =Parent.DisplayMode=DisplayMode.Edit
+                  Width: =Parent.Width - 60
+                  X: =30
+                  Y: =DataCardValue5.Y + DataCardValue5.Height
+            - StarVisible6:
+                Control: Label@2.5.1
+                MetadataKey: FieldRequired
+                Properties:
+                  Align: =Align.Center
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =DataCardKey6.Height
+                  PaddingLeft: =0
+                  Text: ="*"
+                  Visible: =And(Parent.Required, Parent.DisplayMode=DisplayMode.Edit)
+                  Width: =30
+                  Wrap: =false
+                  Y: =DataCardKey6.Y
+      - FORNECEDOR_DataCard1:
+          Control: TypedDataCard@1.0.7
+          Variant: ClassicComboBoxEdit
+          Properties:
+            BorderColor: =RGBA(245, 245, 245, 1)
+            DataField: ="FORNECEDOR"
+            Default: =ThisItem.FORNECEDOR
+            DisplayName: =DataSourceInfo([@TB_CTRL_TERCEIROS],DataSourceInfo.DisplayName,FORNECEDOR)
+            Required: =true
+            Update: =DataCardValue6.Selected
+            Width: =458
+            X: =1
+            Y: =2
+          Children:
+            - DataCardKey7:
+                Control: Label@2.5.1
+                MetadataKey: FieldName
+                Properties:
+                  AutoHeight: =true
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =34
+                  PaddingLeft: =0
+                  Text: ="Fornecedor"
+                  Width: =Parent.Width - 60
+                  Wrap: =false
+                  X: =30
+                  Y: =10
+            - DataCardValue6:
+                Control: Classic/ComboBox@2.4.0
+                MetadataKey: FieldValue
+                Properties:
+                  BorderColor: =If(IsBlank(Parent.Error), Parent.BorderColor, Color.Red)
+                  ChevronBackground: =RGBA(245, 245, 245, 1)
+                  ChevronDisabledBackground: =RGBA(242, 242, 241, 0)
+                  ChevronDisabledFill: =RGBA(161, 159, 157, 1)
+                  ChevronFill: =RGBA(50, 49, 48, 1)
+                  ChevronHoverBackground: =RGBA(245, 245, 245, 1)
+                  ChevronHoverFill: =RGBA(50, 49, 48, 1)
+                  Color: =RGBA(50, 49, 48, 1)
+                  DefaultSelectedItems: =Parent.Default
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  DisabledFill: =RGBA(242, 242, 241, 0)
+                  DisplayFields: =["Value"]
+                  DisplayMode: =Parent.DisplayMode
+                  Fill: =RGBA(245, 245, 245, 1)
+                  Font: =Font.'Segoe UI'
+                  HoverBorderColor: =RGBA(250, 155, 112, 1)
+                  HoverColor: =RGBA(50, 49, 48, 1)
+                  HoverFill: =RGBA(245, 245, 245, 1)
+                  InputTextPlaceholder: ="De qual empresa o colaborador faz parte ?"
+                  Items: =Choices([@TB_CTRL_TERCEIROS].FORNECEDOR)
+                  PaddingLeft: =If(Self.DisplayMode = DisplayMode.Edit, 5, 0)
+                  PressedBorderColor: =RGBA(250, 155, 112, 1)
+                  PressedColor: =RGBA(255, 255, 255, 1)
+                  PressedFill: =RGBA(253, 222, 207, 1)
+                  SearchFields: =["Value"]
+                  SelectMultiple: =false
+                  SelectionColor: =RGBA(255, 255, 255, 1)
+                  SelectionFill: =RGBA(250, 155, 112, 1)
+                  Tooltip: =Parent.DisplayName
+                  Width: =Parent.Width - 60
+                  X: =30
+                  Y: =43
+            - ErrorMessage7:
+                Control: Label@2.5.1
+                MetadataKey: ErrorMessage
+                Properties:
+                  AutoHeight: =true
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(168, 0, 0, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(168, 0, 0, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =10
+                  Live: =Live.Assertive
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Text: =Parent.Error
+                  Visible: =Parent.DisplayMode=DisplayMode.Edit
+                  Width: =Parent.Width - 60
+                  X: =30
+                  Y: =DataCardValue6.Y + DataCardValue6.Height
+            - StarVisible7:
+                Control: Label@2.5.1
+                MetadataKey: FieldRequired
+                Properties:
+                  Align: =Align.Center
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =DataCardKey7.Height
+                  PaddingLeft: =0
+                  Text: ="*"
+                  Visible: =And(Parent.Required, Parent.DisplayMode=DisplayMode.Edit)
+                  Width: =30
+                  Wrap: =false
+                  Y: =DataCardKey7.Y
+      - HORA_ENTRADA_DataCard3:
+          Control: TypedDataCard@1.0.7
+          Variant: ClassicDateTimeEdit
+          Properties:
+            BorderColor: =RGBA(245, 245, 245, 1)
+            DataField: ="Hora_Inicial"
+            Default: =ThisItem.HORA_ENTRADA
+            DisplayName: =DataSourceInfo([@TB_CTRL_TERCEIROS],DataSourceInfo.DisplayName,Hora_Inicial)
+            Height: =110
+            Required: =true
+            Update: =If(Not IsBlank(DateValue2.SelectedDate), DateTime(Year(DateValue2.SelectedDate), Month(DateValue2.SelectedDate), Day(DateValue2.SelectedDate), Value(HourValue7.Selected.Value), Value(MinuteValue7.Selected.Value), 0))
+            Width: =458
+            WidthFit: =true
+            X: =0
+            Y: =3
+          Children:
+            - DataCardKey22:
+                Control: Label@2.5.1
+                MetadataKey: FieldName
+                Properties:
+                  AutoHeight: =true
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =34
+                  PaddingLeft: =0
+                  Text: ="Hora Entrada"
+                  Width: =308
+                  Wrap: =false
+                  X: =30
+                  Y: =10
+            - DateValue2:
+                Control: Classic/DatePicker@2.6.0
+                MetadataKey: DateFieldValue
+                Properties:
+                  BorderColor: =If(IsBlank(Parent.Error), Parent.BorderColor, Color.Red)
+                  Color: =RGBA(50, 49, 48, 1)
+                  DefaultDate: =Parent.Default
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  DisabledFill: =RGBA(242, 242, 241, 0)
+                  DisplayMode: =Parent.DisplayMode
+                  EndYear: =Year(Today())+100
+                  Fill: =RGBA(245, 245, 245, 1)
+                  Font: =Font.'Segoe UI'
+                  IconBackground: =RGBA(244, 111, 10, 1)
+                  IconFill: =RGBA(255, 255, 255, 1)
+                  IsEditable: =true
+                  PaddingBottom: =0
+                  PaddingLeft: =If(Self.DisplayMode = DisplayMode.Edit, 5, 0)
+                  Size: =13
+                  StartYear: =1899
+                  Tooltip: =Parent.DisplayName
+                  Width: =(Parent.Width - 60) / 2
+                  X: =30
+                  Y: =DataCardKey22.Y + DataCardKey22.Height + 5
+            - HourValue7:
+                Control: Classic/DropDown@2.3.1
+                MetadataKey: HourFieldValue
+                Properties:
+                  BorderColor: =If(IsBlank(Parent.Error), Parent.BorderColor, Color.Red)
+                  ChevronBackground: =RGBA(245, 245, 245, 1)
+                  ChevronDisabledBackground: =RGBA(242, 242, 241, 0)
+                  ChevronDisabledFill: =RGBA(161, 159, 157, 1)
+                  ChevronFill: =RGBA(50, 49, 48, 1)
+                  ChevronHoverBackground: =RGBA(245, 245, 245, 1)
+                  ChevronHoverFill: =RGBA(50, 49, 48, 1)
+                  Color: =RGBA(50, 49, 48, 1)
+                  Default: =Text(Hour(Parent.Default),"00")
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  DisabledFill: =RGBA(242, 242, 241, 0)
+                  DisplayMode: =Parent.DisplayMode
+                  Fill: =RGBA(245, 245, 245, 1)
+                  Font: =Font.'Segoe UI'
+                  Height: =DateValue2.Height
+                  HoverBorderColor: =RGBA(244, 111, 2, 1)
+                  HoverColor: =RGBA(50, 49, 48, 1)
+                  HoverFill: =RGBA(245, 245, 245, 1)
+                  Items: =["00","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20","21","22","23"]
+                  Items.Value: =Value
+                  PaddingBottom: =5
+                  PaddingLeft: =If(Self.DisplayMode = DisplayMode.Edit, 5, 0)
+                  PaddingRight: =5
+                  PaddingTop: =5
+                  PressedBorderColor: =RGBA(244, 111, 2, 1)
+                  PressedColor: =RGBA(255, 255, 255, 1)
+                  PressedFill: =RGBA(253, 207, 180, 1)
+                  SelectionColor: =RGBA(50, 49, 48, 1)
+                  SelectionFill: =RGBA(244, 111, 2, 1)
+                  Tooltip: =Parent.DisplayName
+                  Width: =DateValue2.Width / 2 - 10
+                  X: =DateValue2.X + DateValue2.Width + 10
+                  Y: =DateValue2.Y
+            - Separator8:
+                Control: Label@2.5.1
+                MetadataKey: HourMinuteSeparator
+                Properties:
+                  Align: =Align.Center
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Bold
+                  Height: =HourValue7.Height
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Text: =":"
+                  Width: =10
+                  Wrap: =false
+                  X: =HourValue7.X + HourValue7.Width
+                  Y: =HourValue7.Y
+            - MinuteValue7:
+                Control: Classic/DropDown@2.3.1
+                MetadataKey: MinuteFieldValue
+                Properties:
+                  BorderColor: =If(IsBlank(Parent.Error), Parent.BorderColor, Color.Red)
+                  ChevronBackground: =RGBA(245, 245, 245, 1)
+                  ChevronDisabledBackground: =RGBA(242, 242, 241, 0)
+                  ChevronDisabledFill: =RGBA(161, 159, 157, 1)
+                  ChevronFill: =RGBA(50, 49, 48, 1)
+                  ChevronHoverBackground: =RGBA(245, 245, 245, 1)
+                  ChevronHoverFill: =RGBA(50, 49, 48, 1)
+                  Color: =RGBA(50, 49, 48, 1)
+                  Default: =Text(Minute(Parent.Default),"00")
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  DisabledFill: =RGBA(242, 242, 241, 0)
+                  DisplayMode: =Parent.DisplayMode
+                  Fill: =RGBA(245, 245, 245, 1)
+                  Font: =Font.'Segoe UI'
+                  Height: =HourValue7.Height
+                  HoverBorderColor: =RGBA(244, 111, 2, 1)
+                  HoverColor: =RGBA(50, 49, 48, 1)
+                  HoverFill: =RGBA(245, 245, 245, 1)
+                  Items: =["00","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59"]
+                  Items.Value: =Value
+                  PaddingBottom: =5
+                  PaddingLeft: =If(Self.DisplayMode = DisplayMode.Edit, 5, 0)
+                  PaddingRight: =5
+                  PaddingTop: =5
+                  PressedBorderColor: =RGBA(244, 111, 2, 1)
+                  PressedColor: =RGBA(255, 255, 255, 1)
+                  PressedFill: =RGBA(253, 207, 180, 1)
+                  SelectionColor: =RGBA(50, 49, 48, 1)
+                  SelectionFill: =RGBA(244, 111, 2, 1)
+                  Tooltip: =Parent.DisplayName
+                  Width: =HourValue7.Width
+                  X: =HourValue7.X + HourValue7.Width + Separator8.Width
+                  Y: =HourValue7.Y
+            - ErrorMessage22:
+                Control: Label@2.5.1
+                MetadataKey: ErrorMessage
+                Properties:
+                  AutoHeight: =true
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(168, 0, 0, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(168, 0, 0, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =10
+                  Live: =Live.Assertive
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Text: =Parent.Error
+                  Visible: =Parent.DisplayMode=DisplayMode.Edit
+                  Width: =Parent.Width - 60
+                  X: =30
+                  Y: =HourValue7.Y + HourValue7.Height
+            - StarVisible22:
+                Control: Label@2.5.1
+                MetadataKey: FieldRequired
+                Properties:
+                  Align: =Align.Center
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =DataCardKey22.Height
+                  PaddingLeft: =0
+                  Text: ="*"
+                  Visible: =And(Parent.Required, Parent.DisplayMode=DisplayMode.Edit)
+                  Width: =30
+                  Wrap: =false
+                  Y: =DataCardKey22.Y
+            - HoraConcat:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  DisplayMode: =DisplayMode.View
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  Text: =//HourValue2.SelectedText.Value&Separator3.Text&MinuteValue2.Selected.Value
+                  Visible: =false
+                  Width: =77
+                  X: =362
+                  Y: =8
+            - Label4:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =23
+                  Size: =10
+                  Text: ="Data não obrigatório, insira somente hora e minuto"
+                  Width: =413
+                  X: =26
+                  Y: =86
+            - Icon1:
+                Control: Classic/Icon@2.5.0
+                Properties:
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  Color: =RGBA(240, 98, 15, 1)
+                  DisabledBorderColor: =RGBA(245, 245, 245, 1)
+                  DisabledColor: =RGBA(225, 223, 221, 1)
+                  DisabledFill: =RGBA(0, 0, 0, 0)
+                  FocusedBorderThickness: =4
+                  Height: =19
+                  HoverBorderColor: =RGBA(0, 0, 0, 0)
+                  HoverColor: =RGBA(16, 110, 190, 1)
+                  HoverFill: =RGBA(0, 0, 0, 0)
+                  Icon: =Icon.Alarm
+                  PressedBorderColor: =RGBA(0, 0, 0, 0)
+                  PressedColor: =RGBA(16, 110, 190, 1)
+                  PressedFill: =RGBA(0, 0, 0, 0)
+                  Width: =19
+                  X: =140
+                  Y: =18
+      - HORA_SAIDA_DataCard1:
+          Control: TypedDataCard@1.0.7
+          Variant: ClassicDateTimeEdit
+          Properties:
+            BorderColor: =RGBA(245, 245, 245, 1)
+            DataField: ="Hora_Fim"
+            Default: =ThisItem.HORA_SAIDA
+            DisplayName: =DataSourceInfo([@TB_CTRL_TERCEIROS],DataSourceInfo.DisplayName,Hora_Fim)
+            Required: =true
+            Update: =If(Not IsBlank(DateValue3.SelectedDate), DateTime(Year(DateValue3.SelectedDate), Month(DateValue3.SelectedDate), Day(DateValue3.SelectedDate), Value(HourValue8.Selected.Value), Value(MinuteValue8.Selected.Value), 0))
+            Width: =458
+            X: =1
+            Y: =3
+          Children:
+            - DataCardKey23:
+                Control: Label@2.5.1
+                MetadataKey: FieldName
+                Properties:
+                  AutoHeight: =true
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =34
+                  PaddingLeft: =0
+                  Text: ="Hora Saída"
+                  Width: =Parent.Width - 60
+                  Wrap: =false
+                  X: =30
+                  Y: =10
+            - DateValue3:
+                Control: Classic/DatePicker@2.6.0
+                MetadataKey: DateFieldValue
+                Properties:
+                  BorderColor: =If(IsBlank(Parent.Error), Parent.BorderColor, Color.Red)
+                  Color: =RGBA(50, 49, 48, 1)
+                  DefaultDate: =Parent.Default
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  DisabledFill: =RGBA(242, 242, 241, 0)
+                  DisplayMode: =Parent.DisplayMode
+                  EndYear: =Year(Today())+100
+                  Fill: =RGBA(245, 245, 245, 1)
+                  Font: =Font.'Segoe UI'
+                  IconBackground: =RGBA(244, 111, 10, 1)
+                  IconFill: =RGBA(255, 255, 255, 1)
+                  IsEditable: =true
+                  PaddingBottom: =0
+                  PaddingLeft: =If(Self.DisplayMode = DisplayMode.Edit, 5, 0)
+                  Size: =13
+                  StartYear: =1899
+                  Tooltip: =Parent.DisplayName
+                  Width: =(Parent.Width - 60) / 2
+                  X: =30
+                  Y: =DataCardKey23.Y + DataCardKey23.Height + 5
+            - HourValue8:
+                Control: Classic/DropDown@2.3.1
+                MetadataKey: HourFieldValue
+                Properties:
+                  BorderColor: =If(IsBlank(Parent.Error), Parent.BorderColor, Color.Red)
+                  ChevronBackground: =RGBA(245, 245, 245, 1)
+                  ChevronDisabledBackground: =RGBA(242, 242, 241, 0)
+                  ChevronDisabledFill: =RGBA(161, 159, 157, 1)
+                  ChevronFill: =RGBA(50, 49, 48, 1)
+                  ChevronHoverBackground: =RGBA(245, 245, 245, 1)
+                  ChevronHoverFill: =RGBA(50, 49, 48, 1)
+                  Color: =RGBA(50, 49, 48, 1)
+                  Default: =Text(Hour(Parent.Default),"00")
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  DisabledFill: =RGBA(242, 242, 241, 0)
+                  DisplayMode: =Parent.DisplayMode
+                  Fill: =RGBA(245, 245, 245, 1)
+                  Font: =Font.'Segoe UI'
+                  Height: =DateValue3.Height
+                  HoverBorderColor: =RGBA(244, 111, 2, 1)
+                  HoverColor: =RGBA(50, 49, 48, 1)
+                  HoverFill: =RGBA(245, 245, 245, 1)
+                  Items: =["00","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20","21","22","23"]
+                  Items.Value: =Value
+                  PaddingBottom: =5
+                  PaddingLeft: =If(Self.DisplayMode = DisplayMode.Edit, 5, 0)
+                  PaddingRight: =5
+                  PaddingTop: =5
+                  PressedBorderColor: =RGBA(244, 111, 2, 1)
+                  PressedColor: =RGBA(255, 255, 255, 1)
+                  PressedFill: =RGBA(253, 207, 180, 1)
+                  SelectionColor: =RGBA(50, 49, 48, 1)
+                  SelectionFill: =RGBA(244, 111, 2, 1)
+                  Tooltip: =Parent.DisplayName
+                  Width: =DateValue3.Width / 2 - 10
+                  X: =DateValue3.X + DateValue3.Width + 10
+                  Y: =DateValue3.Y
+            - Separator9:
+                Control: Label@2.5.1
+                MetadataKey: HourMinuteSeparator
+                Properties:
+                  Align: =Align.Center
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Bold
+                  Height: =HourValue8.Height
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Text: =":"
+                  Width: =10
+                  Wrap: =false
+                  X: =HourValue8.X + HourValue8.Width
+                  Y: =HourValue8.Y
+            - MinuteValue8:
+                Control: Classic/DropDown@2.3.1
+                MetadataKey: MinuteFieldValue
+                Properties:
+                  BorderColor: =If(IsBlank(Parent.Error), Parent.BorderColor, Color.Red)
+                  ChevronBackground: =RGBA(245, 245, 245, 1)
+                  ChevronDisabledBackground: =RGBA(242, 242, 241, 0)
+                  ChevronDisabledFill: =RGBA(161, 159, 157, 1)
+                  ChevronFill: =RGBA(50, 49, 48, 1)
+                  ChevronHoverBackground: =RGBA(245, 245, 245, 1)
+                  ChevronHoverFill: =RGBA(50, 49, 48, 1)
+                  Color: =RGBA(50, 49, 48, 1)
+                  Default: =Text(Minute(Parent.Default),"00")
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  DisabledFill: =RGBA(242, 242, 241, 0)
+                  DisplayMode: =Parent.DisplayMode
+                  Fill: =RGBA(245, 245, 245, 1)
+                  Font: =Font.'Segoe UI'
+                  Height: =HourValue8.Height
+                  HoverBorderColor: =RGBA(244, 111, 2, 1)
+                  HoverColor: =RGBA(50, 49, 48, 1)
+                  HoverFill: =RGBA(245, 245, 245, 1)
+                  Items: =["00","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59"]
+                  Items.Value: =Value
+                  PaddingBottom: =5
+                  PaddingLeft: =If(Self.DisplayMode = DisplayMode.Edit, 5, 0)
+                  PaddingRight: =5
+                  PaddingTop: =5
+                  PressedBorderColor: =RGBA(244, 111, 2, 1)
+                  PressedColor: =RGBA(255, 255, 255, 1)
+                  PressedFill: =RGBA(253, 207, 180, 1)
+                  SelectionColor: =RGBA(50, 49, 48, 1)
+                  SelectionFill: =RGBA(244, 111, 2, 1)
+                  Tooltip: =Parent.DisplayName
+                  Width: =HourValue8.Width
+                  X: =HourValue8.X + HourValue8.Width + Separator9.Width
+                  Y: =HourValue8.Y
+            - ErrorMessage23:
+                Control: Label@2.5.1
+                MetadataKey: ErrorMessage
+                Properties:
+                  AutoHeight: =true
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(168, 0, 0, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(168, 0, 0, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =10
+                  Live: =Live.Assertive
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Text: =Parent.Error
+                  Visible: =Parent.DisplayMode=DisplayMode.Edit
+                  Width: =Parent.Width - 60
+                  X: =30
+                  Y: =HourValue8.Y + HourValue8.Height
+            - StarVisible23:
+                Control: Label@2.5.1
+                MetadataKey: FieldRequired
+                Properties:
+                  Align: =Align.Center
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =DataCardKey23.Height
+                  PaddingLeft: =0
+                  Text: ="*"
+                  Visible: =And(Parent.Required, Parent.DisplayMode=DisplayMode.Edit)
+                  Width: =30
+                  Wrap: =false
+                  Y: =DataCardKey23.Y
+            - Label4_1:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Color: =RGBA(50, 49, 48, 1)
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledColor: =RGBA(161, 159, 157, 1)
+                  FocusedBorderThickness: =4
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =23
+                  Size: =10
+                  Text: ="Data não obrigatório, insira somente hora e minuto"
+                  Width: =413
+                  X: =26
+                  Y: =86
+            - Icon1_1:
+                Control: Classic/Icon@2.5.0
+                Properties:
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  Color: =RGBA(240, 98, 15, 1)
+                  DisabledBorderColor: =RGBA(245, 245, 245, 1)
+                  DisabledColor: =RGBA(225, 223, 221, 1)
+                  DisabledFill: =RGBA(0, 0, 0, 0)
+                  FocusedBorderThickness: =4
+                  Height: =19
+                  HoverBorderColor: =RGBA(0, 0, 0, 0)
+                  HoverColor: =RGBA(16, 110, 190, 1)
+                  HoverFill: =RGBA(0, 0, 0, 0)
+                  Icon: =Icon.Alarm
+                  PressedBorderColor: =RGBA(0, 0, 0, 0)
+                  PressedColor: =RGBA(16, 110, 190, 1)
+                  PressedFill: =RGBA(0, 0, 0, 0)
+                  Width: =19
+                  X: =120
+                  Y: =17

@@ -1,0 +1,88 @@
+let
+    Fonte = Table.Buffer(PICKING_ESTEIRA_AGRUPADO),
+
+    ColunasReordenadas = Table.ReorderColumns(Fonte,{"Fornecimento", "Data do picking", "Remessas (de/até)", "Documento de compras", "Tipo de remessa", "Status processamento", "Centro", "Local expedição/recebimento", "Emissor da ordem", "Depósito", "Cidade recebedor ordem", "Nome do recebedor da mercadoria", "Material", "Denominação", "Qtd.real em UGE", "UM básica"}),
+
+    // Mesclagem com SALDO_AGRUPADO_ITEM
+    #"Consultas Mescladas" = let
+join = Table.NestedJoin(ColunasReordenadas, {"Material"}, BUSCA_RECLASS, {"Item"}, "SALDO AGRUPADO", JoinKind.Inner),
+exp = Table.ExpandTableColumn(join, "SALDO AGRUPADO", {"EAN_REDUZ", "QTD RESERVADA LOGIX", "QTD DISPONIVEL", "INIC_ITEM"}, {"EAN_REDUZ", "QTD RESERVADA LOGIX", "QTD DISPONIVEL", "INIC_ITEM"})
+in
+exp,
+
+    // Substituir valores nulos por zero
+    ValorSubstituído = Table.ReplaceValue(#"Consultas Mescladas", null, 0, Replacer.ReplaceValue, {"QTD DISPONIVEL"}),
+
+    // Renomear coluna de saldo disponível
+    ColunasRenomeadas = Table.RenameColumns(ValorSubstituído, {{"QTD DISPONIVEL", "QTD DISPONIVEL LOGIX"}}),
+
+    // Calcular diferença entre saldo disponível e quantidade solicitada
+    ColDIF_DISPONIVEL = Table.AddColumn(ColunasRenomeadas, "DIF_DISPONIVEL", each ([QTD DISPONIVEL LOGIX] - [Qtd.real em UGE]), type number),
+
+    // Classificação do status de disponibilidade (corrigido)
+    ColStatusDifDisp = Table.AddColumn(ColDIF_DISPONIVEL, "STATUS_DIF_DISPONIVEL",
+        each 
+            if [QTD DISPONIVEL LOGIX] >= [Qtd.real em UGE] then "ATENDE_TOTAL"
+            else if [QTD DISPONIVEL LOGIX] > 0 then "ATENDE_PARCIAL"
+            else "NÃO_ATENDE_TOTAL",
+        type text
+    ),
+
+    // PROCESSAMENTO_01: Quantidade a ser utilizada na primeira rodada de processamento
+    ColProcessamento01 = Table.AddColumn(ColStatusDifDisp, "PROCESSAMENTO_01", each 
+        if [QTD DISPONIVEL LOGIX] >= [Qtd.real em UGE] then [Qtd.real em UGE]
+        else if [QTD DISPONIVEL LOGIX] < [Qtd.real em UGE] then [QTD DISPONIVEL LOGIX]
+        else 0,
+        type number
+    ),
+
+    // PROCESSAMENTO_02: Diferença a ser reprocessada ou tratada separadamente
+    ColProcessamento02 = Table.AddColumn(ColProcessamento01, "PROCESSAMENTO_02", each 
+        if [STATUS_DIF_DISPONIVEL] = "ATENDE_TOTAL" then 0
+        else if [STATUS_DIF_DISPONIVEL] = "ATENDE_PARCIAL" then Number.Abs([DIF_DISPONIVEL])
+        else [Qtd.real em UGE],
+        type number
+    ),
+
+    // Validação da soma das quantidades de processamento
+    ColValidaçãoQuantidades = Table.AddColumn(ColProcessamento02, "VALIDACAO_QTD",
+        each if ([PROCESSAMENTO_01] + [PROCESSAMENTO_02]) = [Qtd.real em UGE] then "OK" else "NOK",
+        type text
+    ),
+
+    // NOVAS COLUNAS DE RECLASSIFICAÇÃO (ABORDAGEM ALTERNATIVA)
+    EncontrarMelhorReclass = (ean_reduz as text, quantidade_necessaria as number) as record =>
+        let
+            TabelaSaldo = BUSCA_RECLASS,
+            ItensMesmoEAN = Table.SelectRows(TabelaSaldo, each [EAN_REDUZ] = ean_reduz),
+            ItensComOrdem = Table.AddColumn(ItensMesmoEAN, "OrdemTemp", each [QTD DISPONIVEL]),
+            ItensOrdenados = Table.Sort(ItensComOrdem, {{"OrdemTemp", Order.Descending}}),
+            ItensFinais = Table.RemoveColumns(ItensOrdenados, {"OrdemTemp"}),
+            FiltrarItensComSaldo = Table.SelectRows(ItensFinais, each [QTD DISPONIVEL] >= quantidade_necessaria and [QTD DISPONIVEL] > 0),
+            ItemEncontrado = if Table.IsEmpty(FiltrarItensComSaldo) then null else FiltrarItensComSaldo{0},
+            ItemMaiorSaldo = if ItemEncontrado <> null then ItemEncontrado else
+                if Table.IsEmpty(ItensFinais) then null else ItensFinais{0},
+            ResultadoFinal = if ItemMaiorSaldo = null then 
+                [Item = "", Descricao = ""] 
+            else 
+                [Item = ItemMaiorSaldo[Item], Descricao = ItemMaiorSaldo[Descricao]]
+        in
+            ResultadoFinal,
+
+    // Adicionar colunas de reclassificação
+    AdicionarColunasReclass = Table.AddColumn(ColValidaçãoQuantidades, "DadosReclass", 
+        each 
+            if [PROCESSAMENTO_02] > 0 and [EAN_REDUZ] <> null then 
+                EncontrarMelhorReclass([EAN_REDUZ], [PROCESSAMENTO_02])
+            else 
+                [Item = 0, Descricao = "-"],
+        type record
+    ),
+
+    // Expandir os dados de reclassificação
+    ExpandirReclass = Table.ExpandRecordColumn(AdicionarColunasReclass, "DadosReclass", 
+        {"Item", "Descricao"}, {"ITEM_RECLASS", "DESC_ITEM_RECLASS"}
+    ),
+    AlteraTipo = Table.TransformColumnTypes(ExpandirReclass,{{"ITEM_RECLASS",type number},{"DESC_ITEM_RECLASS", type text}})
+in
+    AlteraTipo

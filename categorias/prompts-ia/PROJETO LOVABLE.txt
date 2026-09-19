@@ -1,0 +1,93 @@
+Arquitetura Geral
+Este é um sistema de gerenciamento e exibição de apresentações para TV/displays, construído com React, TypeScript, Tailwind CSS e integração com Supabase para backend.
+
+Estrutura Técnica
+Frontend Stack:
+
+React 18 com TypeScript
+Vite como bundler
+React Router DOM para navegação
+Tailwind CSS + Radix UI para interface
+React Query (@tanstack/react-query) para gerenciamento de estado
+@dnd-kit para drag-and-drop
+Zod para validação
+React Hook Form para formulários
+Backend/Integração:
+
+Supabase como backend (autenticação, banco de dados, storage)
+Browser Image Compression para otimização de imagens
+XLSX para manipulação de planilhas (NF-e)
+Funcionalidades Principais
+1. Sistema de Apresentações
+Criação e gerenciamento de apresentações
+Configuração de intervalos de atualização (refresh)
+Controle de privacidade (público/privado)
+Visualização em fullscreen para TVs
+Auto-progressão de slides com timers
+2. Tipos de Conteúdo Suportados
+Imagens (JPEG, PNG, WebP, GIF) com compressão automática
+Painéis Power BI via iframe
+Ordenação por drag-and-drop
+Upload com otimização para Supabase Storage
+3. Sistema de Autenticação
+Login/cadastro via Supabase Auth
+Row Level Security (RLS) implementado
+Apresentações públicas e privadas
+Controle de acesso baseado em usuário
+4. Ferramentas Utilitárias
+Compressor de Imagens
+URL Encoder/Decoder
+JSON Formatter
+Visualizador de NF-e (Nota Fiscal Eletrônica)
+Estrutura do Banco de Dados
+
+-- Tabela presentations
+- id (UUID)
+- user_id (UUID, FK para auth.users)
+- title (string)
+- refresh_interval (number, em minutos)
+- is_public (boolean)
+- created_at, updated_at
+
+-- Tabela presentation_items  
+- id (UUID)
+- presentation_id (UUID, FK)
+- type ('image' | 'powerbi')
+- title (string)
+- url (string)
+- display_time (number, em minutos)
+- order_index (number)
+
+-- Tabela user_roles
+- user_id (UUID)
+- role ('admin' | 'moderator' | 'user')
+Recursos Avançados
+Sistema de Visualização
+Player fullscreen com controles
+Navegação manual (anterior/próximo)
+Auto-play com pause/play
+Timers visuais para slides e refresh
+Barra de progresso dos slides
+Status bar com informações
+Gerenciamento de Mídia
+Upload otimizado com compressão automática
+Validação de tipos de arquivo
+Progress indicators durante upload
+Storage no Supabase com URLs públicas
+Interface Responsiva
+Layout adaptativo desktop/mobile
+Theme switching (claro/escuro)
+Componentes acessíveis via Radix UI
+Navegação intuitiva
+Casos de Uso Principais
+Displays corporativos: Exibir dashboards e imagens em TVs
+Apresentações automáticas: Rotacionar conteúdo sem intervenção
+Compartilhamento público: URLs diretas para apresentações
+Ferramentas web: Utilitários para desenvolvedores/usuários
+Pontos Fortes da Arquitetura
+Escalabilidade via Supabase
+Segurança com RLS policies
+Performance com React Query caching
+UX fluida com optimistic updates
+Otimização automática de imagens
+Real-time updates via Supabase subscriptions

@@ -1,6 +1,9 @@
 # Categoria: Power Query
 
-Ainda sem regras/skills registradas. Quando houver regras de trabalho com Power Query (M,
-transformações, fontes de dados, boas práticas de nomenclatura de passos etc.), criar arquivos
-aqui seguindo o padrão `REGRAS-<ASSUNTO>.md` e adicionar a entrada correspondente no
-[README.md](../../README.md) da raiz.
+Sem `REGRAS-*.md` consolidado ainda (a metodologia de Power Query dentro do Excel está em
+[`categorias/excel/REGRAS-EXCEL-POWERQUERY.md`](../excel/REGRAS-EXCEL-POWERQUERY.md)).
+
+[`codigos/`](./codigos/) — mais de 100 trechos de código M soltos: extração/tratamento de datas,
+joins, saldo de estoque, situação de nota fiscal, roteirização, consultas `TOTVSSUPP`, entre
+outros. Sem curadoria/deduplicação — há variações numeradas do mesmo código (`_01`, `_II`, datas)
+que ainda não foram consolidadas na versão final.

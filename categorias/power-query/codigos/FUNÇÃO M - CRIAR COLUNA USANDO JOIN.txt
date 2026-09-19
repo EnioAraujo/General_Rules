@@ -1,0 +1,7 @@
+= let 
+A = Table.NestedJoin(Personalizar1,"Área",LinhasAgrupadas1,"Área","Area",JoinKind.LeftOuter),
+B = Table.ExpandTableColumn(A,"Area",{"QtdeArea"},{"QtdeArea"}),
+C = Table.AddColumn(B,"PercentArea", each ([QTD_PESSOAS]/[QtdeArea]), Percentage.Type)
+
+in
+C

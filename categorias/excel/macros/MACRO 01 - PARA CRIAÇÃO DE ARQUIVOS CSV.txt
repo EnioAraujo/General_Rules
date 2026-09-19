@@ -1,0 +1,123 @@
+Sub CriarCSVsPorFornecimento()
+
+    ' Declarando variáveis
+    Dim caminhoOrigem As String
+    Dim caminhoDestino As String
+    Dim dataHoje As String
+    Dim wbOrigem As Workbook
+    Dim wsOrigem As Worksheet
+    Dim tabela As ListObject
+    Dim valoresUnicos As Collection
+    Dim valorFornecimento As String
+    Dim i As Long
+    Dim fornecimentoColuna As Range
+    Dim wbNovo As Workbook
+    Dim nomeArquivoCSV As String
+    Dim linha As ListRow
+    Dim dadosFiltrados As Collection
+
+    ' Definindo caminhos e nome do arquivo
+    caminhoOrigem = "C:\Users\enio.sales\SUPPORTE ARM VENDAS E LOG INTEGRADA LTDA\DOCUMENTOS COD UDI - Documentos\PROJETO - SEP REVENDA\SEPARACAO-ARQUIVOS-V0.1.xlsm"
+    caminhoDestino = "C:\Users\enio.sales\SUPPORTE ARM VENDAS E LOG INTEGRADA LTDA\DOCUMENTOS COD UDI - Documentos\PROJETO - SEP REVENDA\ARQUIVOS CSV\"
+    dataHoje = Format(Date, "ddmmyy")  ' Formata a data como DDMMAA
+
+    On Error GoTo ErroHandler  ' Tratamento de erros
+
+    ' Abrindo o workbook de origem
+    Set wbOrigem = Workbooks.Open(caminhoOrigem)  ' Abre o workbook, mas não o fecha no final
+    Set wsOrigem = wbOrigem.Sheets("PUXADA REVENDA CX")  ' Acessando a sheet especificada
+
+    ' Verificando se a tabela e a coluna "Fornecimento" existem
+    On Error Resume Next
+    Set tabela = wsOrigem.ListObjects("PUXADA_REVENDA_CX")
+    On Error GoTo ErroHandler
+    If tabela Is Nothing Then
+        MsgBox "A tabela 'PUXADA_REVENDA_CX' não foi encontrada na sheet 'PUXADA REVENDA CX'. Verifique o nome da tabela.", vbExclamation
+        Exit Sub  ' Não fecha wbOrigem
+    End If
+
+    On Error Resume Next
+    Set fornecimentoColuna = tabela.ListColumns("Fornecimento").DataBodyRange
+    On Error GoTo ErroHandler
+    If fornecimentoColuna Is Nothing Then
+        MsgBox "A coluna 'Fornecimento' não foi encontrada na tabela 'PUXADA_REVENDA_CX'.", vbExclamation
+        Exit Sub  ' Não fecha wbOrigem
+    End If
+
+    ' Coletando valores únicos da coluna "Fornecimento"
+    Set valoresUnicos = ColetarValoresUnicos(fornecimentoColuna)
+    If valoresUnicos.Count = 0 Then
+        MsgBox "Não há valores na coluna 'Fornecimento'.", vbInformation
+        Exit Sub  ' Não fecha wbOrigem
+    End If
+
+    ' Processando cada valor único
+    For i = 1 To valoresUnicos.Count
+        valorFornecimento = valoresUnicos(i)
+        nomeArquivoCSV = "VL06O_CO_" & CStr(valorFornecimento) & "_" & dataHoje & ".csv"
+
+        ' Coletando linhas filtradas manualmente
+        Set dadosFiltrados = FiltrarLinhasManualmente(tabela, "Fornecimento", valorFornecimento)
+
+        ' Se houver dados filtrados, cria o arquivo CSV
+        If dadosFiltrados.Count > 0 Then
+            ' Criando um novo workbook temporário
+            Set wbNovo = Workbooks.Add
+
+            ' Copiando os dados filtrados para o novo workbook
+            For Each linha In dadosFiltrados
+                linha.Range.Copy Destination:=wbNovo.Sheets(1).Cells(linha.Index, 1)
+            Next linha
+
+            ' Salvando como CSV
+            Application.DisplayAlerts = False
+            wbNovo.SaveAs Filename:=caminhoDestino & nomeArquivoCSV, FileFormat:=xlCSV, CreateBackup:=False
+            wbNovo.Close SaveChanges:=False  ' Fecha o workbook temporário
+            Application.DisplayAlerts = True
+        End If
+    Next i
+
+    MsgBox "Todos os arquivos CSV foram criados com sucesso!", vbInformation
+
+    Exit Sub  ' Sai do sub
+
+ErroHandler:
+    MsgBox "Ocorreu um erro: " & Err.Description & ". Verifique os caminhos e tente novamente.", vbCritical
+    ' Não fecha wbOrigem
+    
+    
+    
+End Sub
+
+' Função para coletar valores únicos de uma coluna
+Function ColetarValoresUnicos(coluna As Range) As Collection
+    Dim valoresUnicos As Collection
+    Set valoresUnicos = New Collection
+    Dim cell As Range, valor As String
+
+    On Error Resume Next
+    For Each cell In coluna.Cells
+        valor = cell.Value
+        If valor <> "" Then
+            valoresUnicos.Add valor, CStr(valor)
+        End If
+    Next cell
+    On Error GoTo 0
+
+    Set ColetarValoresUnicos = valoresUnicos
+End Function
+
+' Função para filtrar linhas manualmente
+Function FiltrarLinhasManualmente(tabela As ListObject, colunaFiltro As String, valorFiltro As String) As Collection
+    Dim linha As ListRow
+    Dim dadosFiltrados As Collection
+    Set dadosFiltrados = New Collection
+
+    For Each linha In tabela.ListRows
+        If linha.Range(tabela.ListColumns(colunaFiltro).Index).Value = valorFiltro Then
+            dadosFiltrados.Add linha
+        End If
+    Next linha
+
+    Set FiltrarLinhasManualmente = dadosFiltrados
+End Function

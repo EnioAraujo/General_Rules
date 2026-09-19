@@ -1,0 +1,7 @@
+C = Table.AddColumn(B,
+"DATA", each
+Text.Middle([Name],6,2)
+&"/"&
+Text.Middle([Name],4,2)
+&"/"&
+Text.Start([Name],4))

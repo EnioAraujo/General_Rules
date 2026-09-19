@@ -1,0 +1,48 @@
+Sub CriarPastas()
+    Dim ws As Worksheet
+    Dim tbl As ListObject
+    Dim rng As Range
+    Dim cell As Range
+    Dim pastaPath As String
+    Dim novaPasta As String
+    
+    'Define a planilha
+    Set ws = ThisWorkbook.Sheets("HC GERAL")
+    
+    'Define a tabela
+    Set tbl = ws.ListObjects("HC_GERAL")
+    
+    'Define o range da coluna "Nome completo"
+    Set rng = tbl.ListColumns("Nome completo").DataBodyRange
+    
+    'Define o caminho específico onde as pastas serão criadas
+    pastaPath = "A:\UBERLÂNDIA\Gabriel\HC SOUZA CRUZ\"
+    
+    'Verifica se o diretório principal existe
+    If Dir(pastaPath, vbDirectory) = "" Then
+        MsgBox "O diretório especificado não existe!", vbCritical
+        Exit Sub
+    End If
+    
+    'Loop através de cada célula na coluna
+    For Each cell In rng
+        If Not IsEmpty(cell) Then
+            'Remove caracteres inválidos para nomes de pasta
+            novaPasta = Replace(Replace(Replace(Replace(Replace(Replace(Replace(cell.Value, "\", ""), "/", ""), ":", ""), "*", ""), "?", ""), """", ""), "<", "")
+            novaPasta = Replace(Replace(Replace(novaPasta, ">", ""), "|", ""), ".", "")
+            
+            'Tenta criar a pasta
+            On Error Resume Next
+            If Len(Dir(novaPasta, vbDirectory)) = 0 Then
+                MkDir novaPasta
+                If Err.Number <> 0 Then
+                    MsgBox "Erro ao criar pasta para: " & cell.Value & vbNewLine & _
+                           "Erro: " & Err.Description, vbExclamation
+                End If
+            End If
+            On Error GoTo 0
+        End If
+    Next cell
+    
+    MsgBox "Processo concluído!", vbInformation
+End Sub

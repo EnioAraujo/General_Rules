@@ -1,0 +1,14 @@
+= let
+A = Table.NestedJoin(ColHoraTurnoAdicionada,"Data", ATUALIZACAO, "Hoje","data", JoinKind.LeftOuter),
+B = Table.ExpandTableColumn(A, "data", {"Hoje","Hora"},{"Hoje","Hora"} ),
+C = Table.AddColumn(B, "TURNO_HOJE",
+        each
+                 if ([HORA_INICIAL] = null and [HORA_FINAL] = null ) then "" else if
+                    [HORA_INICIAL] >= #time(5,21,0)  and [HORA_FINAL] < #time(13,40,0) then "1º TURNO"
+            else if [HORA_INICIAL] >= #time(13,41,0) and [HORA_FINAL] < #time(22,0,0)  then "2º TURNO"
+            else if [HORA_INICIAL] >= #time(22,1,0)  or  [HORA_FINAL] < #time(5,20,0)  then "3º TURNO"
+            else "INTERMEDIÁRIO",
+        type text)
+
+in
+C

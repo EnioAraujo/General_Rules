@@ -1,0 +1,13 @@
+Uso Acumulado = 
+     // Esta formula traz o acumulado entre datas, se for filtrado a data Ex: 10/02/2026 será somado os valores do dia 01/02/2026 até 10/02/2026, trazendo o 
+     //total acumulado até a data 10/02/2026
+CALCULATE(
+    //soma os valores da coluna "Empilhadeira Uso"
+    SUM(FT_RELATORIO_USO[Empilhadeira Uso]),
+    FILTER(
+        //Retira qualquer filtro relativo a data
+        ALL(FT_RELATORIO_USO[Data]),
+        // filtra na coluna Data o valor menor ou igual a data máxima, que seria a data filtrada
+        FT_RELATORIO_USO[Data] <= MAX(FT_RELATORIO_USO[Data])
+    )
+)

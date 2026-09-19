@@ -1,0 +1,66 @@
+{
+"ID",
+"Created",
+"SetorResponsável",
+"ProcedênciadaReclama_x00e7",
+"DatadoCarregamento",
+"DatadoRecebimento",
+"Datadaabertura",
+"SHIP",
+"Localidade",
+"Planta"
+"SKU",
+"DescriçãodoSKU",
+"VolumedoSKU",
+"Unidade",
+"Desvio",
+"Desvio0",
+"StatusdaReclamação",
+"SKU-Sobra",
+"DescriçãodoSKUSobra",
+"VolumeSobra",
+"StatusAjusteFiscal",
+"ComentáriosAjusteFiscal",
+"Observações",
+"DecisãoContestada",
+"CategoriadoDesvio",
+"ObservaçõesdoErro",
+"PlacadaCarreta",
+"NotaFiscal",
+}
+
+
+
+
+
+= Table.AddColumn(#"Personalização Adicionada1", "STATUS AJUSTE FISCAL", each if [StatusAjusteFiscal] = null then [StatusdaReclamação] else [StatusAjusteFiscal], type text)
+
+our [StatusdaReclamação] = null
+
+
+
+{[Name = AplicativoCucoPrimary]}[Content]
+
+
+Shared Documents
+{[Name = "Lista Abertura de Cuco APP"]}[Content]
+
+{[Name = "Lista Abertura de Cuco APP"]}[Content]
+
+
+
+
+= SharePoint.Contents(cuco, [Implementation=null, ApiVersion=15])
+{[Name = "Shared Documents"]}[Content]
+{[Name = "Aplicativo Primary"]}[Content][Content]{0}
+
+
+
+
+Tratativa TLB
+
+
+and _[Observações] <> "TESTE" and _[Observações] <> "Teste"
+
+
+

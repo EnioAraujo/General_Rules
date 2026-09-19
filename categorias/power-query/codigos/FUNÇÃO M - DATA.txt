@@ -1,0 +1,11 @@
+let
+
+//Val  = [DAT_HOR_VALIDADE],
+Data = Date.ToText([DAT_HOR_VALIDADE],""dd/MM/yyyy""),
+Hoje = Date.From(DateTime.LocalNow()),
+SHLEF_LIFE = if Data = "01/01/1900" then 0 else 
+Duration.Days([DAT_HOR_VALIDADE]-Hoje)
+
+in
+
+SHELF_LIFE

@@ -1,0 +1,14 @@
+Função do Power Automate para mudar o nome do anexo, o arquivo será salvo de .xls para .xlsx
+
+concat(outputs('Get_Attachment_(V2)')?['body/name'], 'x')
+
+
+
+Assunto do e-mail
+Informativo Posição de Estoque - Supporte x SOUZA CRUZ - Unidade UBERLANDIA
+
+
+
+INFORMATIVO_ESTOQUE.xlsx
+
+

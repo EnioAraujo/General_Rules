@@ -1,0 +1,13 @@
+= let 
+ColName2 = Table.AddColumn(Origem, "Name2", each 
+Text.BetweenDelimiters([Name],"_Controle comboio_",".xlsm") , type text),
+Tratar = Table.TransformColumns(ColName2, {{"Name2", each Text.Replace(_,".","") }} ),
+ColData = Table.AddColumn(Tratar,"Data", each "01/"& Text.Middle([Name2],0,2)
+&"/"& Text.End([Name2],4)),
+RemoveCol = Table.RemoveColumns(ColData,"Name2"),
+Tipagem1 = Table.TransformColumnTypes(RemoveCol,{{"Data", type date }})
+
+in
+Tipagem1
+
+

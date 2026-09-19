@@ -1,0 +1,22 @@
+=Table.ReplaceValue( 
+   Table.ReplaceValue(
+    Table.ReplaceValue(
+        Personalizar1, // Etapa anterior
+        "1ºTURNO",// Valor a ser localizado e substituido
+        "1ª TURNO", // Substituição será para este valor
+        Replacer.ReplaceText,
+        {"DES_RESTRICAO"} // Nome da coluna, que será feita a substituição dos
+dos valores
+    ),
+      "2ºTURNO", // Valor a ser localizado e substituido
+        "2ª TURNO", // Substituição será para este valor
+    Replacer.ReplaceText,
+    {"DES_RESTRICAO"}
+),
+      "3ºTURNO", // Valor a ser localizado e substituido
+        "3ª TURNO", // Substituição será para este valor
+    Replacer.ReplaceText,
+    {"DES_RESTRICAO"} // Nome da coluna, que será feita a substituição dos
+dos valores
+)
+

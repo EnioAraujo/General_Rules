@@ -1,0 +1,26 @@
+let
+    // Nesta consulta as únicas colunas usadas de fato são as filtradas em " LinhasFiltradas" no "Passo1"
+    
+    Fonte = // Embora tenha 2 selectrows, são para finalizadades diferentes, um filtra a fonte (um passo antes antes da tabela), o outro filtra já na tabela de dados.
+                Table.SelectRows(
+                Table.SelectRows(Sql.Database("192.168.102.154", "logixprd"), // BASE DE DADOS
+                each ([Kind] = "View")){[Schema="totvssupp",Item="VW_TT_WMS_EST_LOT_END"]}[Data], // VIEW - ESCOLHI ESTA POR TER A NOTA FISCAL // Table.SelectRows 
+                each ([COD_EMPRESA] = "04" and [DEPOSIT] = "033009911046988"))
+,
+    LinhasFiltradas = let
+    Passo1 = Table.SelectColumns(Fonte, {"TIP_ESTOQUE", "PALETE", "NUM_NF", "SER_NF"}),
+
+          // SELECIONA SOMENTE AS COLUNAS QUE PRECISO
+    Passo2 = Table.TransformColumnTypes(Passo1, {{"NUM_NF", type text}}),   
+
+                      // CONVERTE "NUM_NF" PARA TEXT ANTES DE COMBINAR
+                     // COMBINA NUM_NF E SER_NF NA COLUNA NOTA_FISCAL
+    Passo3 = Table.CombineColumns(Passo2, {"NUM_NF", "SER_NF"}, Combiner.CombineTextByDelimiter("-"), 
+"NOTA_FISCAL"), 
+    
+                 // REMOVE DUPLICATAS
+    Passo4 = Table.Distinct(Passo3) 
+in
+    Passo4
+in
+    LinhasFiltradas

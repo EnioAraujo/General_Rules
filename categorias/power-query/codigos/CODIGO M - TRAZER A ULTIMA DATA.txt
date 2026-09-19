@@ -1,0 +1,6 @@
+Table.SelectRows(
+             Personalizar1, 
+                 //Cria a variavel ultimo dentro de um let, para trazer o ultimo valor da coluna referencia dentro de ListMax 
+                 let ultimo = List.Max(Personalizar1[Name])
+                 // Traz a linha correspondente ao valor da variavel ultimo, que neste caso é a ultima data
+                 in each [Name] = ultimo)

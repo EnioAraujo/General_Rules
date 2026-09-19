@@ -1,0 +1,44 @@
+let
+    Fonte = FAT_SALDO_DE_ESTOQUE,
+    LinhasFiltradas0 = Table.SelectRows(Fonte, each ([TP_ESTOQUE] <> "COD UDI" and [TP_ESTOQUE] <> "ENDERECO FICTICIO" and [TP_ESTOQUE] <> "EXPEDICAO" and [TP_ESTOQUE] <> "REVERSA") and ([TP_POSICAO] <> "GERAL" and [TP_POSICAO] <> "SEPARACAO") and ([RUA] <> "HUB" and [RUA] <> "REC")),
+    Personalizar1 = Table.AddColumn(LinhasFiltradas0, "BLOCADO", each if [CATEGORIA] = "CIGARRO" then [IDENTIF_ESTOQUE] else [IDEN_ESTOQUE_AGRUPADA], type text),
+    ColRemovida = Table.Distinct(Table.SelectColumns(Personalizar1,{ "TP_ESTOQUE", "DES_TIP_ESTOQUE","ENDERECO","CATEGORIA","POS_OCUP"})),
+    LinhasFiltradas1 = Table.SelectRows(ColRemovida, each ([TP_ESTOQUE] <> "COD UDI") and ([TP_ESTOQUE] <> "AG NORMAL")),
+    AgrupadosBlocado = let
+A = Table.Distinct(Table.SelectColumns(Personalizar1,{ "TP_ESTOQUE", "DES_TIP_ESTOQUE","ENDERECO","CATEGORIA","BLOCADO"})),
+B = Table.SelectRows(A, each ([TP_ESTOQUE] = "BLOCADO")),
+C = Table.Group(B, {"TP_ESTOQUE", "DES_TIP_ESTOQUE", "CATEGORIA"}, {{"BLOCADO", each List.Count([BLOCADO]), type nullable number}})
+in
+C,
+    AgupadosGeral = let
+A = Table.Group(LinhasFiltradas1, {"TP_ESTOQUE", "DES_TIP_ESTOQUE", "CATEGORIA"}, {{"OCUPADOS", each List.Sum([POS_OCUP]), type nullable number}}),
+B = Table.AddColumn(A, "OCUP", each if [TP_ESTOQUE] = "BLOCADO" then 0 else [OCUPADOS]),
+remove_rename = Table.RenameColumns(Table.RemoveColumns(B,"OCUPADOS"),{"OCUP","OCUPADOS"})
+in
+remove_rename,
+    LinhasAgrupadas = let 
+    // 1. Faz o cruzamento entre as duas tabelas
+    join1 = Table.NestedJoin(AgupadosGeral, {"TP_ESTOQUE", "DES_TIP_ESTOQUE", "CATEGORIA"}, AgrupadosBlocado, {"TP_ESTOQUE", "DES_TIP_ESTOQUE", "CATEGORIA"}, "02", JoinKind.LeftOuter),
+    
+    // 2. Expande trazendo a coluna BLOCADO para dentro da tabela (Isso retorna uma tabela)
+    exp = Table.ExpandTableColumn(join1, "02", {"BLOCADO"}, {"BLOCADO"}),
+    
+    // 3. Aplica a lógica LINHA a LINHA (o 'each' cria o contexto para você poder usar [BLOCADO] e [OCUPADOS])
+    logic = Table.AddColumn(exp, "OCUPACAO_FINAL", each if [BLOCADO] = null then 0 else [BLOCADO], type number),
+    removeblocado = Table.RenameColumns(Table.RemoveColumns(logic,"BLOCADO"),{"OCUPACAO_FINAL","BLOCADO"})
+in
+    removeblocado,
+    ContagemIsqueiros = let
+
+A = Table.SelectRows(Personalizar1, each ([SUB_CATEGORIA] = "ISQUEIRO") and ([TP_ESTOQUE] = "HUB BRASIL" )),
+B = List.Count(List.Distinct(A[ENDERECO]))
+in
+B,
+    ColunasAuxiliares = let
+
+Isqueiros = Table.AddColumn(LinhasAgrupadas,"ISQUEIROS", each if [CATEGORIA] = "PARCERIA" and [TP_ESTOQUE] = "HUB BRASIL" then ContagemIsqueiros else 0, type number)
+in
+Isqueiros,
+    LinhasClassificadas = Table.Sort(ColunasAuxiliares,{{"TP_ESTOQUE", Order.Ascending}})
+in
+    LinhasClassificadas

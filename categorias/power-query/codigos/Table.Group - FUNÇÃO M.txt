@@ -1,0 +1,7 @@
+Table.Group(ETAPA ANTERIOR, {COLUNA CHAVE},{{NOME NOVA COLUNA, each FUNÇÃO(neste caso é soma então List.Sum([COLUNA]), TIPO DA COLUNA}})
+
+
+
+
+= Table.Group(Personalizar1, {"NOME_MES"}, {{"Contagem", each List.Sum([QTD]), type number}})
+

@@ -1,0 +1,1 @@
+SOMA([@Caixas]*10+[@Pacotes]*0,2+[@Maços]*0,02)=0;0;[@Caixas]*10+[@Pacotes]*0,2+[@Maços]*0,02)

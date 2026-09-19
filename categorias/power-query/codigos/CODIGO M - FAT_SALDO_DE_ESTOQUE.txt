@@ -1,0 +1,101 @@
+let
+    // 1. Carrega o Dataflow completo em tempo real (sem filtros de data para reter todo o estoque ativo)
+    DF_Completo_Raw = DataFlow_PWRBI_ESTOQUE_BAT,
+    
+    // 1.1 Converte as colunas numericas do Dataflow para texto para evitar conflito de tipo no Append/Table.Combine
+    DF_Completo = Table.TransformColumnTypes(DF_Completo_Raw, {
+        {"SALDO_BLOQUEADO", type text},
+        {"SALDO_RESERVADO", type text},
+        {"QTD_ORIGEM", type text},
+        {"QTD_REGULARIZADA", type text},
+        {"QTD_SALDO_FISICO", type text},
+        {"QTD_RESERVA_NORMAL", type text},
+        {"QTD_RESERVA_PROVIS", type text},
+        {"QTD_SALDO_DISPONIVEL", type text}
+    }),
+    
+    // 2. Carrega a tabela estatica Postgres em sua totalidade (com o filtro do snapshot mais recente aplicado na query dw_tab_estoque_bat_logi)
+    Postgres_Completo = dw_tab_estoque_bat_logi,
+    
+    // 3. Remove da tabela estatica Postgres os paletes que ja estao no Dataflow hoje para evitar duplicidades
+    PaletesNoDataflow = List.Buffer(DF_Completo[PALETE]),
+    Postgres_Filtrado = Table.SelectRows(Postgres_Completo, each not List.Contains(PaletesNoDataflow, [PALETE])),
+    
+    // 3.1 Seleciona no Dataflow exatamente as mesmas colunas que estao no Postgres para evitar erros de colunas extras
+    DF_Completo_Alinhado = Table.SelectColumns(DF_Completo, Table.ColumnNames(Postgres_Filtrado)),
+    
+    // 4. Une (Append) as duas fontes limpas de duplicados e com colunas idênticas
+    Fonte = Table.Combine({Postgres_Filtrado, DF_Completo_Alinhado}),
+
+    JoinCapacidade = let
+        Passo1 = Table.NestedJoin(Fonte, {"ENDERECO"}, TB_CAPACIDADE, {"CODIGO_ENDERECO"}, "CAPACIDADE", JoinKind.LeftOuter),
+        Passo2 = Table.ExpandTableColumn(Passo1, "CAPACIDADE", {"ENDERECO_2", "RUA", "TP_POSICAO","TP_ESTOQUE","CAT_POSICAO", "CAPACIDADE_PALETES"}, {"ENDERECO_2", "RUA", "TP_POSICAO","TP_ESTOQUE","CAT_POSICAO", "CAPACIDADE_PALETES"}),
+        Passo3 = Table.TransformColumnTypes(Passo2, {{"RUA", type text}}),
+        Passo4 = Table.ReplaceValue(Passo3, "Rua BB", "RUA BB", Replacer.ReplaceText, {"RUA"})
+    in
+        Passo4,
+    #"Linhas Filtradas" = Table.SelectRows(JoinCapacidade, each ([TP_ESTOQUE] <> null and [TP_ESTOQUE] <> "ENDERECO FICTICIO" and [TP_ESTOQUE] <> "EXPEDICAO" and [TP_ESTOQUE] <> "REVERSA") and ([CAT_POSICAO] <> "SEPARACAO")),
+    PosicoesUnicas = Table.SelectRows(#"Linhas Filtradas", each [CAPACIDADE_PALETES] = 1),
+    OutrasPosicoes = Table.SelectRows(#"Linhas Filtradas", each [CAPACIDADE_PALETES] <> 1 or [CAPACIDADE_PALETES] = null),
+    
+    OrdenaPosicoesUnicas = Table.Sort(PosicoesUnicas, {{"DAT_RECEBIMENTO", Order.Descending}, {"IDEN_ESTOQUE_AGRUPADA", Order.Descending}}),
+    RemoveFantasmas = Table.Distinct(Table.Buffer(OrdenaPosicoesUnicas), {"ENDERECO"}),
+    
+    BaseSemFantasmas = Table.Combine({RemoveFantasmas, OutrasPosicoes}),
+
+    ItemParaTexto = let 
+        duplicarcoluna = Table.DuplicateColumn(BaseSemFantasmas, "ITEM_DEPOSIT", "ITEM_TXT"),
+        alterartipo = Table.TransformColumnTypes(duplicarcoluna, {{"ITEM_TXT", Int64.Type}})
+    in
+        alterartipo,
+        
+    JoinBaseDeItens = let
+        Passo1 = Table.NestedJoin(ItemParaTexto, {"ITEM_TXT"}, DIM_TB_BASE_ITENS, {"ITEM"}, "TB_BASE_ITENS", JoinKind.LeftOuter),
+        Passo2 = Table.ExpandTableColumn(Passo1, "TB_BASE_ITENS", {"CATEGORIA","SUB_CATEGORIA","QTD_POR_CAIXA", "QTD_BASE_CX", "QTD_PACOTE_CX", "QTD_UN_PACOTE", "MENOR_UNIDADE_MULTIPLO", "POS_OCUP"}, {"CATEGORIA","SUB_CATEGORIA","QTD_POR_CAIXA", "QTD_BASE_CX", "QTD_PACOTE_CX", "QTD_UN_PACOTE", "MENOR_UNIDADE_MULTIPLO", "POS_OCUP"})
+    in
+        Table.Distinct(Passo2),
+
+    ColUm = Table.AddColumn(JoinBaseDeItens, "NUM", each 1, Int64.Type),
+    
+    AddColSaldoReal = let
+        A = Table.AddColumn(ColUm, "SALDO_REAL", each 
+            let
+                real = if [SALDO_BLOQUEADO] = 0 then ([QTD_SALDO_FISICO]-[QTD_RESERVA_NORMAL]) else [SALDO_BLOQUEADO]
+            in
+                real, type number),
+        B = Table.TransformColumnTypes(A,{{"SALDO_REAL", type number }})
+    in
+        B,
+    
+    ColunasRenomeadas = Table.RenameColumns(AddColSaldoReal,{{"SALDO_RESERVADO", "SALDO_RESERVADO"}, {"QTD_SALDO_DISPONIVEL", "SALDO_DISPONIVEL"}, {"QTD_RESERVA_PROVIS", "SALDO_RESERVA_PROVIS"}, {"QTD_SALDO_FISICO", "SALDO_FISICO"}, {"QTD_REGULARIZADA", "SALDO_REGULARIZADO"}}),
+    #"Primeiros Caracteres Inseridos" = Table.AddColumn(ColunasRenomeadas, "INI_SIT_RESTRICAO", each Text.Start([DEN_SITUA_QTD], 1), type text),
+    AddColRestricao2 = Table.AddColumn(#"Primeiros Caracteres Inseridos", "RETRICAO_2", each Text.Combine({[DES_RESTRICAO], [INI_SIT_RESTRICAO]}, "_"), type text),
+    #"Tipo Alterado" = Table.TransformColumnTypes(AddColRestricao2,{{"DAT_HOR_PRODUCAO", type datetime}, {"DAT_HOR_VALIDADE", type datetime}, {"DAT_RECEBIMENTO", type datetime}}),
+    DataHoje1 = DateTime.Date(DateTime.LocalNow()),
+    ColunaShelfLife = Table.AddColumn(#"Tipo Alterado", "SHELF_LIFE", each try Duration.Days(Date.From([DAT_HOR_VALIDADE]) - DataHoje1) otherwise null, Int64.Type),
+    ColunaCesvFim = Table.AddColumn(ColunaShelfLife, "Últimos caracteres", each Text.End([CTR_ENT_SAI_VEIC_DOCUM], 4), type text),
+    ValoresSubstituido = let
+        A = Table.ReplaceValue(ColunaCesvFim,null,1,Replacer.ReplaceValue,{"POS_OCUP"}),
+        B = Table.ReplaceValue(A,0,1,Replacer.ReplaceValue,{"POS_OCUP"})
+    in
+        B,
+    ParadosEstoque = Table.AddColumn(ValoresSubstituido, "GIRO_ESTOQUE", each try Duration.Days(DataHoje1 - Date.From([DAT_RECEBIMENTO])) otherwise null, Int64.Type),
+    TipoAlterado1 = Table.TransformColumnTypes(ParadosEstoque,{{"SALDO_DISPONIVEL", type number}, {"SALDO_RESERVA_PROVIS", type number}, {"QTD_RESERVA_NORMAL", type number}, {"SALDO_FISICO", type number}, {"SALDO_REGULARIZADO", type number}, {"QTD_ORIGEM", type number}, {"SALDO_RESERVADO", type number}, {"SALDO_BLOQUEADO", type number}}),
+    
+    ColsCxPctMaco = let
+        ColConversao = Table.AddColumn(TipoAlterado1,"CONVERSAO",each [SALDO_DISPONIVEL]/[MENOR_UNIDADE_MULTIPLO],type number ),
+        ColCaixas = Table.AddColumn(ColConversao, "CAIXAS", each Int64.From(Text.BeforeDelimiter(Text.From([CONVERSAO]/[QTD_BASE_CX]), ",")), type number),
+        ColPacotes = Table.AddColumn(ColCaixas, "PACOTES", each Int64.From(Text.BeforeDelimiter(Text.From((([CONVERSAO]/[QTD_BASE_CX]) - [CAIXAS]) * [QTD_PACOTE_CX]), ",")), type number),
+        ColMacos = Table.AddColumn(ColPacotes, "MÇS/UND", each Int64.From(Text.BeforeDelimiter(Text.From(((([CONVERSAO]/[QTD_BASE_CX]) - [CAIXAS]) * [QTD_PACOTE_CX] - [PACOTES]) * [QTD_UN_PACOTE]), ",")), type number),
+        RemoverCols = Table.RemoveColumns(ColMacos, {"QTD_POR_CAIXA", "QTD_BASE_CX", "QTD_PACOTE_CX", "QTD_UN_PACOTE", "MENOR_UNIDADE_MULTIPLO"})
+    in
+        RemoverCols,
+    Step3 = let
+        Step1 = Table.ReplaceValue(ColsCxPctMaco, "CHAMADOS PROCEDENTES COD", "CHAMADOS COD", Replacer.ReplaceText, {"DES_RESTRICAO"}),
+        Step2 = Table.ReplaceValue(Step1, "SOBRA SOX (NÃO MOVIMENTAR)", "SOBRA SOX", Replacer.ReplaceText, {"DES_RESTRICAO"}),
+        Step3_Val = Table.ReplaceValue(Step2, each [TP_ESTOQUE], each if [SUB_CATEGORIA] = "PEÇAS" then "HUB BRASIL" else [TP_ESTOQUE], Replacer.ReplaceValue, {"TP_ESTOQUE"})
+    in
+        Step3_Val,
+    #"Linhas Classificadas" = Table.Sort(Step3,{{"DAT_RECEBIMENTO", Order.Ascending}})
+in
+    #"Linhas Classificadas"

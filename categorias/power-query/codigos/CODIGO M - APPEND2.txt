@@ -1,0 +1,29 @@
+let
+    // Corte de 30 dias
+    Hoje = Date.From(DateTime.LocalNow()),
+    CutoffDate = Date.AddDays(Hoje, -30),
+
+    // ================= DW (Histórico) =================
+
+    Fonte = Odbc.DataSource("dsn=ODBC DW", [HierarchicalNavigation=true]),
+    DW_DB = Fonte{[Name="dw_supplog",Kind="Database"]}[Data],
+    DW_Schema = DW_DB{[Name="dw",Kind="Schema"]}[Data],
+    TabelaDW = DW_Schema{[Name="tab_situacao_nota_logi_v2",Kind="Table"]}[Data],
+    Filtra_Filial_Raz_Social = Table.SelectRows(TabelaDW, each ([FILIAL] = "04") and ([RAZ_SOCIAL_REDUZ] = "SOUZA CRUZ")),
+    DW_Tipos = Table.TransformColumnTypes(Filtra_Filial_Raz_Social, {{"DAT_INCLUSAO", type date}}),
+    DW_Historico = Table.SelectRows(DW_Tipos, each [DAT_INCLUSAO] < CutoffDate),
+
+    // ================= ORIGEM (Últimos 30 dias) =================
+    Origem_30D = Sql.Database("192.168.102.154", "LOGIXPRD", [Query="
+            SELECT *
+            FROM dbo.TOTVSSUPP.VW_POWER_BI_SITUACAO_NOTA
+            WHERE EMISSAO >= DATEADD(DAY, -30, CONVERT(date, GETDATE()))
+        "]),
+    Origem_Tipos = Table.TransformColumnTypes(Origem_30D, {{"DAT_INCLUSAO", type date}}),
+    Origem_Operacional = Table.SelectRows(Origem_Tipos, each [DAT_INCLUSAO] >= CutoffDate),
+
+    // ================= UNION =================
+    BaseFinal = Table.Combine({DW_Historico, Origem_Operacional})
+
+in
+    BaseFinal

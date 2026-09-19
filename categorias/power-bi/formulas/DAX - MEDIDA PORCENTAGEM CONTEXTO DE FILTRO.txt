@@ -1,0 +1,9 @@
+Percentual Àrea = 
+VAR PessoasNoTurno = [QTD_PESSOAS]  // Pessoas no turno atual (filtrado)
+VAR TotalGeralPessoas = 
+    CALCULATE(
+        [QTD_PESSOAS],
+        ALL(HC_GERAL[Desc.Funcao])
+    )
+RETURN
+DIVIDE(PessoasNoTurno, TotalGeralPessoas, 0)

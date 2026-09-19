@@ -1,0 +1,76 @@
+let
+    // Carregar dados da planilha "ANALISE PICKING"
+    FonteAnalise = Excel.CurrentWorkbook(){[Name="ANALISE_PICKING"]}[Content],
+    
+    // Carregar dados da planilha "TB_BASE_ITENS"
+    FonteBase = Excel.CurrentWorkbook(){[Name="TB_BASE_ITENS"]}[Content],
+    
+    // Converter tipos de dados (ajuste conforme necessário)
+    DadosAnalise = Table.TransformColumnTypes(FonteAnalise, {
+        {"Column1", type text}, 
+        {"Column2", type text}, 
+        {"Column3", type text}, 
+        {"Column4", type number}
+    }),
+    
+    DadosBase = Table.TransformColumnTypes(FonteBase, {
+        {"Column1", type text}, 
+        {"Column2", type text}, 
+        {"Column3", type text}, 
+        {"Column4", type number}
+    }),
+    
+    // Renomear colunas para facilitar entendimento
+    AnaliseRenomeada = Table.RenameColumns(DadosAnalise, {
+        {"Column1", "EAN"}, 
+        {"Column2", "Descricao1"}, 
+        {"Column3", "OutraInfo"}, 
+        {"Column4", "Diferenca"}
+    }),
+    
+    BaseRenomeada = Table.RenameColumns(DadosBase, {
+        {"Column1", "EAN_Base"}, 
+        {"Column2", "Item"}, 
+        {"Column3", "Descricao"}, 
+        {"Column4", "Saldo"}
+    }),
+    
+    // Realizar junção entre as tabelas pelo EAN
+    TabelaJuncao = Table.Join(AnaliseRenomeada, "EAN", BaseRenomeada, "EAN_Base", JoinKind.Inner),
+    
+    // Filtrar registros onde saldo >= diferenca
+    FiltrarSaldo = Table.SelectRows(TabelaJuncao, each [Saldo] >= [Diferenca]),
+    
+    // Agrupar por EAN e encontrar o item com maior saldo
+    AgruparPorEAN = Table.Group(FiltrarSaldo, {"EAN"}, {
+        {"ReclassPara", each 
+            let 
+                MaiorSaldo = List.Max([Saldo]),
+                ItemCorrespondente = Table.SelectRows(_, each [Saldo] = MaiorSaldo){0}[Item]
+            in
+                ItemCorrespondente, type text
+        },
+        {"Descricao", each 
+            let 
+                MaiorSaldo = List.Max([Saldo]),
+                DescricaoCorrespondente = Table.SelectRows(_, each [Saldo] = MaiorSaldo){0}[Descricao]
+            in
+                DescricaoCorrespondente, type text
+        },
+        {"Diferenca", each {0}[Diferenca], type number} // Pega a diferença do primeiro registro
+    }),
+    
+    // Realizar junção final com dados originais
+    ResultadoFinal = Table.Join(AnaliseRenomeada, "EAN", AgruparPorEAN, "EAN", JoinKind.LeftOuter),
+    
+    // Selecionar e reorganizar colunas
+    ColunasFinais = Table.SelectColumns(ResultadoFinal, {
+        "EAN", 
+        "Descricao1", 
+        "OutraInfo", 
+        "Diferenca", 
+        "ReclassPara", 
+        "Descricao"
+    })
+in
+    ColunasFinais

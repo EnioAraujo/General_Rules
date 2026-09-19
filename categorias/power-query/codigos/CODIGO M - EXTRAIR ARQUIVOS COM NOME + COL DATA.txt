@@ -1,0 +1,43 @@
+= let
+        A = Table.TransformColumns(AcessarSubpastasDias, {
+            {"Name", each
+                let
+                    Valor = _,
+                    Resultado = 
+                        if Text.Contains(Valor, "HUB_OUTBOUND_") then
+                            Text.BetweenDelimiters(Valor, "HUB_OUTBOUND_", ".xlsm")
+                        else
+                            Valor
+                in
+                    Resultado
+            , type text}
+        }),
+        B = Table.AddColumn(A,"DIA",each Text.Start([Name],2)),
+        C = Table.AddColumn(B,"MES",each Text.Middle([Name],2,2)),
+        D = Table.AddColumn(C,"ANO",each Text.End([Name],4)),
+        Coldata = Table.AddColumn(D,"Data", each Text.Combine({[DIA],[MES],[ANO]},"/"),type date),
+        Removecols = Table.RemoveColumns(Coldata,{"DIA","MES","ANO","Name"}),
+        
+        // Carregar dados da sheet "HUB Inbound"
+        CarregaDados = Table.AddColumn(Removecols, "Dados", each
+            try
+                Excel.Workbook([Content]){[Name = "HUB Inbound"]}[Data]
+            otherwise
+                null
+        ),
+        
+        // Expandir dados
+        DadosExpandidos = Table.ExpandTableColumn(
+            CarregaDados,
+            "Dados",
+            if Table.RowCount(CarregaDados) > 0 then
+                Table.ColumnNames(CarregaDados{0}[Dados])
+            else
+                {},
+            if Table.RowCount(CarregaDados) > 0 then
+                Table.ColumnNames(CarregaDados{0}[Dados])
+            else
+                {}
+        )
+    in
+        DadosExpandidos

@@ -1,0 +1,8 @@
+""TOTVSSUPP VW_POWER_BI_SITUACAO_NOTA""
+let
+    Fonte = PostgreSQL.Database("192.168.102.172", "dw_supplog"),
+    Personalizar1 = Fonte{[Schema="dw",Item="tab_situacao_nota_logi_v2"]}[Data],
+    FiltraEstaSemana = Table.SelectRows(Personalizar1, each Date.IsInCurrentWeek([last_updated]) and [RAZ_SOCIAL_REDUZ] = "SOUZA CRUZ"),
+    #"Linhas Classificadas" = Table.Sort(FiltraEstaSemana,{{"DAT_INCLUSAO", Order.Descending}})
+in
+    #"Linhas Classificadas"

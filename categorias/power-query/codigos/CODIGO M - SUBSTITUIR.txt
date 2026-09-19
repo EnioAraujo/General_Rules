@@ -1,0 +1,47 @@
+Opção 1: Combinar em Uma Única Transformação (Recomendada)
+m= Table.TransformColumns(
+    LinhasFiltradas,
+    {
+        { "CNPJ_CPF_DES", 
+          each 
+            Replacer.ReplaceText(
+              Replacer.ReplaceText(_, ".", ""),
+              "/",
+              ""
+            )
+        }
+    }
+)
+
+Opção 2: Usar Regex (Mais Elegante)
+m= Table.TransformColumns(
+    LinhasFiltradas,
+    {
+        { "CNPJ_CPF_DES", 
+          each Text.Replace(_, each Text.Select(_, {"0".."9"}))
+        }
+    }
+)
+OU com função nativa:
+m= Table.TransformColumns(
+    LinhasFiltradas,
+    {
+        { "CNPJ_CPF_DES", 
+          each Text.Select(_, {"0".."9"})
+        }
+    }
+)
+
+Opção 3: Função Personalizada (Mais Mantível)
+mlet
+    LinhasFiltradas = ... ,
+    
+    LimparCNPJCPF = (texto as text) as text =>
+        Text.Select(texto, {"0".."9"}),
+    
+    Resultado = Table.TransformColumns(
+        LinhasFiltradas,
+        { { "CNPJ_CPF_DES", LimparCNPJCPF } }
+    )
+in
+    Resultado

@@ -1,0 +1,37 @@
+HORA_MEDIA_EXP = 
+VAR MediaDecimal =
+    
+        AVERAGE (INBOUND[TEMPO_DE_DESCARGA])
+    
+RETURN
+    MediaDecimal // Formata o tempo como horas:minutos:segundos
+
+
+
+FORMAT(SELECTEDMEASURE(),"hh:mm")
+
+_______________________________________
+
+MEDIA_HORA = //Media_Horas_Decimal: Converte as horas para formato decimal antes de calcular a média
+
+
+VAR MED1 = 
+    AVERAGEX( 
+    INBOUND,
+    HOUR(INBOUND[TEMPO_DE_DESCARGA]) + // Horas: Extrai a parte inteira do número decimal (horas completas)
+    MINUTE(INBOUND[TEMPO_DE_DESCARGA])/60 + // Minutos: Calcula os minutos multiplicando a parte decimal por 60
+    SECOND(INBOUND[TEMPO_DE_DESCARGA])/3600 // Segundos: Calcula os segundos a partir do resto dos minutos
+)
+
+
+VAR MediaDecimal = MED1
+VAR Horas = INT(MediaDecimal)
+VAR Minutos = INT((MediaDecimal - Horas) * 60)
+VAR Segundos = INT(((MediaDecimal - Horas) * 60 - Minutos) * 60)
+
+VAR TM = TIME(Horas, Minutos, Segundos)
+//VAR TM1000 = Horas * 10000 + Minutos * 100
+
+RETURN
+TM
+//IF([CARGAS_DIA] = 0,"-",FORMAT(TM,"0#:##"))

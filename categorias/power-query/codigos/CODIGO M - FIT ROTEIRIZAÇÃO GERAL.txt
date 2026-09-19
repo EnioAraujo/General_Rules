@@ -1,0 +1,27 @@
+let
+    Fonte = Table.Buffer(tab_pec_roteirizacao_geral_logi),
+    Personalizar1 = let
+colpedido = Fonte[PEDIDO],
+AddCol = Table.AddColumn(Fonte, "PEDIDO2", each Text.Combine({Text.From([NOTA_FISCAL], "pt-BR"), Text.From([SERIE], "pt-BR")}, "-"), type text),
+logica = Table.AddColumn(AddCol, "PEDIDO_", each 
+if [PEDIDO2] = "" then [PEDIDO] else [PEDIDO2], type text),
+
+removercolunas = Table.RemoveColumns(logica, {"PEDIDO2"} ),
+limpartexto = Table.TransformColumns(removercolunas, {{"PEDIDO_", each Text.Start(_,10), type text}} )
+
+in
+limpartexto,
+    #"Data Extraída" = Table.TransformColumns(Personalizar1,{{"DATA_INCLUSAO", DateTime.Date, type date}}),
+    #"Outras Colunas Removidas" = Table.SelectColumns(#"Data Extraída",{"CIDADE_DESTINATARIO", "DATA_INCLUSAO", "PEDIDO"}),
+    #"Duplicatas Removidas" = Table.Distinct(#"Outras Colunas Removidas"),
+    #"Linhas Classificadas1" = Table.Sort(#"Duplicatas Removidas",{{"DATA_INCLUSAO", Order.Descending}}),
+    #"Primeiros Caracteres Inseridos" = Table.AddColumn(#"Linhas Classificadas1", "Primeiros caracteres", each Text.Start([PEDIDO], 2), type text),
+    #"Linhas Filtradas" = Table.SelectRows(#"Primeiros Caracteres Inseridos", each ([Primeiros caracteres] = "47")),
+    #"Primeiros Caracteres Inseridos1" = Table.AddColumn(#"Linhas Filtradas", "Primeiros caracteres.1", each Text.Start([PEDIDO], 10), type text),
+    #"Duplicatas Removidas1" = Table.Distinct(#"Primeiros Caracteres Inseridos1"),
+    #"Linhas Agrupadas" = Table.Group(#"Duplicatas Removidas1", {"Primeiros caracteres.1", "DATA_INCLUSAO", "CIDADE_DESTINATARIO"}, {{"Contagem", each Table.RowCount(_), Int64.Type}}),
+    SelecCol = Table.SelectColumns(#"Linhas Agrupadas",{"Primeiros caracteres.1", "CIDADE_DESTINATARIO", "ESTADO_DESTINATARIO", "DATA_INCLUSAO", "PEDIDO"}),
+    Personalizar2 = Table.Distinct(SelecCol),
+    #"Linhas Classificadas" = Table.Sort(Personalizar2,{{"DATA_INCLUSAO", Order.Descending}})
+in
+    #"Linhas Classificadas"

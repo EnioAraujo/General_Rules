@@ -1,0 +1,25 @@
+let
+    Fonte = SharePoint.Tables("https://supportelogistica2.sharepoint.com/sites/ARQUIVOS_UTEIS/", [ApiVersion = 15]),
+    #"86567152-c9fe-4c30-8680-113ce6b0212f" = Fonte{[Id="86567152-c9fe-4c30-8680-113ce6b0212f"]}[Items],
+    #"Colunas Renomeadas" = Table.RenameColumns(#"86567152-c9fe-4c30-8680-113ce6b0212f",{{"ID", "ID.1"}}),
+    #"Colunas Removidas" = Table.RemoveColumns(#"Colunas Renomeadas",{"FileSystemObjectType", "ServerRedirectedEmbedUri", "ServerRedirectedEmbedUrl", "ContentTypeId", "OData__ColorTag", "ComplianceAssetId"}),
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Colunas Removidas",{{"field_11", type text}}),
+    #"Colunas Removidas1" = Table.RemoveColumns(#"Tipo Alterado",{"EditorId", "OData__UIVersionString", "Attachments", "GUID", "FirstUniqueAncestorSecurableObject", "RoleAssignments", "AttachmentFiles", "ContentType", "GetDlpPolicyTip", "FieldValuesAsHtml", "FieldValuesAsText", "FieldValuesForEdit", "File", "Folder", "LikedByInformation", "ParentList", "AuthorId", "Properties", "Versions", "Author", "Editor", "Modified", "ID.1"}),
+    #"Colunas Renomeadas1" = Table.RenameColumns(#"Colunas Removidas1",{{"field_17", "CODIGO_ITEM"}, {"field_16", "EAN_REDUZIDO"}, {"field_15", "ITEM_REDUZIDO"}, {"field_14", "TIPO_CAIXA"}, {"field_13", "CX/PALETE"}}),
+    #"Colunas Removidas2" = Table.RemoveColumns(#"Colunas Renomeadas1",{"CX/PALETE"}),
+    #"Colunas Renomeadas2" = Table.RenameColumns(#"Colunas Removidas2",{{"field_12", "EAN_MAÇO"}, {"field_11", "EAN_PACOTE"}, {"field_10", "BONIF_REGULAR_?"}, {"field_9", "CAPSULA_?"}, {"field_8", "UNIDADE_MEDIDA"}, {"field_7", "SUB_CATEGORIA"}, {"field_6", "CATEGORIA_ITEM"}, {"field_2", "QTD_POR_CAIXA"}, {"field_3", "QTD_BASE_CX"}, {"field_1", "DESCRIÇÃO DO ITEM"}, {"Title", "ITEM"}}),
+    #"Tipo Alterado1" = Table.TransformColumnTypes(#"Colunas Renomeadas2",{{"Id", Int64.Type}, {"ITEM", Int64.Type}, {"ITEM_REDUZIDO", Int64.Type}, {"EAN_REDUZIDO", Int64.Type}, {"CODIGO_ITEM", Int64.Type}, {"TIPO_CAIXA", type text}, {"EAN_MAÇO", type text}, {"BONIF_REGULAR_?", type text}, {"CAPSULA_?", type text}, {"UNIDADE_MEDIDA", type text}, {"SUB_CATEGORIA", type text}, {"CATEGORIA_ITEM", type text}}),
+    #"Colunas Renomeadas3" = Table.RenameColumns(#"Tipo Alterado1",{{"field_4", "QTD_PACOTE_CX"}, {"field_5", "QTD_UN_PACOTE"}}),
+    #"Intervalo de texto inserido" = Table.AddColumn(#"Colunas Renomeadas3", "UM", each Text.Middle(Text.From([ITEM], "pt-BR"), 4, 4), type text),
+    #"Colunas Renomeadas4" = Table.RenameColumns(#"Intervalo de texto inserido",{{"UM", "ITEM_REDZ"}}),
+    #"Últimos caracteres inseridos" = Table.AddColumn(#"Colunas Renomeadas4", "EAN_REDUZ", each Text.End([EAN_PACOTE], 4), type text),
+    #"Colunas Removidas3" = Table.RemoveColumns(#"Últimos caracteres inseridos",{"ITEM_REDUZIDO", "EAN_REDUZIDO"}),
+    #"Colunas Reordenadas" = Table.ReorderColumns(#"Colunas Removidas3",{"Id", "ITEM_REDZ", "ITEM", "DESCRIÇÃO DO ITEM", "QTD_POR_CAIXA", "QTD_BASE_CX", "QTD_PACOTE_CX", "QTD_UN_PACOTE", "CATEGORIA_ITEM", "SUB_CATEGORIA", "UNIDADE_MEDIDA", "CAPSULA_?", "BONIF_REGULAR_?", "EAN_REDUZ", "EAN_PACOTE", "EAN_MAÇO", "TIPO_CAIXA", "CODIGO_ITEM"}),
+    #"Tipo Alterado2" = Table.TransformColumnTypes(#"Colunas Reordenadas",{{"DESCRIÇÃO DO ITEM", type text}, {"QTD_UN_PACOTE", type number}, {"QTD_PACOTE_CX", type number}, {"QTD_BASE_CX", type number}, {"QTD_POR_CAIXA", type number}}),
+    #"Primeiros Caracteres Inseridos" = Table.AddColumn(#"Tipo Alterado2", "UM_REDZ", each Text.Start([UNIDADE_MEDIDA], 2), type text),
+    #"Colunas Reordenadas1" = Table.ReorderColumns(#"Primeiros Caracteres Inseridos",{"Id", "EAN_REDUZ", "ITEM_REDZ", "ITEM", "DESCRIÇÃO DO ITEM", "QTD_POR_CAIXA", "QTD_BASE_CX", "QTD_PACOTE_CX", "QTD_UN_PACOTE", "CATEGORIA_ITEM", "SUB_CATEGORIA", "UNIDADE_MEDIDA", "CAPSULA_?", "BONIF_REGULAR_?", "EAN_PACOTE", "EAN_MAÇO", "TIPO_CAIXA", "CODIGO_ITEM", "UM_REDZ"}),
+    #"Colunas Removidas4" = Table.RemoveColumns(#"Colunas Reordenadas1",{"Id", "TIPO_CAIXA", "CAPSULA_?", "BONIF_REGULAR_?"}),
+    #"Colunas Reordenadas2" = Table.ReorderColumns(#"Colunas Removidas4",{"Created", "EAN_REDUZ", "ITEM_REDZ", "ITEM", "DESCRIÇÃO DO ITEM", "QTD_POR_CAIXA", "QTD_BASE_CX", "QTD_PACOTE_CX", "QTD_UN_PACOTE", "CATEGORIA_ITEM", "SUB_CATEGORIA", "UNIDADE_MEDIDA", "EAN_PACOTE", "EAN_MAÇO", "POS_OCUP", "CAIXA_PALETE", "CODIGO_ITEM", "UM_REDZ"}),
+    #"Tipo Alterado3" = Table.TransformColumnTypes(#"Colunas Reordenadas2",{{"Created", type date}})
+in
+    #"Tipo Alterado3"

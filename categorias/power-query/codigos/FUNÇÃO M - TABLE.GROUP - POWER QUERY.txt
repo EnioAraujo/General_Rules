@@ -1,0 +1,3 @@
+= Table.Group(ColLogicProcedente,{"mes"},{{"qtd_proc", each Table.RowCount(
+    Table.SelectRows(_,each [StatusdaReclamação] = "Procedente" and [SetorResponsável] = "HUB" and Date.Year([Datadaabertura])= 2025 and [StatusAjusteFiscal]= "Finalizado")
+), type number }})

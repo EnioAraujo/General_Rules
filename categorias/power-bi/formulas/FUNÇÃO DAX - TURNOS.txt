@@ -1,0 +1,55 @@
+TURN = 
+var t1 = FORMAT(VALUE(DIM_HORA[HMS_NUMBER]),"'0000") >=0521
+var t1_ = FORMAT(VALUE(DIM_HORA[HMS_NUMBER]),"'0000")<=1340
+var t2 = FORMAT(VALUE(DIM_HORA[HMS_NUMBER]),"'0000")>=1341
+var t2_ = FORMAT(VALUE(DIM_HORA[HMS_NUMBER]),"'0000")<=2200
+var t3 = FORMAT(VALUE(DIM_HORA[HMS_NUMBER]),"'0000")>=2201
+var t3_ = FORMAT(VALUE(DIM_HORA[HMS_NUMBER]),"'0000")<=0520
+
+var SW = SWITCH(
+               TRUE(),
+               t1,"1ª Turno",t1_,"1ª Turno",
+               t2,"2ª Turno",t2_,"2ª Turno",
+               t3,"3ª Turno",t3_,"3ª Turno"
+)
+
+RETURN
+SW
+
+
+_________________________________
+
+
+
+if TMP >= "0521" then "1ª Turno"
+               else if TMP <= "1340" then "1ª Turno"
+               else if TMP >= "1341" then "2ª Turno"
+               else if TMP <= "2200" then "2ª Turno"
+               else if TMP >= "2201" then "3ª Turno" 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+= Table.AddColumn(#"Texto Substituído inserido", "TURN_", each let
+
+TMP = Number.FromText([HMS_NUMBER]),
+
+RESULT =       if TMP >= "0521" then "1ª Turno"
+               else if TMP <= "1340" then "1ª Turno"
+               else if TMP >= "1341" then "2ª Turno"
+               else if TMP <= "2200" then "2ª Turno"
+               else if TMP >= "2201" then "3ª Turno" else "0"
+
+in
+
+RESULT)

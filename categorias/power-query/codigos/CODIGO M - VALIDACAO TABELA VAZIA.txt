@@ -1,0 +1,15 @@
+let
+    A = Table.AddColumn(BASE_HUB_OUTBOUND, "VALIDACAO", each
+        let
+            Content = [Content],
+            EstaVazio = if Content = null then
+                "VAZIO"
+            else if Table.IsEmpty(Content) then
+                "VAZIO"
+            else
+                "PREENCHIDO"
+        in
+            EstaVazio
+    , type text)
+in
+    A

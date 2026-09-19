@@ -1,0 +1,8 @@
+AddColDiferencas = let
+        A = Table.AddColumn(JoinCategoria, "Diferencas1", each
+            Number.Abs([Diferencas])
+        , Int64.Type),
+        B = Table.RemoveColumns(A, {"Diferencas"}),
+        C = Table.RenameColumns(B, {{"Diferencas1", "Diferencas"}})
+    in
+        C

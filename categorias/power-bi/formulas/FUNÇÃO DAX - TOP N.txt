@@ -1,0 +1,8 @@
+TOP N = 
+
+CALCULATE([PROD_EXP],
+         FILTER(
+            VALUES(
+                FAT_PRD_2425[NOME]),
+                [RANK] <= [Valor TOPN])
+         )  

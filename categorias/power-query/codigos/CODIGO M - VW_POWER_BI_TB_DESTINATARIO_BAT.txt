@@ -1,0 +1,10 @@
+let
+    Fonte = 
+    let
+   Fonte = Sql.Database("192.168.102.154", "logixprd")
+in
+Fonte,
+    #"Linhas Filtradas" = Table.SelectRows(Fonte, each ([Schema] = "totvssupp") and ([Kind] = "View") and ([Name] = "totvssupp.VW_POWER_BI_TB_DESTINATARIO_BAT")),
+    totvssupp_VW_POWER_BI_TB_DESTINATARIO_BAT = #"Linhas Filtradas"{[Schema="totvssupp",Item="VW_POWER_BI_TB_DESTINATARIO_BAT"]}[Data]
+in
+    totvssupp_VW_POWER_BI_TB_DESTINATARIO_BAT

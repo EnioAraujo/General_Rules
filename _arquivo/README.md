@@ -15,6 +15,19 @@ para não perder histórico, mas não fazem parte do "cérebro" consultado pelos
   (nome de cliente, empresa e usuário de domínio Windows em texto claro). Uma versão genérica e
   parametrizada, sem esses dados, está em
   [`categorias/power-bi/scripts/inject-measure-TEMPLATE.ps1`](../categorias/power-bi/scripts/inject-measure-TEMPLATE.ps1).
+- `Regras_intocaveis-ORIGINAL.txt` — versão antiga/curta das regras REGRA LIVE e "proibido editar
+  em pedidos de leitura", já totalmente incorporadas em
+  [`geral/REGRAS-GERAIS.md`](../geral/REGRAS-GERAIS.md) (itens 1 e 2). Mantido só por histórico.
+- `contexto_excel-ORIGINAL.md` — metade era a mesma persona crítica de
+  [`critical-dev-surgeon`](../geral/skills/critical-dev-surgeon.md) (redundante); a metade
+  específica de Excel+Power Query foi extraída, generalizada (removidas as siglas de linha de
+  negócio do cliente original) e virou
+  [`categorias/excel/REGRAS-EXCEL-POWERQUERY.md`](../categorias/excel/REGRAS-EXCEL-POWERQUERY.md).
+- `skills-duplicadas/` — pacotes `.skill` (zip com `SKILL.md` dentro) cujo conteúdo já existe como
+  `.md` equivalente em `geral/skills/`, seja idêntico (`skill-powerapps-identico.skill`,
+  `frontend-design-pacote.skill`, `interface-design-pacote.skill`) seja uma versão mais antiga e
+  menos completa (`caveman-v-antiga.skill`, `seguranca-webapp-v-antiga.skill`). O `.md` em
+  `geral/skills/` é a versão de referência.
 
 ⚠️ **Atenção:** este repositório é **público**. Os dois arquivos acima contêm nome de cliente,
 nome de empresa e nome de usuário de domínio em texto claro, e já estavam expostos nos commits

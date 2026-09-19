@@ -1,0 +1,1 @@
+= Table.AddColumn(LinhasAgrupadas, "MÉDIA", each [QTD]/List.Sum(LinhasAgrupadas[QTD]),Percentage.Type)

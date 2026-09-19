@@ -1,0 +1,2 @@
+Crie uma automação em vba que leia a planilha "SEPARACAO-ARQUIVOS-V0.1.xlsx", sheet "PARCERIAS E FUMO" , tabela "PARCERIAS_E_FUMO", e crie um arquivo .csv ( separado por vígulas) (*.csv), com o nome iniciado em "VL06O_CO_OUTROS" CONCATENADO COM A DATA DO DIA NESTE FORMATO "DDMMAA", na pasta "C:\Users\enio.sales\SUPPORTE ARM VENDAS E LOG INTEGRADA LTDA\DOCUMENTOS COD UDI - Documentos\PROJETO - SEP REVENDA\ARQUIVOS CSV". 
+Observação: copie os dados sem o cabeçalho,isso é importante.

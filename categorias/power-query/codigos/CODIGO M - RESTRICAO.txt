@@ -1,0 +1,28 @@
+let
+    // 1. Referencia a tabela fato diretamente (mantém o Query Folding)
+    FONTE = #"[FATBD]SALDO_DE_ESTOQUE",
+    
+    // 2. Seleciona apenas as 3 colunas necessárias
+    COLUNAS_SELECIONADAS = Table.SelectColumns(FONTE, {"DES_RESTRICAO", "IES_SITUA_QTD", "DEN_SITUA_QTD"}),
+    
+    // 3. Remove duplicadas (se for banco de dados, vai virar um SELECT DISTINCT)
+    REMOVER_DUPLICADAS = Table.Distinct(COLUNAS_SELECIONADAS),
+    
+    // 4. Renomeia as colunas para o padrão da sua tabela dimensão
+    RENOMEAR_COLUNAS = Table.RenameColumns(REMOVER_DUPLICADAS, {
+        {"DES_RESTRICAO", "RESTRICAO"}, 
+        {"IES_SITUA_QTD", "STATUS_REST"}, 
+        {"DEN_SITUA_QTD", "SITUACAO"}
+    }),
+    
+    // 5. Adiciona a coluna mesclada (sua chave para relacionamento)
+    ColunaMescladaInserida = Table.AddColumn(RENOMEAR_COLUNAS, "REST_1", each Text.Combine({[RESTRICAO], [STATUS_REST]}, "_"), type text)
+in
+    ColunaMescladaInserida
+
+
+
+
+
+
+

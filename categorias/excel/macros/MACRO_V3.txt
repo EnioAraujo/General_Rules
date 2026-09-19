@@ -1,0 +1,154 @@
+Sub MACRO_V3()
+    Dim wsLista As Worksheet, wsSaldo As Worksheet, wsResultado As Worksheet
+    Dim pedidoItem As String
+    Dim pedidoQtd As Double
+    Dim saldoItem As String
+    Dim saldoQtd As Double
+    Dim saldoFuncao As String
+    Dim saldoNivel As Long
+    Dim ultimaLinhaLista As Long, ultimaLinhaSaldo As Long
+    Dim i As Long, j As Long, k As Long
+    Dim qtdNecessaria As Double
+    Dim linhaResultado As Long
+    Dim arrSaldos() As Variant
+    Dim tbl As ListObject
+    Dim intervaloTabela As Range
+
+    ' Definir as planilhas
+    Set wsLista = ThisWorkbook.Sheets("lista")
+    Set wsSaldo = ThisWorkbook.Sheets("saldo")
+    
+    ' Criar ou limpar a planilha de resultados
+    On Error Resume Next
+    Set wsResultado = ThisWorkbook.Sheets("Resultado")
+    If wsResultado Is Nothing Then
+        Set wsResultado = ThisWorkbook.Sheets.Add
+        wsResultado.Name = "Resultado"
+    Else
+        wsResultado.Cells.Clear
+    End If
+    On Error GoTo 0
+    
+    ' Configurar cabeçalhos na planilha de resultados
+    wsResultado.Cells(1, 1).Value = "Posição"
+    wsResultado.Cells(1, 2).Value = "Item"
+    wsResultado.Cells(1, 3).Value = "Saldo"
+    
+    linhaResultado = 2 ' Iniciar na linha 2 para resultados
+    
+    ' Obter a última linha preenchida em cada planilha
+    ultimaLinhaLista = wsLista.Cells(wsLista.Rows.Count, "A").End(xlUp).Row
+    ultimaLinhaSaldo = wsSaldo.Cells(wsSaldo.Rows.Count, "A").End(xlUp).Row
+    
+    ' Percorrer cada item na lista de pedidos
+    For i = 2 To ultimaLinhaLista
+        pedidoItem = wsLista.Cells(i, 1).Value
+        pedidoQtd = wsLista.Cells(i, 2).Value
+        qtdNecessaria = pedidoQtd
+        
+        ' Criar uma matriz temporária para armazenar as posições e seus respectivos saldos
+        ReDim arrSaldos(1 To ultimaLinhaSaldo - 1, 1 To 4)
+        k = 0
+        
+        ' Armazenar posições e saldos em uma matriz temporária
+        For j = 2 To ultimaLinhaSaldo
+            saldoItem = wsSaldo.Cells(j, 5).Value ' Coluna ITEM
+            saldoQtd = wsSaldo.Cells(j, 6).Value  ' Coluna SALDO
+            saldoFuncao = wsSaldo.Cells(j, 1).Value ' Coluna FUNCAO
+            saldoNivel = wsSaldo.Cells(j, 2).Value  ' Coluna NIVEL
+            
+            If saldoItem = pedidoItem And IsNumeric(saldoQtd) And saldoQtd > 0 Then
+                ' Adicionar todos os registros, sem filtrar nesta etapa
+                k = k + 1
+                arrSaldos(k, 1) = wsSaldo.Cells(j, 4).Value  ' Posição
+                arrSaldos(k, 2) = saldoQtd                   ' Saldo
+                arrSaldos(k, 3) = saldoFuncao                ' Função
+                arrSaldos(k, 4) = saldoNivel                ' Nível
+            End If
+        Next j
+        
+        ' Ordenar a matriz pelo saldo em ordem decrescente, e priorizar "PICKING" e nível 1
+        If k > 0 Then
+            Call BubbleSort(arrSaldos, k)
+        End If
+        
+        ' Alocar o saldo a partir da posição com maior saldo e maior prioridade
+        For j = 1 To k
+            quantidadeUsada = Application.Min(arrSaldos(j, 2), qtdNecessaria)
+            
+            ' Registrar a posição, item e saldo na planilha de resultados
+            wsResultado.Cells(linhaResultado, 1).Value = arrSaldos(j, 1)
+            wsResultado.Cells(linhaResultado, 2).Value = pedidoItem
+            wsResultado.Cells(linhaResultado, 3).Value = quantidadeUsada
+            linhaResultado = linhaResultado + 1
+            
+            ' Reduzir a quantidade necessária
+            qtdNecessaria = qtdNecessaria - quantidadeUsada
+            
+            If qtdNecessaria <= 0 Then Exit For
+        Next j
+    Next i
+
+    ' Criar a tabela com o nome "Lista"
+    Set intervaloTabela = wsResultado.Range("A1:C" & linhaResultado - 1)
+    Set tbl = wsResultado.ListObjects.Add(xlSrcRange, intervaloTabela, , xlYes)
+    tbl.Name = "Lista"
+    
+    ' Formatar a coluna "Saldo" como decimal
+    tbl.ListColumns("Saldo").DataBodyRange.NumberFormat = "0.00"
+
+    MsgBox "Tabela gerada com sucesso!", vbInformation
+End Sub
+
+Sub BubbleSort(arr As Variant, n As Long)
+    Dim i As Long, j As Long
+    Dim tempPos As Variant, tempQtd As Variant
+    Dim tempFuncao As Variant, tempNivel As Variant
+    Dim prioridadeAtual As Integer, prioridadeProximo As Integer
+    
+    For i = 1 To n - 1
+        For j = 1 To n - i
+            ' Determinar a prioridade atual
+            If arr(j, 3) = "PICKING" And arr(j, 4) = 1 Then
+                prioridadeAtual = 10
+            ElseIf arr(j, 3) = "PICKING" Then
+                prioridadeAtual = 5
+            ElseIf arr(j, 4) = 1 Then
+                prioridadeAtual = 1
+            Else
+                prioridadeAtual = 0
+            End If
+            
+            ' Determinar a prioridade do próximo item
+            If arr(j + 1, 3) = "PICKING" And arr(j + 1, 4) = 1 Then
+                prioridadeProximo = 10
+            ElseIf arr(j + 1, 3) = "PICKING" Then
+                prioridadeProximo = 5
+            ElseIf arr(j + 1, 4) = 1 Then
+                prioridadeProximo = 1
+            Else
+                prioridadeProximo = 0
+            End If
+            
+            ' Comparar prioridades e saldos
+            If prioridadeProximo > prioridadeAtual Or (prioridadeProximo = prioridadeAtual And arr(j, 2) < arr(j + 1, 2)) Then
+                ' Trocar posição
+                tempPos = arr(j, 1)
+                tempQtd = arr(j, 2)
+                tempFuncao = arr(j, 3)
+                tempNivel = arr(j, 4)
+                arr(j, 1) = arr(j + 1, 1)
+                arr(j, 2) = arr(j + 1, 2)
+                arr(j, 3) = arr(j + 1, 3)
+                arr(j, 4) = arr(j + 1, 4)
+                arr(j + 1, 1) = tempPos
+                arr(j + 1, 2) = tempQtd
+                arr(j + 1, 3) = tempFuncao
+                arr(j + 1, 4) = tempNivel
+            End If
+        Next j
+    Next i
+End Sub
+
+
+

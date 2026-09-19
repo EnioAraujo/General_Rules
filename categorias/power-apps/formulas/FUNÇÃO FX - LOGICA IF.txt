@@ -1,0 +1,13 @@
+//If(DataCardValue27.Text = "0" ;"OK";"Não OK!")
+With(
+    {
+        Menor0: Value(DataCardValue7.Text - DataCardValue21.Text )-Value(TotalCxCortadas1.Text) < 0 = true;
+        Maior0: Value(DataCardValue7.Text - DataCardValue21.Text )-Value(TotalCxCortadas1.Text) > 0 = true;
+        Igual0: Value(DataCardValue7.Text - DataCardValue21.Text )-Value(TotalCxCortadas1.Text) = 0 = true
+        
+    };
+If(
+    Menor0;"Falta";
+    Maior0;"Sobra";
+    Igual0;"Ok"
+    ;"-"))

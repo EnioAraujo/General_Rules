@@ -1,0 +1,10 @@
+O vídeo apresenta dicas fundamentais para desenvolver o pensamento lógico e resolver problemas complexos na programação, adotando a mentalidade de um programador experiente. Em vez de começar a codar imediatamente, o foco inicial deve ser no planejamento e na lógica.
+
+Principais abordagens abordadas:
+
+Método da Caixa Preta (Black Box): Focar estritamente nos inputs (entradas de dados) e outputs (resultados esperados) antes de escrever o algoritmo (0:13 - 1:58).
+Colaboração e Legibilidade: Escrever código para humanos entenderem, usando nomes descritivos, organizando em métodos/classes e seguindo convenções como Clean Code (2:00 - 3:52).
+Não Reinventar a Roda: Utilizar bibliotecas e ferramentas existentes (como JWT ou OAuth) para aumentar a produtividade e evitar bugs, estudando-as para entender seu funcionamento por baixo dos panos (3:53 - 4:57).
+Conhecimentos Clássicos: Estudar estruturas de dados, algoritmos e Big O Notation é essencial para resolver problemas complexos e passar em entrevistas técnicas (4:58 - 6:44).
+Linguagens como Ferramentas: Não se apegar a uma única linguagem; tratá-las como ferramentas específicas para cada problema (6:45 - 8:39).
+Resolver Dores e Quebrar em Processos: Identificar problemas reais dos usuários e trabalhar de trás para frente, quebrando a solução em etapas menores e testáveis (8:40 - 9:55).

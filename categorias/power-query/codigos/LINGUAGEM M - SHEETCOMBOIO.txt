@@ -1,0 +1,78 @@
+let
+  Origem = 
+SharePoint.Contents(#"SHP (2)", [ApiVersion = 15])//SHP é o parametro que guarda o caminho do sharepoint
+    {[Name = "Shared Documents"]}[Content] // filtra na coluna Name a pasta Shared Documents e abro a pasta com o comando content
+    {[Name = "General"]}[Content] // filtra na coluna name a pasta General e abro a pasta com o comando content
+    {[Name = "Fill Rate M3"]}[Content] // filtra na coluna name a pasta Fill Rate M3 e abro a pasta com o comando content
+    {[Name = "Comboio"]}[Content] // filtra na coluna name a pasta Comboio e abro a pasta com o comando content
+    {[Name =  "Controle_Comboio_2025"]}[Content],
+  ExtractBinays = Table.Combine(
+    List.Transform(
+        Origem[Content],
+        each
+            let
+                wb = Excel.Workbook(_, true),
+                aba = Table.SelectRows(wb, each [Name] = "Comboio")
+            in
+                if Table.IsEmpty(aba) then #table({}, {}) else aba{0}[Data]
+    )
+),
+  #"Linhas filtradas" = Table.SelectRows(ExtractBinays, each ([#"Embarque (F.O)"] <> null)),
+  #"Personalizar 1" = Table.TransformColumnTypes(#"Linhas filtradas", {
+    {"Data", type date}, 
+    {"Tempo_total", type time}, 
+    {"Horario Apresentação Portaria", type datetime}
+    }),
+  Personalizar = Table.SelectColumns(
+        #"Personalizar 1",
+    
+        {
+     "Data",
+     "Destino",
+     "Embarque (F.O)",
+     "Tipo Carreta",
+     "PlacaCavalo",
+     "Horario Apresentação Portaria",
+     "Tempo_total",
+     "Carregado em qual Turno ?"
+    }
+    ),
+
+    trocarvalor = Table.ReplaceValue(Personalizar,null,"00:00:00",//substitui os campos null(vazios) por "00:00:00"
+    Replacer.ReplaceValue,
+    {
+    "Horario Apresentação Portaria"
+    } 
+    ),
+    excel1 = Table.TransformColumnTypes(trocarvalor, // transforma as colunas no tipos para os seusrespectivos ipo e dados
+    {
+    {"Embarque (F.O)", type text }, //texto
+    {"Horario Apresentação Portaria", type time },//data
+    {"Tipo Carreta", type text},//texto
+    {"PlacaCavalo", type text}//texto
+
+    }
+    ),
+    Veic20H = Table.AddColumn(excel1, "Apos_20h", each if  Time.From([Horario Apresentação Portaria]) >= #time(20,0,0) or Time.From([Horario Apresentação Portaria]) <= #time(9,0,0) then "20H" else "-", type text),
+  HorariosVeic = Table.AddColumn(Veic20H, "HorariosVeic", each 
+if [Horario Apresentação Portaria] >= #time(20, 1, 0) and [Horario Apresentação Portaria] <= #time(22, 0, 0)
+then "20:01h às 22:00h" else if
+[Horario Apresentação Portaria] >= #time(22, 1, 0) and [Horario Apresentação Portaria] <= #time(23, 59, 0)
+then "22:01h às 00:00h" else if
+([Horario Apresentação Portaria] >= #time(0, 0, 0) and [Horario Apresentação Portaria] <= #time(2, 0, 0))
+or 
+([Horario Apresentação Portaria] >= #time(0, 1, 0) and [Horario Apresentação Portaria] <= #time(2, 0, 0))
+then "00:01h às 02:00h" else if
+[Horario Apresentação Portaria] >= #time(2, 1, 0) and [Horario Apresentação Portaria] <= #time(9, 0, 0)
+then "02:01h às 09:00h" else if
+[Horario Apresentação Portaria] >= #time(9, 1, 0) and [Horario Apresentação Portaria] <= #time(14, 0, 0)
+then "09:01h às 14:00h" else if
+[Horario Apresentação Portaria] >= #time(14, 1, 0) and [Horario Apresentação Portaria] <= #time(16, 0, 0)
+then "14:01h às 16:00h" else if
+[Horario Apresentação Portaria] >= #time(16, 1, 0) and [Horario Apresentação Portaria] <= #time(18, 0, 0)
+then "16:01h às 18:00h" else if
+[Horario Apresentação Portaria] >= #time(18, 1, 0) and [Horario Apresentação Portaria] <= #time(20, 0, 0)
+then "18:01h às 20:00h"
+else "-",type text)
+in
+    HorariosVeic

@@ -1,0 +1,52 @@
+= Table.PromoteHeaders(
+Table.SelectRows(
+Excel.Workbook(
+SharePoint.Contents(CAMINHO_ARQUIVO, [ApiVersion = 15])
+{[Name="Shared Documents"]}[Content]
+{[Name="General"]}[Content]
+{[Name="Informativo EXP E ESTOQUE"]}[Content]
+{[Name="INFORMATIVO EXP"]}[Content][Content]{0})[Data]{0},
+each [Column1]<>null))
+
+
+
+
+
+
+
+
+
+
+= Table.SelectColumns(
+Table.AddColumn(
+Table.AddColumn(
+Table.SelectColumns(Fonte,
+{
+"Data Leitura",
+"Pedido",
+"SKU",
+"Descrição",
+"Quantidade",
+"Volume",
+"QR code",
+"Data Prod.",
+"Hora Prod.",
+"Lote",
+"Número Peça"
+}), "Date da Leitura", each Text.Trim(Text.Start([Data Leitura],10)),Date.Type),
+"Hora da Leitura", each Text.Trim(Text.AfterDelimiter([Data Leitura],"  ")),Time.Type),
+{
+"Date da Leitura",
+"Hora da Leitura",
+"Pedido",
+"SKU",
+"Descrição",
+"Quantidade",
+"Volume",
+"QR code",
+"Data Prod.",
+"Hora Prod.",
+"Lote",
+"Número Peça"
+})
+

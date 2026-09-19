@@ -1,0 +1,39 @@
+
+ ColConversao03 = let
+
+Colconv03 = Table.AddColumn(
+        ColVolumePedido, 
+        "CONVERSAO_03", 
+        each 
+                Int64.From(Text.BeforeDelimiter(Text.From((([VOLUME_PEDIDO]/[MenorUnidadePCT]))),",")),
+        type number
+    )
+
+in
+Colconv03,
+
+ColCaixas03 = Table.AddColumn(ColConversao03,
+ "CAIXAS03", each
+Number.Round(Int64.From(Text.BeforeDelimiter(Text.From([CONVERSAO_03]/[QTD_BASE_CX]), ","))),
+ type number),
+    
+    // Cria a coluna Pacotes
+    ColPacotes03 = Table.AddColumn(ColCaixas03, "PACOTES03", each 
+Int64.From(Text.BeforeDelimiter(Text.From((([CONVERSAO_03]/[QTD_BASE_CX]) - [CAIXAS03]) * [QTD_PACOTE_CX]), ",")),
+type number),
+    // Cria a coluna Maços e Unidades
+    ColMacos03 = Table.AddColumn(
+        ColPacotes03, 
+        "MACOS_UN03", 
+        each 
+                Int64.From(Text.BeforeDelimiter(Text.From(((([CONVERSAO_03]/[QTD_BASE_CX]) - [CAIXAS03]) * [QTD_PACOTE_CX] - [PACOTES03]) * [QTD_UN_PACOTE]), ",")),Int64.Type),
+    
+ColReverterConversao03 = let
+
+ColReverterconversao03 = Table.AddColumn(ColMacos03,"CONVERSAO_REVERSA_03", each ([CAIXAS03]*[QTD_POR_CAIXA])+([PACOTES03]*[QTD_UN_PACOTE])+[MACOS_UN03], type number)
+
+in
+ColReverterconversao03,
+    ColStatus03 = Table.AddColumn(ColReverterConversao03, "STATUS_03",
+each if ([CONVERSAO_REVERSA_03] = [SAIDA_70]) then "OK"
+else "NOK", type text)

@@ -1,0 +1,33 @@
+%_MERCHAN = 
+VAR PERCENT_ = DIVIDE(
+                    [CAT_MERCHAN],
+                    [Contagem_dEndereco])
+RETURN
+PERCENT_
+
+________________________________
+
+%_FUMO_TREVO = 
+VAR PERCENT_ = DIVIDE(
+                    [CAT_FUMO_TREVO],
+                    [Contagem_dEndereco])
+RETURN
+PERCENT_
+
+________________________________
+
+%_PARCERIA = 
+VAR PERCENT_ = DIVIDE(
+                    [CAT_PARCERIA],
+                    [Contagem_dEndereco])
+RETURN
+PERCENT_
+________________________________
+
+%_CIGARRO = 
+VAR PERCENT_ = DIVIDE(
+                    [CAT_CIGARRO],
+                    [Contagem_dEndereco])
+RETURN
+PERCENT_
+___________

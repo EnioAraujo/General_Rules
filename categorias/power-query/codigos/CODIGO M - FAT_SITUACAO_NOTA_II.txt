@@ -1,0 +1,145 @@
+let
+    // ① Carrega as tabelas na memória evitando releituras
+    Fonte = Table.Buffer(FAT_SITUACAO_NOTA),
+    #"Linhas Classificadas" = Table.Sort(Fonte,{{"DAT_INCLUSAO", Order.Descending}}),
+    FonteHierarquia = Table.Buffer(DIM_TB_SITUACAO_PEDIDO),
+
+    // ② Seleciona apenas as colunas necessárias
+    ColunasStatus = Table.SelectColumns(
+        #"Linhas Classificadas",
+        {
+            "PEDIDO",
+            "PEDIDO_SEM_LETRA",
+            "DESC_TIP_PEDIDO",
+            "LISTA",
+            "QTDE_ITEM",
+            "SOMA_ITEM",
+            "DAT_INCLUSAO",
+            "last_updated",
+            "HORA-ACOLHIDO",
+            "HORA-ONDA_GERADA",
+            "HORA-PLANO_GERADO",
+            "HORA-INI_SEPARACAO",
+            "HORA-FIM_SEPARACAO",
+            "HORA-INI_CONFERENCIA",
+            "HORA-FIM_CONFERENCIA",
+            "HORA-EXPEDIDO"
+        }
+    ),
+
+    // ③ Unpivot das colunas HORA-* — cada status vira uma linha
+    Unpivotado = Table.Unpivot(
+        ColunasStatus,
+        {
+            "HORA-ACOLHIDO",
+            "HORA-ONDA_GERADA",
+            "HORA-PLANO_GERADO",
+            "HORA-INI_SEPARACAO",
+            "HORA-FIM_SEPARACAO",
+            "HORA-INI_CONFERENCIA",
+            "HORA-FIM_CONFERENCIA",
+            "HORA-EXPEDIDO"
+        },
+        "STATUS_TIPO",
+        "HORA_STATUS"
+    ),
+
+    // ④ Remove nulos e horas 00:00:00 — status que não ocorreram de fato
+    StatusValidos = Table.SelectRows(
+        Unpivotado,
+        each 
+            [HORA_STATUS] <> null and 
+            [HORA_STATUS] <> #time(0, 0, 0)
+    ),
+
+    // ⑤ Mapeia cada coluna HORA-* para o código de situação correspondente
+    AdicionarCodigo = Table.AddColumn(
+        StatusValidos,
+        "SIT_SOL",
+        each
+            if [STATUS_TIPO] = "HORA-ACOLHIDO"        then "A"
+            else if [STATUS_TIPO] = "HORA-ONDA_GERADA"     then "O"
+            else if [STATUS_TIPO] = "HORA-PLANO_GERADO"    then "L"
+            else if [STATUS_TIPO] = "HORA-INI_SEPARACAO"   then "S"
+            else if [STATUS_TIPO] = "HORA-FIM_SEPARACAO"   then "S"
+            else if [STATUS_TIPO] = "HORA-INI_CONFERENCIA" then "F"
+            else if [STATUS_TIPO] = "HORA-FIM_CONFERENCIA" then "F"
+            else if [STATUS_TIPO] = "HORA-EXPEDIDO"        then "E"
+            else null,
+        type text
+    ),
+
+    // ⑥ Remove linhas com código null (segurança)
+    RemoverCodigoNulo = Table.SelectRows(
+        AdicionarCodigo,
+        each [SIT_SOL] <> null
+    ),
+
+    // ⑦ Join com DIM_TB_SITUACAO_PEDIDO para trazer HIERARQUIA e DESC_SITUACAO
+    MergeHierarquia = 
+    let
+    A = Table.NestedJoin(
+    RemoverCodigoNulo,
+    {"SIT_SOL"},
+    FonteHierarquia,
+    {"SITUACAO"},
+    "DIM",
+    JoinKind.LeftOuter
+),
+
+    // ⑧ Expande apenas as colunas necessárias da dimensão
+    B =  Table.ExpandTableColumn(
+        A,
+        "DIM",
+        {"DESC_SITUACAO", "HIERARQUIA"},
+        {"DESC_SITUACAO", "HIERARQUIA"}
+    )
+    
+    in
+    B,
+
+    // ⑨ Agrupa por PEDIDO — determina o status atual pela maior HIERARQUIA
+    // e dentro do mesmo nível hierárquico, pela maior HORA_STATUS
+    AgruparPorPedido = Table.Group(
+        MergeHierarquia,
+        {"PEDIDO"},
+        {
+            {
+                "DADOS",
+                each
+                    let
+                        // Ordena por HIERARQUIA desc, depois HORA_STATUS desc
+                        Ordenado = Table.Sort(
+                            _,
+                            {
+                                {"HIERARQUIA", Order.Descending},
+                                {"HORA_STATUS", Order.Descending}
+                            }
+                        )
+                    in
+                        Table.FirstN(Ordenado, 1)
+            }
+        }
+    ),
+
+    // ⑩ Expande o resultado do agrupamento
+    Resultado = Table.ExpandTableColumn(
+        AgruparPorPedido,
+        "DADOS",
+        {
+            "PEDIDO_SEM_LETRA",
+            "DESC_TIP_PEDIDO",
+            "LISTA",
+            "QTDE_ITEM",
+            "SOMA_ITEM",
+            "DAT_INCLUSAO",
+            "last_updated",
+            "SIT_SOL",
+            "DESC_SITUACAO",
+            "HIERARQUIA",
+            "HORA_STATUS"
+        }
+    )
+
+in
+    Resultado

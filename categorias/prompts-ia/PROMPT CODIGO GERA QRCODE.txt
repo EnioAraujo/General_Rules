@@ -1,0 +1,36 @@
+usando a API abaixo, que gera QRCODE a partir de uma informação contida na célula
+'ABA AUXILIAR'!$B$7, adcione-a ao código vba que irei informar mais abaixo, a saída, que será uma imagem QRCODE, devera ser mostrada na célula 'QR'!$H$3.
+
+1 - API https://quickchart.io/qr?text= 
+2 - código VBA -
+
+Sub Gerarqrcode()
+    Dim ws As Worksheet
+    Dim qtdeEtiquetas As Integer
+    Dim i As Integer
+    
+    ' Definir a planilha "QR"
+    Set ws = ThisWorkbook.Sheets("QR")
+    
+    ' Captura a quantidade de etiquetas da célula D7
+    qtdeEtiquetas = ws.Range("B11").Value
+    
+    ' Verifica se B11 é um número válido maior que zero
+    If IsNumeric(qtdeEtiquetas) And qtdeEtiquetas > 0 Then
+        ' Loop para gerar a sequência e imprimir
+        For i = 1 To qtdeEtiquetas
+            ' Escreve o número na célula B10
+            ws.Range("B10").Value = i
+            
+            ' Imprime a área de impressão "Area_de_impressao"
+            ws.PageSetup.PrintArea = ws.Range("Area_de_impressao").Address
+            ws.PrintOut
+            
+            ' Pausa por 6 segundos antes de ir para o próximo número
+            Application.Wait Now + TimeValue("00:00:1")
+        Next i
+    Else
+        MsgBox "Por favor, insira um número válido em B11.", vbExclamation
+    End If
+End Sub
+

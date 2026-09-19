@@ -1,0 +1,7 @@
+Table.AddColumn(#"Tipo Alterado", "CAIXAS", each Int64.From(Text.BeforeDelimiter(Text.From([CONVERSAO]/[QTD_BASE_CX]), ",")))
+
+
+= Table.AddColumn(COL_CAIXAS, "PACOTES", each Int64.From(Text.BeforeDelimiter(Text.From((([CONVERSAO]/[QTD_BASE_CX]) - [CAIXAS]) * [QTD_PACOTE_CX]), ","))),
+
+
+= Table.AddColumn(COL_PACOTES, "MÇS/UND", each Int64.From(Text.BeforeDelimiter(Text.From(((([CONVERSAO]/[QTD_BASE_CX]) - [CAIXAS]) * [QTD_PACOTE_CX] - [PACOTES]) * [QTD_UN_PACOTE]), ",")))

@@ -1,0 +1,70 @@
+Table.AddColumn(Fonte, "HorariosVeic", each 
+if [Horario Apresentação Portaria] >= #time(20, 1, 0) and [Horario Apresentação Portaria] <= #time(22, 0, 0)
+then "20:01h às 22:00h" else if
+[Horario Apresentação Portaria] >= #time(22, 1, 0) and [Horario Apresentação Portaria] <= #time(0, 0, 0)
+then "22:01h às 00:00" else if
+([Horario Apresentação Portaria] >= #time(0, 0, 0) and [Horario Apresentação Portaria] <= #time(2, 0, 0))
+or 
+([Horario Apresentação Portaria] >= #time(0, 1, 0) and [Horario Apresentação Portaria] <= #time(2, 0, 0))
+then "00:01h às 02:00h" else if
+[Horario Apresentação Portaria] >= #time(2, 1, 0) and [Horario Apresentação Portaria] <= #time(9, 0, 0)
+then "02:01h às 09:00h" else if
+[Horario Apresentação Portaria] >= #time(9, 1, 0) and [Horario Apresentação Portaria] <= #time(14, 0, 0)
+then "09:01h às 14:00h" else if
+[Horario Apresentação Portaria] >= #time(14, 1, 0) and [Horario Apresentação Portaria] <= #time(16, 0, 0)
+then "14:01h às 16:00h" else if
+[Horario Apresentação Portaria] >= #time(16, 1, 0) and [Horario Apresentação Portaria] <= #time(18, 0, 0)
+then "16:01h às 18:00h" else if
+[Horario Apresentação Portaria] >= #time(18, 1, 0) and [Horario Apresentação Portaria] <= #time(20, 0, 0)
+then "18:01h às 20:00h"
+else "-",type text)
+
+2__________________________________________________________________________
+
+
+Table.AddColumn(Veic20H, "HorariosVeic", each 
+if [Horario Apresentação Portaria] >= #time(20, 0, 0) and [Horario Apresentação Portaria] <= #time(22, 0, 0)
+then "20:00h às 22:00h" else if
+[Horario Apresentação Portaria] >= #time(22, 1, 0) and [Horario Apresentação Portaria] <= #time(23, 59, 0)
+then "22:01h às 23:59h" else if
+[Horario Apresentação Portaria] >= #time(0, 0, 0) and [Horario Apresentação Portaria] <= #time(2, 0, 0)
+then "00:00h às 02:00h" else if
+[Horario Apresentação Portaria] >= #time(2, 1, 0) and [Horario Apresentação Portaria] <= #time(8, 55, 0)
+then "02:01h às 08:55h" else if
+[Horario Apresentação Portaria] >= #time(9, 0, 0) and [Horario Apresentação Portaria] <= #time(14, 0, 0)
+then "09:00h às 14:00h" else if
+[Horario Apresentação Portaria] >= #time(14, 0, 0) and [Horario Apresentação Portaria] <= #time(16, 0, 0)
+then "14:00h às 16:00h" else if
+[Horario Apresentação Portaria] >= #time(16, 1, 0) and [Horario Apresentação Portaria] <= #time(18, 0, 0)
+then "16:01h às 18:00h" else if
+[Horario Apresentação Portaria] >= #time(18, 1, 0) and [Horario Apresentação Portaria] <= #time(19, 59, 0)
+then "18:01h às 19:59h"
+else "-",type text)
+
+3__________________________________________________________________________________
+
+Table.AddColumn(Veic20H, "HorariosVeic", each 
+if [HorariosVeic] = "20:00h às 22:00h" 
+or [HorariosVeic] = "22:01h às 00:00h" 
+or [HorariosVeic] = "00:01h às 02:00h"
+or [HorariosVeic] = "02:01h às 09:00h"
+then "20H" else "-")
+
+
+
+then "20:00h às 22:00h" else if
+[Horario Apresentação Portaria] >= #time(22, 1, 0) and [Horario Apresentação Portaria] <= #time(23, 59, 0)
+then "22:01h às 23:59h" else if
+[Horario Apresentação Portaria] >= #time(0, 0, 0) and [Horario Apresentação Portaria] <= #time(2, 0, 0)
+then "00:00h às 02:00h" else if
+[Horario Apresentação Portaria] >= #time(2, 1, 0) and [Horario Apresentação Portaria] <= #time(8, 55, 0)
+then "02:01h às 08:55h" else if
+[Horario Apresentação Portaria] >= #time(9, 0, 0) and [Horario Apresentação Portaria] <= #time(14, 0, 0)
+then "09:00h às 14:00h" else if
+[Horario Apresentação Portaria] >= #time(14, 0, 0) and [Horario Apresentação Portaria] <= #time(16, 0, 0)
+then "14:00h às 16:00h" else if
+[Horario Apresentação Portaria] >= #time(16, 1, 0) and [Horario Apresentação Portaria] <= #time(18, 0, 0)
+then "16:01h às 18:00h" else if
+[Horario Apresentação Portaria] >= #time(18, 1, 0) and [Horario Apresentação Portaria] <= #time(19, 59, 0)
+then "18:01h às 19:59h"
+else "-",type text)

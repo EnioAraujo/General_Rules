@@ -1,0 +1,6 @@
+let
+    Fonte = Table.Buffer(SALDO_DE_ESTOQUE),
+    #"Linhas Filtradas" = Table.SelectRows(Fonte, each ([TP_ESTOQUE] = "COD UDI") and ([DES_RESTRICAO] = "SEM RESTRICAO")),
+    #"Linhas Agrupadas" = Table.Group(#"Linhas Filtradas", {"BONIF_REGULAR_?", "DES_RESTRICAO", "EAN_REDUZ", "ITEM_DEPOSIT", "DEN_ITEM"}, {{"QTD FISICO", each List.Sum([QTD_SALDO_FISICO]), type nullable number}, {"QTD RESERVADA", each List.Sum([QTD_RESERVA_NORMAL]), type nullable number}, {"QTD DISPONIVEL", each List.Sum([QTD_SALDO_DISPONIVEL]), type nullable number}})
+in
+    #"Linhas Agrupadas"

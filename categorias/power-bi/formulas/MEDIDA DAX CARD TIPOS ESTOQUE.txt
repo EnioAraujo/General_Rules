@@ -1,0 +1,269 @@
+Card HTML Tipos Estoque = 
+
+-- ╔══════════════════════════════════════════════════════════════════╗
+-- ║                  🎨 PAINEL DE CONTROLE VISUAL                   ║
+-- ║   Ajuste os parâmetros abaixo sem mexer na lógica da medida      ║
+-- ╚══════════════════════════════════════════════════════════════════╝
+
+-- ──────────────────────────────────────────────────────────────────
+-- 🔎 ESCALA GERAL
+-- ──────────────────────────────────────────────────────────────────
+VAR EscalaCardPercentual = 100
+VAR FatorEscalaCard = DIVIDE(EscalaCardPercentual, 100)
+
+-- ──────────────────────────────────────────────────────────────────
+-- 🔤 FONTES
+-- ──────────────────────────────────────────────────────────────────
+VAR fonte_principal = "'Segoe UI', Arial, sans-serif"
+
+-- ──────────────────────────────────────────────────────────────────
+-- 🎨 CORES GERAIS
+-- ──────────────────────────────────────────────────────────────────
+VAR cor_dark   = "#212B36"
+VAR cor_orange = "#F37E38"
+VAR cor_white  = "#FFFFFF"
+VAR cor_muted  = "#637381"
+VAR cor_border = "#DFE3E8"
+VAR cor_bg     = "#F4F6F8"
+VAR cor_green  = "#1B7A4E"
+VAR cor_red    = "#B71C1C"
+VAR cor_amber  = "#B76E00"
+
+VAR cor_fundo_card = cor_white
+
+-- Cores dos Chips (Fundo)
+VAR bg_chip_red    = "#FDEDED"
+VAR bg_chip_orange = "#FFF4EC"
+VAR bg_chip_green  = "#E8F5EE"
+
+-- ──────────────────────────────────────────────────────────────────
+-- 📦 CARD / CONTAINER
+-- ──────────────────────────────────────────────────────────────────
+VAR largura_card = ROUND(420 * FatorEscalaCard, 0) & "px"
+VAR raio_borda_card = ROUND(12 * FatorEscalaCard, 0) & "px"
+VAR sombra_card = "0 1px 4px rgba(33,43,54,.06)"
+
+-- ──────────────────────────────────────────────────────────────────
+-- 🏷️ CABEÇALHO (HEADER)
+-- ──────────────────────────────────────────────────────────────────
+VAR padding_head = ROUND(18 * FatorEscalaCard, 0) & "px " & ROUND(22 * FatorEscalaCard, 0) & "px " & ROUND(14 * FatorEscalaCard, 0) & "px"
+VAR tamanho_nome = ROUND(15 * FatorEscalaCard, 0) & "px"
+VAR tamanho_tag = ROUND(11 * FatorEscalaCard, 0) & "px"
+VAR tamanho_pct = ROUND(36 * FatorEscalaCard, 0) & "px"
+
+-- Chip
+VAR padding_chip = ROUND(3 * FatorEscalaCard, 0) & "px " & ROUND(10 * FatorEscalaCard, 0) & "px"
+VAR tamanho_chip = ROUND(11 * FatorEscalaCard, 0) & "px"
+VAR raio_chip = ROUND(5 * FatorEscalaCard, 0) & "px"
+
+-- ──────────────────────────────────────────────────────────────────
+-- 📊 BARRA PRINCIPAL
+-- ──────────────────────────────────────────────────────────────────
+VAR padding_bar_sec = ROUND(14 * FatorEscalaCard, 0) & "px " & ROUND(22 * FatorEscalaCard, 0) & "px " & ROUND(4 * FatorEscalaCard, 0) & "px"
+VAR altura_track = ROUND(10 * FatorEscalaCard, 0) & "px"
+VAR raio_track = ROUND(5 * FatorEscalaCard, 0) & "px"
+
+-- ──────────────────────────────────────────────────────────────────
+-- 📈 KPIs
+-- ──────────────────────────────────────────────────────────────────
+VAR padding_kpis = ROUND(14 * FatorEscalaCard, 0) & "px " & ROUND(22 * FatorEscalaCard, 0) & "px"
+VAR tamanho_kpi_val = ROUND(24 * FatorEscalaCard, 0) & "px"
+VAR tamanho_kpi_lbl = ROUND(10 * FatorEscalaCard, 0) & "px"
+
+-- ──────────────────────────────────────────────────────────────────
+-- 🛣️ SEÇÃO DE RUAS
+-- ──────────────────────────────────────────────────────────────────
+VAR padding_ruas = ROUND(14 * FatorEscalaCard, 0) & "px " & ROUND(22 * FatorEscalaCard, 0) & "px " & ROUND(18 * FatorEscalaCard, 0) & "px"
+VAR tamanho_rua_title = ROUND(10 * FatorEscalaCard, 0) & "px"
+VAR tamanho_rua_nm = ROUND(12 * FatorEscalaCard, 0) & "px"
+VAR tamanho_rua_nums = ROUND(11 * FatorEscalaCard, 0) & "px"
+
+VAR altura_rua_bar = ROUND(8 * FatorEscalaCard, 0) & "px"
+VAR raio_rua_bar = ROUND(4 * FatorEscalaCard, 0) & "px"
+VAR margem_rua_row = ROUND(11 * FatorEscalaCard, 0) & "px"
+
+-- ╔══════════════════════════════════════════════════════════════════╗
+-- ║                   ⚙️ LÓGICA DE NEGÓCIO                          ║
+-- ╚══════════════════════════════════════════════════════════════════╝
+
+-- 1. Medidas Gerais do Contexto (Card Principal)
+VAR vNome = SELECTEDVALUE('[DIM]CAPACIDADE'[TP_ESTOQUE], "HUB BRASIL")
+VAR vTag = SELECTEDVALUE('[DIM]CAPACIDADE'[TP_ESTOQUE], "Armazém 3 · Cigarro & Fumo · 6 ruas")
+
+-- Associa as medidas globais do seu modelo
+VAR vCapacidade = [Capacidades]
+VAR vOcupados = [Enderecos_Ocupados]
+VAR vVazios = [Enderecos_Vazios]
+VAR vPct = [%_Ocupados] 
+
+-- Tratamento para valores Blank
+VAR vPctSafe = IF(ISBLANK(vPct) || ISERROR(vPct), 0, vPct)
+VAR vCapacidadeSafe = IF(ISBLANK(vCapacidade), 0, vCapacidade)
+VAR vOcupadosSafe = IF(ISBLANK(vOcupados), 0, vOcupados)
+VAR vVaziosSafe = IF(ISBLANK(vVazios), 0, vVazios)
+
+-- Largura CSS da barra (corrige erro de vírgula e max 100%)
+VAR vPctWidth = SUBSTITUTE(FORMAT(MIN(vPctSafe * 100, 100), "0.0"), ",", ".")
+
+-- 2. Definição de Status Principal (Regras de Negócio de Cores)
+VAR status_pct = 
+    SWITCH(
+        TRUE(),
+        vPctSafe >= 0.75, "high",
+        vPctSafe >= 0.50, "mid",
+        "low"
+    )
+
+VAR cor_status = 
+    SWITCH(status_pct, "high", cor_red, "mid", cor_orange, "low", cor_green)
+
+VAR bg_status = 
+    SWITCH(status_pct, "high", bg_chip_red, "mid", bg_chip_orange, "low", bg_chip_green)
+
+VAR icone_status = 
+    SWITCH(status_pct, "high", "⬆", "mid", "▶", "low", "✔")
+
+VAR label_status = 
+    SWITCH(status_pct, "high", "ALTO", "mid", "MÉDIO", "low", "BAIXO")
+
+-- Formatações Numéricas
+VAR pct_formatado = FORMAT(vPctSafe, "0.0%")
+VAR cap_formatado = FORMAT(vCapacidadeSafe, "#,##0")
+VAR oc_formatado = FORMAT(vOcupadosSafe, "#,##0")
+VAR vaz_formatado = FORMAT(vVaziosSafe, "#,##0")
+
+
+-- 3. Geração das Linhas de Rua (Iteração)
+VAR html_ruas = 
+    CONCATENATEX(
+        FILTER(
+            VALUES('[DIM]CAPACIDADE'[RUA]),
+            [Capacidades] > 0 || [Enderecos_Ocupados] > 0
+        ),
+        
+        VAR rNome = '[DIM]CAPACIDADE'[RUA]
+        VAR rCapacidade = [Capacidades]
+        VAR rOcupados = [Enderecos_Ocupados]
+        VAR rPct = [%_Ocupados]
+        
+        VAR rCapSafe = IF(ISBLANK(rCapacidade), 0, rCapacidade)
+        VAR rOcSafe = IF(ISBLANK(rOcupados), 0, rOcupados)
+        VAR rPctSafe = IF(ISBLANK(rPct) || ISERROR(rPct) || rCapSafe = 0, 0, rPct)
+        
+        -- Largura CSS (corrige erro inf e vírgula decimal)
+        VAR rPctWidth = SUBSTITUTE(FORMAT(MIN(rPctSafe * 100, 100), "0.0"), ",", ".")
+        
+        VAR rStatus = 
+            SWITCH(
+                TRUE(),
+                rPctSafe >= 0.75, "high",
+                rPctSafe >= 0.50, "mid",
+                "low"
+            )
+            
+        VAR rCor = SWITCH(rStatus, "high", cor_red, "mid", cor_orange, "low", cor_green)
+        VAR rCorDarkStatus = SWITCH(rStatus, "high", cor_red, "mid", cor_amber, "low", cor_green)
+        VAR rPctFormatado = FORMAT(rPctSafe, "0.0%")
+        
+        RETURN
+        "<div style='margin-bottom:" & margem_rua_row & ";'>
+            <div style='display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px;'>
+                <span style='font-size:" & tamanho_rua_nm & "; font-weight:700; color:" & cor_dark & ";'>" & rNome & "</span>
+                <span style='font-size:" & tamanho_rua_nums & "; color:" & cor_muted & ";'>
+                    <strong style='color:" & cor_dark & "; font-weight:700;'>" & FORMAT(rOcSafe, "#,##0") & "</strong> / " & FORMAT(rCapSafe, "#,##0") & " · 
+                    <span style='color:" & rCorDarkStatus & "; font-weight:700;'>" & rPctFormatado & "</span>
+                </span>
+            </div>
+            <div style='height:" & altura_rua_bar & "; background:" & cor_border & "; border-radius:" & raio_rua_bar & "; overflow:hidden;'>
+                <div style='height:100%; border-radius:" & raio_rua_bar & "; background:" & rCor & "; width:" & rPctWidth & "%;'></div>
+            </div>
+        </div>",
+        "", -- Separador (vazio)
+        [%_Ocupados], DESC -- Ordenação por percentual decrescente (opcional)
+    )
+
+-- ╔══════════════════════════════════════════════════════════════════╗
+-- ║                   🧱 MONTAGEM DO HTML                           ║
+-- ╚══════════════════════════════════════════════════════════════════╝
+
+RETURN
+"
+<div style='
+    width:" & largura_card & ";
+    background:" & cor_fundo_card & ";
+    border:1px solid " & cor_border & ";
+    border-radius:" & raio_borda_card & ";
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    box-shadow:" & sombra_card & ";
+    font-family:" & fonte_principal & ";
+    box-sizing:border-box;
+'>
+
+    <!-- Cabeçalho -->
+    <div style='
+        padding:" & padding_head & ";
+        border-bottom:1px solid " & cor_border & ";
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+    '>
+        <div>
+            <div style='font-size:" & tamanho_nome & "; font-weight:800; letter-spacing:-0.2px; color:" & cor_dark & ";'>" & vNome & "</div>
+            <div style='font-size:" & tamanho_tag & "; color:" & cor_muted & "; margin-top:3px; text-transform:uppercase; letter-spacing:0.4px;'>" & vTag & "</div>
+        </div>
+        <div style='text-align:right;'>
+            <div style='font-size:" & tamanho_pct & "; font-weight:800; line-height:1; color:" & cor_status & ";'>" & pct_formatado & "</div>
+            <div style='
+                display:inline-flex;
+                align-items:center;
+                gap:4px;
+                font-size:" & tamanho_chip & ";
+                font-weight:700;
+                letter-spacing:0.4px;
+                padding:" & padding_chip & ";
+                border-radius:" & raio_chip & ";
+                margin-top:6px;
+                background:" & bg_status & ";
+                color:" & SWITCH(status_pct, "high", cor_red, "mid", cor_amber, "low", cor_green) & ";
+            '>" & icone_status & " " & label_status & "</div>
+        </div>
+    </div>
+
+    <!-- Barra Principal -->
+    <div style='padding:" & padding_bar_sec & ";'>
+        <div style='height:" & altura_track & "; background:" & cor_border & "; border-radius:" & raio_track & "; overflow:hidden;'>
+            <div style='height:100%; border-radius:" & raio_track & "; background:" & cor_status & "; width:" & vPctWidth & "%;'></div>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div style='
+        display:grid;
+        grid-template-columns:1fr 1fr 1fr;
+        padding:" & padding_kpis & ";
+        border-bottom:1px solid " & cor_border & ";
+    '>
+        <div style='text-align:center; border-right:1px solid " & cor_border & ";'>
+            <div style='font-size:" & tamanho_kpi_val & "; font-weight:700; color:" & cor_dark & ";'>" & cap_formatado & "</div>
+            <div style='font-size:" & tamanho_kpi_lbl & "; color:" & cor_muted & "; text-transform:uppercase; letter-spacing:0.7px; margin-top:3px;'>Capacidade</div>
+        </div>
+        <div style='text-align:center; border-right:1px solid " & cor_border & ";'>
+            <div style='font-size:" & tamanho_kpi_val & "; font-weight:700; color:" & cor_status & ";'>" & oc_formatado & "</div>
+            <div style='font-size:" & tamanho_kpi_lbl & "; color:" & cor_muted & "; text-transform:uppercase; letter-spacing:0.7px; margin-top:3px;'>Ocupados</div>
+        </div>
+        <div style='text-align:center;'>
+            <div style='font-size:" & tamanho_kpi_val & "; font-weight:700; color:" & cor_dark & ";'>" & vaz_formatado & "</div>
+            <div style='font-size:" & tamanho_kpi_lbl & "; color:" & cor_muted & "; text-transform:uppercase; letter-spacing:0.7px; margin-top:3px;'>Vazios</div>
+        </div>
+    </div>
+
+    <!-- Ruas -->
+    <div style='padding:" & padding_ruas & ";'>
+        <div style='font-size:" & tamanho_rua_title & "; font-weight:700; letter-spacing:1.1px; text-transform:uppercase; color:" & cor_muted & "; margin-bottom:12px;'>Ocupação por Rua</div>
+        " & html_ruas & "
+    </div>
+
+</div>
+"

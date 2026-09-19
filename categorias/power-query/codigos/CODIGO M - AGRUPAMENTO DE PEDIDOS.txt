@@ -1,0 +1,106 @@
+= let
+    Dados = #"Colunas Removidas",
+    
+    ColunasStatus = Table.SelectColumns(
+        Dados,
+        {
+            "PEDIDO",
+            "LISTA",
+            "QTDE_ITEM",
+            "SOMA_ITEM",
+            "DAT_INCLUSAO",
+            "last_updated",
+            "HORA-ACOLHIDO",
+            "HORA-ONDA_GERADA",
+            "HORA-PLANO_GERADO",
+            "HORA-INI_SEPARACAO",
+            "HORA-FIM_SEPARACAO",
+            "HORA-INI_CONFERENCIA",
+            "HORA-FIM_CONFERENCIA",
+            "HORA-EXPEDIDO"
+        }
+    ),
+    
+    Unpivotado = Table.Unpivot(
+        ColunasStatus,
+        {
+            "HORA-ACOLHIDO",
+            "HORA-ONDA_GERADA",
+            "HORA-PLANO_GERADO",
+            "HORA-INI_SEPARACAO",
+            "HORA-FIM_SEPARACAO",
+            "HORA-INI_CONFERENCIA",
+            "HORA-FIM_CONFERENCIA",
+            "HORA-EXPEDIDO"
+        },
+        "STATUS_TIPO",
+        "HORA_STATUS"
+    ),
+    
+    RemoverNulos = Table.SelectRows(Unpivotado, each [HORA_STATUS] <> null),
+    
+    AdicionarStatusNome = Table.AddColumn(
+        RemoverNulos,
+        "STATUS_NOME",
+        each
+            if [STATUS_TIPO] = "HORA-ACOLHIDO" then "ACOLHIDO"
+            else if [STATUS_TIPO] = "HORA-ONDA_GERADA" then "ONDA GERADA"
+            else if [STATUS_TIPO] = "HORA-PLANO_GERADO" then "PLANO GERADO"
+            else if [STATUS_TIPO] = "HORA-INI_SEPARACAO" then "EM SEPARAÇÃO"
+            else if [STATUS_TIPO] = "HORA-FIM_SEPARACAO" then "FIM SEPARAÇÃO"
+            else if [STATUS_TIPO] = "HORA-INI_CONFERENCIA" then "EM CONFERÊNCIA"
+            else if [STATUS_TIPO] = "HORA-FIM_CONFERENCIA" then "FIM CONFERÊNCIA"
+            else if [STATUS_TIPO] = "HORA-EXPEDIDO" then "EXPEDIDO"
+            else "DESCONHECIDO",
+        type text
+    ),
+    
+    Ordenado = Table.Sort(
+        AdicionarStatusNome,
+        {
+            {"PEDIDO", Order.Ascending},
+            {"HORA_STATUS", Order.Descending}
+        }
+    ),
+    
+    AdicionarRanking = Table.AddColumn(
+        Ordenado,
+        "RANKING",
+        each
+            let
+                PedidoAtual = [PEDIDO],
+                Filtrado = Table.SelectRows(Ordenado, each [PEDIDO] = PedidoAtual),
+                Posicao = List.PositionOf(Filtrado[PEDIDO], PedidoAtual)
+            in
+                Posicao + 1,
+        type number
+    ),
+    
+    ApenasStatusAtual = Table.SelectRows(AdicionarRanking, each [RANKING] = 1),
+    
+    // 🆕 AGRUPAR POR PEDIDO
+    AgruparPorPedido = Table.Group(
+        ApenasStatusAtual,
+        {"PEDIDO"},
+        {
+            {"DADOS", each Table.FirstN(_, 1)}
+        }
+    ),
+    
+    // 🆕 EXPANDIR
+    ExpandirDados = Table.ExpandTableColumn(
+        AgruparPorPedido,
+        "DADOS",
+        {
+            "LISTA",
+            "QTDE_ITEM",
+            "SOMA_ITEM",
+            "DAT_INCLUSAO",
+            "last_updated",
+            "STATUS_NOME",
+            "HORA_STATUS"
+        }
+    )
+
+in
+    ExpandirDados

@@ -1,0 +1,88 @@
+Sub GerarQRCodeESequencia()
+    Dim wsQR As Worksheet
+    Dim wsAux As Worksheet
+    Dim qtdeEtiquetas As Integer
+    Dim i As Integer
+    Dim urlBase As String
+    Dim textoQR As String
+    Dim QRImageURL As String
+    Dim http As Object
+    Dim img As Picture
+    Dim cmToPoints As Double
+    
+    ' Conversão de cm para pontos (1 cm = 28,35 pontos)
+    cmToPoints = 28.35
+    
+    ' Definir as planilhas
+    Set wsQR = ThisWorkbook.Sheets("QR")
+    Set wsAux = ThisWorkbook.Sheets("ABA AUXILIAR")
+    
+    ' Captura a quantidade de etiquetas da célula B11
+    qtdeEtiquetas = wsQR.Range("D5").Value
+    
+    ' Verifica se B11 é um número válido maior que zero
+    If IsNumeric(qtdeEtiquetas) And qtdeEtiquetas > 0 Then
+        ' Loop para gerar a sequência, QR Code e imprimir
+        For i = 1 To qtdeEtiquetas
+            ' Escreve o número na célula B10
+            wsQR.Range("D7").Value = i
+            
+            ' Captura o texto da célula 'ABA AUXILIAR'!$B$7
+            textoQR = wsAux.Range("B7").Value
+            
+            ' Cria a URL do QR Code com base no texto
+            urlBase = "https://quickchart.io/qr?text="
+            QRImageURL = urlBase & Application.EncodeURL(textoQR)
+            
+            ' Baixa a imagem do QR Code
+            Set http = CreateObject("MSXML2.XMLHTTP")
+            http.Open "GET", QRImageURL, False
+            http.Send
+            
+            ' Salva a imagem em um arquivo temporário
+            If http.Status = 200 Then
+                Dim TempFilePath As String
+                TempFilePath = Environ("TEMP") & "\QRCode" & i & ".png"
+                Dim stream As Object
+                Set stream = CreateObject("ADODB.Stream")
+                stream.Type = 1 ' Tipo binário
+                stream.Open
+                stream.Write http.responseBody
+                stream.SaveToFile TempFilePath, 2
+                stream.Close
+                
+                ' Insere a imagem do QR Code na célula H3
+                On Error Resume Next
+                wsQR.Pictures("QRCodeImage").Delete ' Remove a imagem anterior se existir
+                On Error GoTo 0
+                Set img = wsQR.Pictures.Insert(TempFilePath)
+                With img
+                    .Name = "QRCodeImage"
+                    .Top = wsQR.Range("H3").Top
+                    .Left = wsQR.Range("H3").Left
+                    ' Desativa a proporção fixa e ajusta o tamanho
+                    .ShapeRange.LockAspectRatio = msoFalse
+                    .Placement = xlMoveAndSize
+                    .Width = 11.5 * cmToPoints ' 11,5 cm em pontos
+                    .Height = 11.5 * cmToPoints ' 11,5 cm em pontos
+                End With
+            Else
+                MsgBox "Falha ao gerar o QR Code. Verifique sua conexão com a internet.", vbExclamation
+                Exit Sub
+            End If
+            
+            ' Imprime a área de impressão "Area_de_impressao"
+            wsQR.PageSetup.PrintArea = wsQR.Range("Area_de_impressao").Address
+            wsQR.PrintOut
+            
+            ' Pausa por 6 segundos antes de ir para o próximo número
+            Application.Wait Now + TimeValue("00:00:01")
+        Next i
+    Else
+        MsgBox "Por favor, insira um número válido em B11.", vbExclamation
+    End If
+End Sub
+
+
+
+

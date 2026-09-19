@@ -1,0 +1,164 @@
+let
+    // Conecta ao Sharepoint e navega até a pasta específica
+    Fonte = SharePoint.Contents(SHP_CODUDI, [ApiVersion = 15])
+{[Name = "Documentos Partilhados"]}[Content]
+{[Name = "PROJETO - SEP REVENDA"]}[Content]
+{[Name = "03 - ARQUIVOS CSV"]}[Content],
+    FiltraMesAtual = Table.SelectRows( 
+Table.TransformColumnTypes(Fonte,{{"Name",Date.Type}}),
+each Date.IsInCurrentMonth([Name])),
+    // Adiciona o nome do arquivo
+    ArquivosComNome = let 
+A = Table.AddColumn(FiltraMesAtual, "NomeArquivo", each [Name])[Content]{0},
+B = Table.ExpandTableColumn(A, "Content", {"Content", "Name", "Extension", "Date accessed", "Date modified", "Date created", "Attributes", "Folder Path"}, {"Content.1", "Name.1", "Extension.1", "Date accessed.1", "Date modified.1", "Date created.1", "Attributes.1", "Folder Path.1"}),
+C = Table.SelectColumns(B,{"Content.1","Name.1"}),
+D = Table.SelectRows(C,each 
+Text.Start([Name.1],8)="VL06O_CO"),
+E = Table.TransformColumns(D,{{"Name.1",each Text.BetweenDelimiters(_,"VL06O_CO_","_")}}),
+F = Table.TransformColumnTypes(E,{{"Name.1", type date}}),
+G_ = Table.SelectRows(
+Table.AddColumn(F,"Dias", each Duration.Days(Date.From(DateTime.LocalNow())-[Name.1])-1, type number),
+each [Dias]>=0 and [Dias]<=22)
+
+in
+G_[Content.1],
+    Varias_transformacoes = let
+TabelasCSV = Table.Combine(
+List.Transform(ArquivosComNome, 
+each Csv.Document(_,[Delimiter=";", Encoding=1252]))),
+
+RenameCols = Table.RenameColumns(TabelasCSV,{{"Column1","Fornecimento"},
+{"Column2","Data do picking"},
+{"Column3","Remessas (de/até)"},
+{"Column4","Documento de compras"},
+{"Column5","Tipo de remessa"},
+{"Column6","Status processamento"},
+{"Column7","Centro"},
+{"Column8","Local expedição/recebimento"},
+{"Column9","Emissor da ordem"},
+{"Column10","Depósito"},
+{"Column11","Cidade recebedor ordem"},
+{"Column12","Nome do recebedor da mercadoria"},
+{"Column13","Material"},
+{"Column14","Denominação"},
+{"Column15","Qtd.real em UGE"},
+{"Column16","UM básica"}})
+
+
+
+in
+RenameCols,
+
+    AlteraTiposdeDados = // Fixa os tipos de dados de cada coluna
+Table.TransformColumnTypes(
+
+// Cria o cabeçalho da tabela a aartir da segunda linha
+Varias_transformacoes,{{"Fornecimento", Int64.Type}, {"Data do picking", type date}, {"Remessas (de/até)", type date}, {"Documento de compras", Int64.Type}, {"Tipo de remessa", type text}, {"Status processamento", type text}, {"Centro", type text}, {"Local expedição/recebimento", type text}, {"Emissor da ordem", Int64.Type}, {"Depósito", type text}, {"Cidade recebedor ordem", type text}, {"Nome do recebedor da mercadoria", type text}, {"Material", Int64.Type}, {"Denominação", type text}, {"Qtd.real em UGE", type number}, {"UM básica", type text}}),
+    
+    // Mescla tabela com base de itens, para trazer algumas colunas de informações sobre os itens
+    ConsultasMescladas1 = let
+group = Table.Group(AlteraTiposdeDados, {"Material", "UM básica"}, {{"QTD. SAÍDA", each List.Sum([Qtd.real em UGE]), type number}}),
+
+join = Table.NestedJoin(group, {"Material"}, TB_BASE_ITENS, {"ITEM"}, "TB_BASE_ITENS", JoinKind.LeftOuter),
+expand = Table.ExpandTableColumn(join, "TB_BASE_ITENS", {"DESCRIÇÃO DO ITEM", "QTD_POR_CAIXA", "QTD_BASE_CX", "QTD_PACOTE_CX", "QTD_UN_PACOTE", "CATEGORIA_ITEM", "SUB_CATEGORIA", "MenorUnidadePCT", "DRIVE"}, {"DESCRIÇÃO DO ITEM", "QTD_POR_CAIXA", "QTD_BASE_CX", "QTD_PACOTE_CX", "QTD_UN_PACOTE", "CATEGORIA_ITEM", "SUB_CATEGORIA", "MenorUnidadePCT", "DRIVE"}),
+ filtracigarro = Table.SelectRows(expand, each ([CATEGORIA_ITEM] = "CIGARRO"))
+
+in
+filtracigarro,
+    // altera o tipo de dado da coluna MenorUnidadePCT, para tipo número
+    AlteraTipo = Table.TransformColumnTypes(ConsultasMescladas1,
+{{"MenorUnidadePCT",type number},{"DRIVE",type number},{"Material",type number}}),
+    ColConversao = let
+
+Colconv = Table.AddColumn(
+        AlteraTipo, 
+        "CONVERSAO", 
+        each 
+                let
+                    // Calcula o valor decimal completo
+                    valorCalculado = ([QTD. SAÍDA]/[MenorUnidadePCT]),
+                    
+                    // Converte para texto e pega a parte antes da vírgula (caso exista)
+                    parteInteira = Text.BeforeDelimiter(Text.From(valorCalculado, "pt-BR"), ","),
+                    //parteFracao = Text.AfterDelimiter(Text.From(valorCalculado, "pt-BR"), ",", {"", 000}),
+                    // Converte para número inteiro com tratamento de erro
+                    resultado = try Number.From(parteInteira) otherwise 0
+                in
+                    resultado,
+        type number
+    )
+
+in
+Colconv,
+    
+    // Cria a coluna Caixas
+    ColCaixas = Table.AddColumn(ColConversao,
+ "CAIXAS", each
+Number.Round(Int64.From(Text.BeforeDelimiter(Text.From([CONVERSAO]/[QTD_BASE_CX]), ","))),
+ type number),
+    
+    // Cria a coluna Pacotes
+    ColPacotes = Table.AddColumn(ColCaixas, "PACOTES", each 
+Int64.From(Text.BeforeDelimiter(Text.From((([CONVERSAO]/[QTD_BASE_CX]) - [CAIXAS]) * [QTD_PACOTE_CX]), ",")),
+type number),
+    // Cria a coluna Maços e Unidades
+    ColMacos = Table.AddColumn(
+        ColPacotes, 
+        "MACOS_UN", 
+        each 
+                let
+                    // Calcula o valor decimal completo
+                    valorCalculado = ((([CONVERSAO]/[QTD_BASE_CX]) - [CAIXAS]) * [QTD_PACOTE_CX] - [PACOTES]) * [QTD_UN_PACOTE],
+                    
+                    // Converte para texto e pega a parte antes da vírgula (caso exista)
+                    parteInteira = Text.BeforeDelimiter(Text.From(valorCalculado, "pt-BR"), ",", {0, ""}),
+                    //parteFracao = Text.AfterDelimiter(Text.From(valorCalculado, "pt-BR"), ",", {"", 000}),
+                    // Converte para número inteiro com tratamento de erro
+                    resultado = try Number.From(parteInteira) otherwise 0
+                in
+                    resultado,
+        type number
+    ),
+    // ESTA COLUNA REFAZ A CONVERSÃO EM MILHEIROS E UNIDADES, PARA VALIDAR SE BATE A QUANTIDADE ORIGINAL
+    ColReverterConversao = let
+
+Colconv = 
+
+ Table.AddColumn(
+        ColMacos, 
+        "conv", 
+        each  
+                let
+                    // Calcula o valor decimal completo
+                    valorCalculado = (([CAIXAS]*[QTD_POR_CAIXA])+([PACOTES]*0.2)),
+                    // Converte para texto e pega a parte antes da vírgula (caso exista)
+                    parteInteira = Text.BeforeDelimiter(Text.From(valorCalculado, "pt-BR"), ","),
+                    //parteFracao = Text.AfterDelimiter(Text.From(valorCalculado, "pt-BR"), ",", {"", 000}),
+                    // Converte para número inteiro com tratamento de erro
+                    resultado = try Number.From(parteInteira) otherwise 0
+                in
+                    resultado,
+        type number
+    ),
+
+ColConversao02 = Table.AddColumn(Colconv,"CONVERS_VALID", each if [conv] = 0 then (([CAIXAS]*[QTD_POR_CAIXA])+([PACOTES]*0.2)) else [conv], type number),
+
+removeconv = Table.RemoveColumns(ColConversao02,{"conv"})
+
+in
+removeconv,
+    // SE O VALOR DE CONVERS_VALID FOR IGUAL A VOL_PEDIDO, ENTÃO OK, SENÃO NOK 
+    ColStatus = Table.AddColumn(ColReverterConversao, "STATUS",
+each if ([CONVERS_VALID] = [QTD. SAÍDA]) then "OK"
+else "NOK", type text),
+    RemoveCols = let
+removecols = Table.RemoveColumns(ColStatus, {"QTD. SAÍDA"}),
+renamecols = Table.RenameColumns(removecols,{{"CONVERS_VALID","QTD. SAÍDA"}})
+in
+renamecols,
+    ColPedido = // ESTA COLUNA TRAZ O 70% DO VALOR DA COLUNA "QTD. SAÍDA"
+Table.AddColumn(RemoveCols,"VOL_PEDIDO", each 
+if Number.Round(([QTD. SAÍDA]*0.7)) = 0 then [QTD. SAÍDA]
+else Number.Round(([QTD. SAÍDA]*0.7)), type number)
+in
+    ColPedido

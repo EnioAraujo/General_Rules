@@ -1,0 +1,15 @@
+D = Table.AddColumn(C, "PEDIDO_FIM", each
+    let
+        StoTexto = Text.From([STO], "pt-BR"),
+        Comprimento = Text.Length(StoTexto),
+        NumCaracteres = 
+            if Comprimento = 11 then 1
+            else if Comprimento = 12 then 2
+            else if Comprimento = 13 then 3
+            else 0
+    in
+        if NumCaracteres > 0 then
+            Text.End(StoTexto, NumCaracteres)
+        else
+            ""
+, type text)

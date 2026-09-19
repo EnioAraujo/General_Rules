@@ -1,0 +1,10 @@
+= Table.TransformColumnTypes(
+    Table.AddColumn(#"Tipo Alterado","CATEGORIA_ITEM", each 
+if [ITEM_DEPOSIT] = 10053057 then "FUMO TREVO" 
+else if Text.Start([ITEM_DEPOSIT],2) = "10" then "CIGARRO"
+else if Text.Start([ITEM_DEPOSIT],2) = "50" then "PARCERIA"
+else if Text.Start([ITEM_DEPOSIT],2) = "75" then "MERCHAN"
+else if Text.Start([ITEM_DEPOSIT],2) = "40" then "MERCHAN"
+else if Text.Start([ITEM_DEPOSIT],2) = "73" then "MERCHAN"
+else "VERIFICAR CATEGORIA"
+),{{"ITEM_DEPOSIT", Int64.Type}})

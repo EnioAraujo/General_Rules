@@ -1,0 +1,24 @@
+ANTIGA OPÇÃO_____
+
+DIAS =SEERRO(VALOR(EXT.TEXTO(TRUNCAR(SOMA([@[Data Admis.]]-HOJE())/365;1);2;1));0)
+
+MESES =SEERRO(VALOR(EXT.TEXTO(
+TRUNCAR(
+SOMA([@[Data Admis.]]-HOJE())/365;1);4;1));0)
+
+
+
+
+NOVA OPÇÃO___________
+
+
+ANOS =DATADIF([@Admissão]; HOJE(); "Y")
+MESES DATADIF([@Admissão]; HOJE(); "YM")
+DIAS =DATADIF([@Admissão]; HOJE(); "MD")
+
+CONCATENADO 
+=DATADIF([@Admissão]; HOJE(); "Y") & " anos; " & DATADIF(A1; B1; "YM") & " meses; " & DATADIF([@Admissão]; HOJE(); "MD") & " dias"
+
+
+
+

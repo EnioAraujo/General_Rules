@@ -1,0 +1,8 @@
+let
+    Fonte = SharePoint.Files(FONTE_SHP, [ApiVersion = 15])
+{[Name = "TURNOS_OTIMIZADO.xlsx"]}[Content],
+    Navegacao = Excel.Workbook(Fonte){[Name = "horarios"]}[Data],
+    PromoveCabecalhos = Table.PromoteHeaders(Navegacao),
+    AlteraTipos = Table.TransformColumnTypes(PromoveCabecalhos,{{"Horario24", type time}, {"HoraInicio", type time}, {"MinutoInicio", type time}, {"Hora", Int64.Type}, {"Minuto", Int64.Type}, {"Segundo", Int64.Type}, {"Periodo", type text}, {"HoraNumero", Int64.Type}, {"PeriodoDia", type text}, {"DescTurno", type text}, {"TurnoAbrev", type text}, {"TurnoNum", Int64.Type}})
+in
+    AlteraTipos

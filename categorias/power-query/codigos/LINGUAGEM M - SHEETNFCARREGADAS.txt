@@ -1,0 +1,35 @@
+let
+  Origem = 
+SharePoint.Contents(#"SHP (2)", [ApiVersion = 15])//SHP é o parametro que guarda o caminho do sharepoint
+    {[Name = "Shared Documents"]}[Content] // filtra na coluna Name a pasta Shared Documents e abro a pasta com o comando content
+    {[Name = "General"]}[Content] // filtra na coluna name a pasta General e abro a pasta com o comando content
+    {[Name = "Fill Rate M3"]}[Content] // filtra na coluna name a pasta Fill Rate M3 e abro a pasta com o comando content
+    {[Name = "Comboio"]}[Content] // filtra na coluna name a pasta Comboio e abro a pasta com o comando content
+    {[Name =  "Controle_Comboio_2025"]}[Content],
+  ExtractBinays = Table.Combine(
+    List.Transform(
+        Origem[Content],
+        each
+            let
+                wb = Excel.Workbook(_, true),
+                aba = Table.SelectRows(wb, each [Name] = "Notas Fiscais - Carregadas")
+            in
+                if Table.IsEmpty(aba) then #table({}, {}) else aba{0}[Data]
+    )
+),
+  #"Linhas filtradas" = Table.SelectRows(ExtractBinays, each ([#"Embarque (F.O)"] <> null)),
+  SelectColls = Table.SelectColumns(#"Linhas filtradas",{"Embarque (F.O)",
+"Data Embarque",
+"Destino",
+"Tipo de Embarque",
+"Placa Cavalo",
+"STO",
+"NF/Série",
+"Quantidde cxs NF",
+"Classificação Produto"}),
+  #"Tipo de coluna alterado" = Table.TransformColumnTypes(SelectColls, {{"Data Embarque", type date}, {"Embarque (F.O)", type text}, {"STO", type text}}),
+  #"Linhas classificadas" = Table.Sort(#"Tipo de coluna alterado", {{"Data Embarque", Order.Descending}})
+
+
+in
+    #"Linhas classificadas"

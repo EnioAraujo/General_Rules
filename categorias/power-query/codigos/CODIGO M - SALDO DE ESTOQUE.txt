@@ -1,0 +1,144 @@
+let
+   Fonte = Sql.Database("192.168.102.154", "logixprd"),
+    Filtros = let
+A = Table.SelectRows(Fonte, each ([Kind] = "View")){[Schema="totvssupp",Item="VW_TT_ESTOQUE"]}[Data],
+B = Table.SelectRows(A,each ([COD_EMPRESA] = "04") and ([DEPOSIT] = "033009911001887" or [DEPOSIT] = "033009911046988"))
+in
+B,
+    SelectColunas = Table.SelectColumns(Filtros,{"ENDERECO", "DES_ENDERECO", "ITEM", "ITEM_DEPOSIT", "DEN_ITEM", "SKU", "DES_SKU", "IDENTIF_ESTOQUE", "DES_TIP_ESTOQUE", "DES_RESTRICAO", "IES_SITUA_QTD", "DEN_SITUA_QTD", "QTD_ORIGEM", "QTD_REGULARIZADA", "QTD_SALDO_FISICO", "QTD_RESERVA_NORMAL", "QTD_RESERVA_PROVIS", "QTD_SALDO_DISPONIVEL", "QTD_EM_TERCEIROS", "QTD_ITEM", "PALETE", "IDENTIF_SAIDA", "IDENTIF_SAIDA_EXPED", "RECEBIMENTO_INDUSTRIALIZACAO", "ORIGEM_IDENTIF_ESTOQUE", "CTR_ENT_SAI_VEIC_DOCUM", "NUM_LOTE", "NUM_PECA", "NUM_SERIE", "NUM_VOLUME", "DAT_HOR_PRODUCAO", "DAT_HOR_VALIDADE", "COMPRIMENTO", "LARGURA", "ALTURA", "DIAMETRO", "ROTATIVIDADE", "DES_ROTATIVIDADE", "FUNCAO", "DES_FUNCAO", "TIP_ESTRUTURA", "DES_TIP_ESTRUTURA", "CAT_ITEM", "DES_CATEGORIA", "DAT_RECEBIMENTO", "PALETE_NIVEL", "PALETE_EMPILHAMENTO", "IDEN_ESTOQUE_AGRUPADA", "PERC_VIDA_UTIL", "STATUS_VIDA_UTIL"}),
+    
+    TextoAparado = let
+A = Table.TransformColumnTypes(SelectColunas, {{"QTD_ORIGEM", type text},
+     {"QTD_REGULARIZADA", type text}, 
+     {"QTD_SALDO_FISICO", type text}, 
+     {"QTD_RESERVA_NORMAL", type text}, 
+     {"QTD_RESERVA_PROVIS", type text}, 
+     {"QTD_SALDO_DISPONIVEL", type text}, 
+     {"QTD_EM_TERCEIROS", type text}, 
+     {"QTD_ITEM", type text}, 
+     {"NUM_VOLUME", type text}, 
+     {"DAT_HOR_PRODUCAO", type text}, 
+     {"DAT_HOR_VALIDADE", type text}, 
+     {"COMPRIMENTO", type text}, 
+     {"LARGURA", type text}, 
+     {"ALTURA", type text}, 
+     {"DIAMETRO", type text}, 
+     {"ROTATIVIDADE", type text}, 
+     {"FUNCAO", type text}, 
+     {"TIP_ESTRUTURA", type text}, 
+     {"DAT_RECEBIMENTO", type text}, 
+     {"PALETE_NIVEL", type text}, 
+     {"PERC_VIDA_UTIL", type text}}, "pt-BR"),
+
+     B = Table.TransformColumns(A,{ 
+     {"ENDERECO", Text.Trim, type text}, 
+     {"DES_ENDERECO", Text.Trim, type text}, 
+     {"ITEM", Text.Trim, type text}, 
+     {"ITEM_DEPOSIT", Text.Trim, type text}, 
+     {"DEN_ITEM", Text.Trim, type text}, 
+     {"SKU", Text.Trim, type text}, 
+     {"DES_SKU", Text.Trim, type text}, 
+     {"IDENTIF_ESTOQUE", Text.Trim, type text}, 
+     {"DES_TIP_ESTOQUE", Text.Trim, type text}, 
+     {"DES_RESTRICAO", Text.Trim, type text}, 
+     {"IES_SITUA_QTD", Text.Trim, type text}, 
+     {"DEN_SITUA_QTD", Text.Trim, type text}, 
+     {"QTD_ORIGEM", Text.Trim, type text}, 
+     {"QTD_REGULARIZADA", Text.Trim, type text}, 
+     {"QTD_SALDO_FISICO", Text.Trim, type text}, 
+     {"QTD_RESERVA_NORMAL", Text.Trim, type text}, 
+     {"QTD_RESERVA_PROVIS", Text.Trim, type text}, 
+     {"QTD_SALDO_DISPONIVEL", Text.Trim, type text}, 
+     {"QTD_EM_TERCEIROS", Text.Trim, type text}, 
+     {"QTD_ITEM", Text.Trim, type text}, 
+     {"PALETE", Text.Trim, type text}, 
+     {"IDENTIF_SAIDA", Text.Trim, type text}, 
+     {"IDENTIF_SAIDA_EXPED", Text.Trim, type text}, 
+     {"RECEBIMENTO_INDUSTRIALIZACAO", Text.Trim, type text}, 
+     {"ORIGEM_IDENTIF_ESTOQUE", Text.Trim, type text}, 
+     {"CTR_ENT_SAI_VEIC_DOCUM", Text.Trim, type text}, {"NUM_LOTE", Text.Trim, type text},
+     {"NUM_PECA", Text.Trim, type text}, {"NUM_SERIE", Text.Trim, type text}, 
+     {"NUM_VOLUME", Text.Trim, type text}, {"DAT_HOR_PRODUCAO", Text.Trim, type text}, 
+     {"DAT_HOR_VALIDADE", Text.Trim, type text}, {"COMPRIMENTO", Text.Trim, type text}, 
+     {"LARGURA", Text.Trim, type text}, {"ALTURA", Text.Trim, type text}, 
+     {"DIAMETRO", Text.Trim, type text}, {"ROTATIVIDADE", Text.Trim, type text}, 
+     {"DES_ROTATIVIDADE", Text.Trim, type text}, {"FUNCAO", Text.Trim, type text}, 
+     {"DES_FUNCAO", Text.Trim, type text}, {"TIP_ESTRUTURA", Text.Trim, type text}, 
+     {"DES_TIP_ESTRUTURA", Text.Trim, type text}, {"CAT_ITEM", Text.Trim, type text}, 
+     {"DES_CATEGORIA", Text.Trim, type text}, {"DAT_RECEBIMENTO", Text.Trim, type text}, 
+     {"PALETE_NIVEL", Text.Trim, type text}, {"PALETE_EMPILHAMENTO", Text.Trim, type text}, 
+     {"IDEN_ESTOQUE_AGRUPADA", Text.Trim, type text}, {"PERC_VIDA_UTIL", Text.Trim, type text}, 
+     {"STATUS_VIDA_UTIL", Text.Trim, type text}})
+in
+B,
+     
+    #"Colunas Reordenadas" = Table.ReorderColumns(TextoAparado,{"DES_RESTRICAO", "DES_TIP_ESTOQUE", "DES_ENDERECO", "SKU", "ITEM_DEPOSIT", "DEN_ITEM", "DES_SKU", "IDENTIF_ESTOQUE", "IES_SITUA_QTD", "DEN_SITUA_QTD", "QTD_ORIGEM", "QTD_REGULARIZADA", "QTD_SALDO_FISICO", "QTD_RESERVA_NORMAL", "QTD_RESERVA_PROVIS", "QTD_SALDO_DISPONIVEL", "QTD_EM_TERCEIROS", "QTD_ITEM", "PALETE", "IDENTIF_SAIDA", "IDENTIF_SAIDA_EXPED", "RECEBIMENTO_INDUSTRIALIZACAO", "ORIGEM_IDENTIF_ESTOQUE", "CTR_ENT_SAI_VEIC_DOCUM", "NUM_LOTE", "NUM_PECA", "NUM_SERIE", "NUM_VOLUME", "DAT_HOR_PRODUCAO", "DAT_HOR_VALIDADE", "COMPRIMENTO", "LARGURA", "ALTURA", "DIAMETRO", "ROTATIVIDADE", "DES_ROTATIVIDADE", "FUNCAO", "DES_FUNCAO", "TIP_ESTRUTURA", "DES_TIP_ESTRUTURA", "CAT_ITEM", "DES_CATEGORIA", "DAT_RECEBIMENTO", "PALETE_NIVEL", "PALETE_EMPILHAMENTO", "IDEN_ESTOQUE_AGRUPADA", "PERC_VIDA_UTIL", "STATUS_VIDA_UTIL"}),
+    #"Colunas Removidas1" = Table.RemoveColumns(#"Colunas Reordenadas",{"DES_SKU", "IES_SITUA_QTD", "DEN_SITUA_QTD", "IDENTIF_ESTOQUE"}),
+    #"Colunas Reordenadas1" = Table.ReorderColumns(#"Colunas Removidas1",{"DES_RESTRICAO", "DES_TIP_ESTOQUE", "DES_ENDERECO", "SKU", "ITEM_DEPOSIT", "DEN_ITEM", "QTD_ORIGEM", "QTD_REGULARIZADA", "QTD_SALDO_FISICO", "QTD_RESERVA_NORMAL", "QTD_RESERVA_PROVIS", "QTD_SALDO_DISPONIVEL", "QTD_EM_TERCEIROS", "QTD_ITEM", "PALETE", "IDENTIF_SAIDA", "IDENTIF_SAIDA_EXPED", "RECEBIMENTO_INDUSTRIALIZACAO", "ORIGEM_IDENTIF_ESTOQUE", "CTR_ENT_SAI_VEIC_DOCUM", "NUM_LOTE", "NUM_PECA", "NUM_SERIE", "NUM_VOLUME", "DAT_HOR_PRODUCAO", "DAT_RECEBIMENTO", "DAT_HOR_VALIDADE", "COMPRIMENTO", "LARGURA", "ALTURA", "DIAMETRO", "ROTATIVIDADE", "DES_ROTATIVIDADE", "FUNCAO", "DES_FUNCAO", "TIP_ESTRUTURA", "DES_TIP_ESTRUTURA", "CAT_ITEM", "DES_CATEGORIA", "PALETE_NIVEL", "PALETE_EMPILHAMENTO", "IDEN_ESTOQUE_AGRUPADA", "PERC_VIDA_UTIL", "STATUS_VIDA_UTIL"}),
+    #"Colunas Removidas2" = Table.RemoveColumns(#"Colunas Reordenadas1",{"NUM_SERIE", "NUM_VOLUME", "COMPRIMENTO", "LARGURA", "ALTURA", "DIAMETRO", "ROTATIVIDADE", "DES_ROTATIVIDADE", "FUNCAO", "TIP_ESTRUTURA", "DES_TIP_ESTRUTURA", "CAT_ITEM", "DES_CATEGORIA", "PALETE_NIVEL", "PALETE_EMPILHAMENTO", "PERC_VIDA_UTIL", "STATUS_VIDA_UTIL", "NUM_PECA", "RECEBIMENTO_INDUSTRIALIZACAO", "ORIGEM_IDENTIF_ESTOQUE", "IDENTIF_SAIDA", "IDENTIF_SAIDA_EXPED"}),
+    #"Colunas Reordenadas2" = Table.ReorderColumns(#"Colunas Removidas2",{"DES_RESTRICAO", "DES_TIP_ESTOQUE", "DES_ENDERECO", "SKU", "ITEM_DEPOSIT", "DEN_ITEM", "DAT_RECEBIMENTO", "DAT_HOR_VALIDADE", "QTD_ORIGEM", "QTD_REGULARIZADA", "QTD_SALDO_FISICO", "QTD_RESERVA_NORMAL", "QTD_RESERVA_PROVIS", "QTD_SALDO_DISPONIVEL", "QTD_EM_TERCEIROS", "QTD_ITEM", "PALETE", "CTR_ENT_SAI_VEIC_DOCUM", "NUM_LOTE", "DES_FUNCAO", "IDEN_ESTOQUE_AGRUPADA"}),
+    #"Colunas Reordenadas3" = Table.ReorderColumns(#"Colunas Reordenadas2",{"DES_TIP_ESTOQUE", "DES_RESTRICAO", "DES_ENDERECO", "SKU", "ITEM_DEPOSIT", "DEN_ITEM", "DAT_RECEBIMENTO", "DAT_HOR_VALIDADE", "NUM_LOTE", "CTR_ENT_SAI_VEIC_DOCUM", "QTD_ORIGEM", "QTD_REGULARIZADA", "QTD_SALDO_FISICO", "QTD_RESERVA_NORMAL", "QTD_RESERVA_PROVIS", "QTD_SALDO_DISPONIVEL", "QTD_EM_TERCEIROS", "QTD_ITEM", "PALETE"}),
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Colunas Reordenadas3",{{"ITEM_DEPOSIT", type text}}),
+    #"Primeiros caracteres extraídos" = Table.TransformColumns(#"Tipo Alterado", {{"ITEM_DEPOSIT", each Text.Start(_, 8), type text}}),
+   
+   
+    CAT = 
+    Table.TransformColumnTypes(
+    Table.AddColumn(#"Primeiros caracteres extraídos","CATEGORIA_ITEM", each 
+if [ITEM_DEPOSIT] = "10053057" or [ITEM_DEPOSIT] = "10230675" then "FUMO TREVO" 
+else if Text.Start([ITEM_DEPOSIT],2) = "10" then "CIGARRO"
+else if Text.Start([ITEM_DEPOSIT],2) = "50" then "PARCERIA"
+else if Text.Start([ITEM_DEPOSIT],2) = "75" then "MERCHAN"
+else if Text.Start([ITEM_DEPOSIT],2) = "40" then "MERCHAN"
+else if Text.Start([ITEM_DEPOSIT],2) = "73" then "MERCHAN"
+else "VERIFICAR CATEGORIA"
+),{{"ITEM_DEPOSIT", Int64.Type}}),
+
+
+    #"Consultas Mescladas" = let
+A = Table.NestedJoin(CAT, {"ITEM_DEPOSIT"}, TB_BASE_ITENS, {"ITEM"}, "TB_BASE_ITENS", JoinKind.LeftOuter),
+B = Table.ExpandTableColumn(A, "TB_BASE_ITENS", {"CAIXA_PALETE", "EAN_REDUZ", "ITEM_REDZ", "QTD_POR_CAIXA", "SUB_CATEGORIA", "UNIDADE_MEDIDA"}, {"CAIXA_PALETE", "EAN_REDUZ", "ITEM_REDZ", "QTD_POR_CAIXA", "SUB_CATEGORIA", "UNIDADE_MEDIDA"})
+in
+B,
+    #"Colunas Reordenadas4" = Table.ReorderColumns(#"Consultas Mescladas",{"EAN_REDUZ", "ITEM_REDZ", "CATEGORIA_ITEM", "SUB_CATEGORIA","DES_TIP_ESTOQUE", "DES_RESTRICAO", "DES_ENDERECO", "SKU", "ITEM_DEPOSIT", "DEN_ITEM", "UNIDADE_MEDIDA", "DAT_RECEBIMENTO", "DAT_HOR_VALIDADE", "NUM_LOTE", "CTR_ENT_SAI_VEIC_DOCUM", "PALETE", "QTD_REGULARIZADA", "QTD_SALDO_FISICO","QTD_RESERVA_NORMAL","QTD_RESERVA_PROVIS", "QTD_SALDO_DISPONIVEL"}),
+    COL_CATEGORIA_ADD = Table.AddColumn(#"Colunas Reordenadas4", "CATEGORIA_PRODUTO", each if [CATEGORIA_ITEM] = "" then "CADASTRAR_ITEM" else [CATEGORIA_ITEM], type text),
+    #"Colunas Removidas4" = Table.RemoveColumns(COL_CATEGORIA_ADD,{"QTD_ITEM"}),
+    #"Tipo Alterado1" = Table.TransformColumnTypes(#"Colunas Removidas4",{{"QTD_REGULARIZADA", type number}, {"QTD_SALDO_FISICO", type number}, {"QTD_RESERVA_NORMAL", type number}, {"QTD_RESERVA_PROVIS", type number}, {"QTD_SALDO_DISPONIVEL", type number}}),
+    #"Colunas Removidas5" = Table.RemoveColumns(#"Tipo Alterado1",{"QTD_EM_TERCEIROS"}),
+    #"Tipo Alterado2" = Table.TransformColumnTypes(#"Colunas Removidas5",{{"DAT_HOR_VALIDADE", type datetime}, {"DAT_RECEBIMENTO", type datetime}}),
+    #"Hora Inserida" = Table.AddColumn(#"Tipo Alterado2", "Hora_Rec", each DateTime.Time([DAT_RECEBIMENTO]), type time),
+    #"Colunas Reordenadas11" = Table.ReorderColumns(#"Hora Inserida",{"ENDERECO", "EAN_REDUZ", "ITEM_REDZ", "CATEGORIA_ITEM", "SUB_CATEGORIA", "DES_TIP_ESTOQUE", "DES_RESTRICAO", "DES_ENDERECO", "SKU", "ITEM_DEPOSIT", "DEN_ITEM", "QTD_ORIGEM", "UNIDADE_MEDIDA", "DAT_RECEBIMENTO", "Hora_Rec", "DAT_HOR_VALIDADE", "NUM_LOTE", "CTR_ENT_SAI_VEIC_DOCUM", "DAT_HOR_PRODUCAO", "PALETE", "DES_FUNCAO", "IDEN_ESTOQUE_AGRUPADA", "QTD_REGULARIZADA", "QTD_SALDO_FISICO", "QTD_RESERVA_NORMAL", "QTD_RESERVA_PROVIS", "QTD_SALDO_DISPONIVEL", "CATEGORIA_PRODUTO"}),
+    #"Data Extraída" = Table.TransformColumns(#"Colunas Reordenadas11",{{"DAT_HOR_VALIDADE", DateTime.Date, type date}, {"DAT_RECEBIMENTO", DateTime.Date, type date}}),
+    #"Colunas Removidas6" = Table.RemoveColumns(#"Data Extraída",{"QTD_ORIGEM"}),
+    #"Consultas Mescladas1" = Table.NestedJoin(#"Colunas Removidas6", {"DES_ENDERECO"}, #"CAPACIDADE DE ESTOQUE", {"ENDERECO_1"}, "CAPACIDADE DE ESTOQUE", JoinKind.LeftOuter),
+    #"CAPACIDADE DE ESTOQUE Expandido" = Table.ExpandTableColumn(#"Consultas Mescladas1", "CAPACIDADE DE ESTOQUE", {"RUA", "COLUNA", "NIVEL", "TP_ESTOQUE", "CAT_POSICAO"}, {"RUA", "COLUNA", "NIVEL", "TP_ESTOQUE", "CAT_POSICAO"}),
+    #"Colunas Reordenadas5" = Table.ReorderColumns(#"CAPACIDADE DE ESTOQUE Expandido",{"EAN_REDUZ", "ITEM_REDZ", "CATEGORIA_ITEM", "SUB_CATEGORIA","TP_ESTOQUE", "RUA", "COLUNA", "NIVEL", "CAT_POSICAO", "DES_TIP_ESTOQUE", "DES_RESTRICAO", "DES_ENDERECO", "SKU", "ITEM_DEPOSIT", "DEN_ITEM", "UNIDADE_MEDIDA", "DAT_RECEBIMENTO", "DAT_HOR_VALIDADE", "NUM_LOTE", "CTR_ENT_SAI_VEIC_DOCUM", "PALETE", "QTD_REGULARIZADA", "QTD_SALDO_FISICO", "QTD_RESERVA_NORMAL", "QTD_RESERVA_PROVIS", "QTD_SALDO_DISPONIVEL"}),
+    #"Tipo Alterado3" = Table.TransformColumnTypes(#"Colunas Reordenadas5",{{"COLUNA", Int64.Type}, {"RUA", type text}}),
+    #"Valor Substituído" = Table.ReplaceValue(#"Tipo Alterado3",null,"-",Replacer.ReplaceValue,{"CTR_ENT_SAI_VEIC_DOCUM"}),
+    #"Colunas Reordenadas6" = Table.ReorderColumns(#"Valor Substituído",{"DES_FUNCAO", "EAN_REDUZ", "ITEM_REDZ", "CATEGORIA_ITEM", "SUB_CATEGORIA", "TP_ESTOQUE", "RUA", "COLUNA", "NIVEL", "CAT_POSICAO", "DES_TIP_ESTOQUE", "DES_RESTRICAO", "DES_ENDERECO", "SKU", "ITEM_DEPOSIT", "DEN_ITEM", "UNIDADE_MEDIDA", "DAT_RECEBIMENTO", "DAT_HOR_VALIDADE", "NUM_LOTE", "CTR_ENT_SAI_VEIC_DOCUM", "PALETE", "IDEN_ESTOQUE_AGRUPADA", "QTD_REGULARIZADA", "QTD_SALDO_FISICO", "QTD_RESERVA_NORMAL", "QTD_RESERVA_PROVIS", "QTD_SALDO_DISPONIVEL"}),
+    #"Duplicatas Removidas" = Table.Distinct(#"Colunas Reordenadas6"),
+    #"Coluna Condicional Adicionada" = Table.AddColumn(#"Duplicatas Removidas", "RESERVADO", each if [DES_RESTRICAO] = "SEM RESTRICAO" then [QTD_RESERVA_NORMAL] else 0),
+    #"Tipo Alterado4" = Table.TransformColumnTypes(#"Coluna Condicional Adicionada",{{"RESERVADO", type number}}),
+    #"Coluna Condicional Adicionada1" = Table.AddColumn(#"Tipo Alterado4", "BLOQUEADO", each if [DES_RESTRICAO] <> "SEM RESTRICAO" then [QTD_RESERVA_NORMAL] else 0),
+    #"Colunas Removidas3" = Table.RemoveColumns(#"Coluna Condicional Adicionada1",{"QTD_RESERVA_NORMAL"}),
+    #"Colunas Renomeadas" = Table.RenameColumns(#"Colunas Removidas3",{{"RESERVADO", "QTD_RESERVA_NORMAL"}}),
+    #"Colunas Reordenadas7" = Table.ReorderColumns(#"Colunas Renomeadas",{"DES_FUNCAO", "EAN_REDUZ", "ITEM_REDZ", "CATEGORIA_ITEM", "SUB_CATEGORIA", "TP_ESTOQUE", "RUA", "COLUNA", "NIVEL", "CAT_POSICAO", "DES_TIP_ESTOQUE", "DES_RESTRICAO", "DES_ENDERECO", "SKU", "ITEM_DEPOSIT", "DEN_ITEM", "UNIDADE_MEDIDA", "DAT_RECEBIMENTO", "DAT_HOR_VALIDADE", "NUM_LOTE", "CTR_ENT_SAI_VEIC_DOCUM", "PALETE", "IDEN_ESTOQUE_AGRUPADA", "QTD_REGULARIZADA", "QTD_SALDO_FISICO", "QTD_RESERVA_NORMAL", "QTD_RESERVA_PROVIS", "QTD_SALDO_DISPONIVEL", "BLOQUEADO"}),
+    #"Tipo Alterado5" = Table.TransformColumnTypes(#"Colunas Reordenadas7",{{"BLOQUEADO", type number}}),
+    #"Colunas Renomeadas1" = Table.RenameColumns(#"Tipo Alterado5",{{"BLOQUEADO", "QTD_BLOQUEADO"}}),
+    #"Colunas Reordenadas8" = Table.ReorderColumns(#"Colunas Renomeadas1",{"DES_FUNCAO", "EAN_REDUZ", "ITEM_REDZ", "CATEGORIA_ITEM", "SUB_CATEGORIA", "TP_ESTOQUE", "RUA", "COLUNA", "NIVEL", "CAT_POSICAO", "DES_TIP_ESTOQUE", "DES_RESTRICAO", "DES_ENDERECO", "SKU", "ITEM_DEPOSIT", "DEN_ITEM", "UNIDADE_MEDIDA", "DAT_HOR_PRODUCAO", "DAT_RECEBIMENTO", "DAT_HOR_VALIDADE", "NUM_LOTE", "CTR_ENT_SAI_VEIC_DOCUM", "PALETE", "IDEN_ESTOQUE_AGRUPADA", "QTD_REGULARIZADA", "QTD_SALDO_FISICO", "QTD_RESERVA_NORMAL", "QTD_RESERVA_PROVIS", "QTD_SALDO_DISPONIVEL", "QTD_BLOQUEADO"}),
+    #"Tipo Alterado6" = Table.TransformColumnTypes(#"Colunas Reordenadas8",{{"DAT_HOR_PRODUCAO", type datetime}}),
+    #"Data Extraída1" = Table.TransformColumns(#"Tipo Alterado6",{{"DAT_HOR_PRODUCAO", DateTime.Date, type date}}),
+    #"Valor Substituído1" = Table.ReplaceValue(#"Data Extraída1",null,"-",Replacer.ReplaceValue,{"NUM_LOTE"}),
+    COL_SHLEF_LIFE_ADD = Table.AddColumn(#"Valor Substituído1", "SHELF_LIFE", each Duration.Days([DAT_HOR_VALIDADE]-DATA),Int64.Type),
+    #"Colunas Reordenadas9" = Table.ReorderColumns(COL_SHLEF_LIFE_ADD,{"DES_FUNCAO", "EAN_REDUZ", "ITEM_REDZ", "CATEGORIA_ITEM", "SUB_CATEGORIA", "TP_ESTOQUE", "RUA", "COLUNA", "NIVEL", "CAT_POSICAO", "DES_TIP_ESTOQUE", "DES_RESTRICAO", "DES_ENDERECO", "SKU", "ITEM_DEPOSIT", "DEN_ITEM", "UNIDADE_MEDIDA", "DAT_HOR_PRODUCAO", "DAT_RECEBIMENTO", "DAT_HOR_VALIDADE", "SHELF_LIFE", "NUM_LOTE", "CTR_ENT_SAI_VEIC_DOCUM", "PALETE", "IDEN_ESTOQUE_AGRUPADA", "QTD_REGULARIZADA", "QTD_SALDO_FISICO", "QTD_RESERVA_NORMAL", "QTD_RESERVA_PROVIS", "QTD_SALDO_DISPONIVEL", "QTD_BLOQUEADO"}),
+#"Personalização Adicionada" = Table.AddColumn(#"Colunas Reordenadas9", "SALDO_REAL", each let
+real = if [QTD_BLOQUEADO] = 0 then ([QTD_SALDO_FISICO]-[QTD_RESERVA_NORMAL]) else [QTD_BLOQUEADO]
+in
+real, type number),
+    ColunasReordenadas10 = Table.ReorderColumns(#"Personalização Adicionada",{"ENDERECO", "DES_FUNCAO", "EAN_REDUZ", "ITEM_REDZ", "CATEGORIA_PRODUTO", "SUB_CATEGORIA", "TP_ESTOQUE", "RUA", "COLUNA", "NIVEL", "CAT_POSICAO", "DES_TIP_ESTOQUE", "DES_RESTRICAO", "DES_ENDERECO", "SKU", "ITEM_DEPOSIT", "DEN_ITEM", "UNIDADE_MEDIDA", "DAT_HOR_PRODUCAO", "DAT_RECEBIMENTO", "DAT_HOR_VALIDADE", "SHELF_LIFE", "NUM_LOTE", "CTR_ENT_SAI_VEIC_DOCUM", "PALETE", "IDEN_ESTOQUE_AGRUPADA", "QTD_REGULARIZADA", "QTD_SALDO_FISICO", "QTD_RESERVA_NORMAL", "QTD_RESERVA_PROVIS", "QTD_SALDO_DISPONIVEL", "QTD_BLOQUEADO", "SALDO_REAL"}),
+    #"Colunas Removidas7" = Table.RemoveColumns(ColunasReordenadas10,{"CATEGORIA_ITEM"}),
+    ColunasReordenadas12 = Table.ReorderColumns(#"Colunas Removidas7",{"ENDERECO", "DES_FUNCAO", "EAN_REDUZ", "ITEM_REDZ", "CATEGORIA_PRODUTO", "SUB_CATEGORIA", "QTD_POR_CAIXA", "CAIXA_PALETE", "TP_ESTOQUE", "RUA", "COLUNA", "NIVEL", "CAT_POSICAO", "DES_TIP_ESTOQUE", "DES_RESTRICAO", "DES_ENDERECO", "SKU", "ITEM_DEPOSIT", "DEN_ITEM", "UNIDADE_MEDIDA", "DAT_HOR_PRODUCAO", "DAT_RECEBIMENTO", "Hora_Rec", "DAT_HOR_VALIDADE", "SHELF_LIFE", "NUM_LOTE", "CTR_ENT_SAI_VEIC_DOCUM", "PALETE", "IDEN_ESTOQUE_AGRUPADA", "QTD_REGULARIZADA", "QTD_SALDO_FISICO", "QTD_RESERVA_NORMAL", "QTD_RESERVA_PROVIS", "QTD_SALDO_DISPONIVEL", "QTD_BLOQUEADO", "SALDO_REAL"}),
+    ColGiroEstoque = Table.AddColumn(ColunasReordenadas12, "GIRO_ESTOQUE", each Duration.Days(Hoje-[DAT_RECEBIMENTO]),Int64.Type),
+    #"Colunas Reordenadas12" = Table.ReorderColumns(ColGiroEstoque,{"ENDERECO", "DES_FUNCAO", "EAN_REDUZ", "ITEM_REDZ", "CATEGORIA_PRODUTO", "SUB_CATEGORIA", "QTD_POR_CAIXA", "CAIXA_PALETE", "TP_ESTOQUE", "RUA", "COLUNA", "NIVEL", "CAT_POSICAO", "DES_TIP_ESTOQUE", "DES_RESTRICAO", "DES_ENDERECO", "SKU", "ITEM_DEPOSIT", "DEN_ITEM", "UNIDADE_MEDIDA", "DAT_HOR_PRODUCAO", "DAT_RECEBIMENTO", "Hora_Rec", "DAT_HOR_VALIDADE", "SHELF_LIFE", "GIRO_ESTOQUE", "NUM_LOTE", "CTR_ENT_SAI_VEIC_DOCUM", "PALETE", "IDEN_ESTOQUE_AGRUPADA", "QTD_REGULARIZADA", "QTD_SALDO_FISICO", "QTD_RESERVA_NORMAL", "QTD_RESERVA_PROVIS", "QTD_SALDO_DISPONIVEL", "QTD_BLOQUEADO", "SALDO_REAL"})
+in
+    #"Colunas Reordenadas12"

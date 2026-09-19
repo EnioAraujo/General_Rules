@@ -1,0 +1,103 @@
+Sub RECLASSIFICAÇÃO()
+
+    ' Declaração de variáveis para armazenar referências de planilha, contadores de linhas, e informações
+    Dim wb As Workbook ' Variável para armazenar a referência do arquivo Excel atual
+    Dim wsAnalise As Worksheet ' Planilha "VALIDACAO SALDO DISP" onde será feita a análise
+    Dim wsBase As Worksheet ' Planilha "TB_BASE_ITENS" que contém os dados de base para comparação
+    Dim lastRowAnalise As Long ' Última linha com dados da planilha de análise
+    Dim lastRowBase As Long ' Última linha com dados da planilha base
+    Dim i As Long ' Contador para percorrer as linhas da planilha de análise
+    Dim j As Long ' Contador para percorrer as linhas da planilha base
+    Dim maiorSaldo As Double ' Variável para armazenar o maior saldo encontrado
+    Dim itemCorrespondente As String ' Armazena o item correspondente com maior saldo
+    Dim descricaoCorrespondente As String ' Armazena a descrição do item correspondente
+
+    ' Atribui o workbook atual à variável wb
+    Set wb = ThisWorkbook
+
+    ' Define as planilhas "ANALISE PICKING" e "TB_BASE_ITENS" como wsAnalise e wsBase
+    Set wsAnalise = wb.Sheets("ANALISE PICKING")
+    Set wsBase = wb.Sheets("TB_BASE_ITENS")
+
+    ' Insere títulos para novas colunas na planilha de análise
+    wsAnalise.Cells(1, 5).Value = "RECLASS PARA" ' Nova coluna para armazenar o item correspondente
+    wsAnalise.Cells(1, 6).Value = "DESCRICAO" ' Nova coluna para armazenar a descrição do item correspondente
+
+    ' Calcula a última linha preenchida nas planilhas de análise e base
+    lastRowAnalise = wsAnalise.Cells(wsAnalise.Rows.Count, "A").End(xlUp).Row
+    lastRowBase = wsBase.Cells(wsBase.Rows.Count, "A").End(xlUp).Row
+
+    ' Loop para percorrer cada linha da planilha de análise, começando da linha 2 (assumindo que a linha 1 é o cabeçalho)
+    For i = 2 To lastRowAnalise
+        Dim eanReduz As String ' Armazena o valor do EAN (código de produto) reduzido
+        Dim diferenca As Double ' Armazena o valor da diferença (Saldo ou necessidade a ser comparada)
+
+        ' Pega o valor do EAN e da diferença na planilha de análise
+        eanReduz = wsAnalise.Cells(i, 1).Value ' Coluna A: EAN reduzido (provavelmente código de item)
+        diferenca = wsAnalise.Cells(i, 4).Value ' Coluna D: diferença (valor a ser comparado com saldos)
+
+        ' Reseta os valores do maior saldo, item e descrição correspondente para cada linha da análise
+        maiorSaldo = -1
+        itemCorrespondente = ""
+        descricaoCorrespondente = ""
+
+        ' Loop para percorrer as linhas da planilha base em busca do EAN correspondente
+        For j = 2 To lastRowBase
+            ' Verifica se o EAN da linha atual da planilha base coincide com o da planilha de análise
+            If wsBase.Cells(j, 1).Value = eanReduz Then
+                Dim saldo As Double ' Variável para armazenar o saldo do item na base
+
+                ' Pega o valor do saldo para o item correspondente na planilha base
+                saldo = wsBase.Cells(j, 4).Value ' Coluna D: saldo do item na planilha base
+
+                ' Verifica se o saldo é suficiente para cobrir a diferença e se é maior que o maior saldo encontrado até agora
+                If saldo >= diferenca And saldo > maiorSaldo Then
+                    ' Se for o maior saldo, armazena o saldo, o item correspondente e sua descrição
+                    maiorSaldo = saldo
+                    itemCorrespondente = wsBase.Cells(j, 2).Value ' Coluna B: item correspondente
+                    descricaoCorrespondente = wsBase.Cells(j, 3).Value ' Coluna C: descrição correspondente
+                End If
+            End If
+        Next j
+
+        ' Após o loop de comparação com a base, insere os valores do item correspondente e sua descrição na planilha de análise
+        wsAnalise.Cells(i, 5).Value = itemCorrespondente ' Coluna E: armazena o item correspondente
+        wsAnalise.Cells(i, 6).Value = descricaoCorrespondente ' Coluna F: armazena a descrição correspondente
+    Next i
+    
+     MsgBox "AO CLICAR EM OK, A TABELA CONSLD_VL06O IRÁ ATUALIZAR"
+     
+     Sheets("CONSLD_VL6O").Select
+    Range("A2").Select
+    Selection.ListObject.QueryTable.Refresh BackgroundQuery:=False
+     
+     
+     
+    
+    ' Espera de 15 segundos
+    Application.Wait (Now + TimeValue("00:00:15"))
+    
+    ' Bloco de código após a espera
+    MsgBox "FINALIZADO, CLIQUE EM OK"
+    
+    
+    
+    
+End Sub
+
+
+
+
+
+Sub ATUALIZAR_CONSLD_VL06()
+'
+' ATUALIZAR_CONSLD_VL06 Macro
+'
+
+'
+    Sheets("CONSLD_VL6O").Select
+    Range("A2").Select
+    Selection.ListObject.QueryTable.Refresh BackgroundQuery:=False
+End Sub
+
+

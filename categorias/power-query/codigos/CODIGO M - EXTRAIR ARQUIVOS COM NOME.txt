@@ -1,0 +1,20 @@
+Table.AddColumn(Filtrado, "Dados", each
+        try
+            Excel.Workbook([Content]){0}[Data]
+        otherwise
+            null
+    ),
+    
+    // Expandir dados
+    DadosExpandidos = Table.ExpandTableColumn(
+        ComDados,
+        "Dados",
+        if Table.RowCount(ComDados) > 0 then
+            Table.ColumnNames(ComDados{0}[Dados])
+        else
+            {},
+        if Table.RowCount(ComDados) > 0 then
+            Table.ColumnNames(ComDados{0}[Dados])
+        else
+            {}
+    )

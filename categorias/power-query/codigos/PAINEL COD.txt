@@ -1,0 +1,29 @@
+TEMPO DE CONFERÊNCIA DE SALDO
+
+1 - 05:00 AM / 13:00 PM / 10:00 PM
+2 - concat(formatDateTime(utcNow(), 'dd-MM-yyyy'), ' - ', outputs('Get_Attachment_(V2)')?['body/name'])
+
+
+{{"DATA DO PICKING", type date },
+{"DIA SEMANA", type text },
+{"HR LIB. ARQUIVO PICKING BAT", type time}
+{"HR LIB. PICKING LOGIX", type time},
+{"QTD RECLASSIFICAÇÃO", Int64.type},
+{"TMP PROCESS. LOGIX",type time },
+{"HR INICIO PUXADA",type time },
+{"HR FIM PUXADA", type time},
+{"TMP PUXADA", type time },
+{"HR INI SEP ESTEIRA", type time },
+{"HR INI INTERVALO", type time },
+{"HR FIM INTERVALO", type time },
+{"TMP TOTAL INTERVALO", type time },
+{"HR FIM SEP ESTEIRA", type time },
+{"TMP TOTAL SEP. ESTEIRA", type time },
+{"HR FIM VEIC 24H", type time },
+{"QTD REMESSAS PROD",Int64.type },
+{"ITENS HOMEM-HORA",Int64.type },
+{"REMESSAS HOMEM-HORA", Int64.type},
+{"BACKLOG",Int64.type }})
+
+
+

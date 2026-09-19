@@ -1,0 +1,12 @@
+diário ( opção acompanhar ou não ) 
+semanal ( opção acompanhar ou não )
+Prazo específico
+
+
+
+1 -A opção de compartilhamento está atribuindo acesso em todos os itens criados, exemplo, se eu atribuir um acesso para um usuário nas apresentações, o acesso é concedido também em todos os itens criados de todas as páginas. Verifique a possibilidade conceder acesso somente à aquele item naquele momento.
+
+2 - Verifique a possibilidade de aplicar zoom diferente para cada página 
+
+3 - temho alguns itens criados e já compartilhei com alguém, mas a pessoa não consegue acessar mesmo os itens sendo compartilhados, o que pode estar acontecendo ?
+

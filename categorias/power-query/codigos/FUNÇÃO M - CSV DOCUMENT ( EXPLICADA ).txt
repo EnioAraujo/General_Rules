@@ -1,0 +1,169 @@
+me explique os detalhes deste código M
+
+Csv.Document(
+                                    _[Content],
+                                    [Delimiter = ";", Columns = null, Encoding = 1252, QuoteStyle = QuoteStyle.Csv]
+                                )
+Power Query Assistant disse:
+
+Boa! Vamos detalhar cada parte do seu trecho M com Csv.Document:
+
+Csv.Document(
+    _[Content],
+    [Delimiter = ";", Columns = null, Encoding = 1252, QuoteStyle = QuoteStyle.Csv]
+)
+
+🔎 Função principal
+
+Csv.Document é uma função do Power Query M que converte um binário contendo um arquivo CSV em uma tabela.
+
+O parâmetro obrigatório é o conteúdo do arquivo (_[Content]), que no caso vem do SharePoint (ou de uma pasta).
+
+📌 Parâmetros
+
+_[Content]
+
+É a coluna binária que contém os dados do arquivo CSV.
+
+Cada linha da sua tabela de arquivos tem um campo [Content] com o conteúdo bruto do CSV.
+
+O Csv.Document lê isso e transforma em linhas e colunas.
+
+Delimiter = ";"
+
+Informa qual separador de campos o CSV usa.
+
+";" → muito comum no Brasil/Europa, quando o Excel exporta CSV.
+
+"," → típico em ambientes em inglês.
+
+Pode ser trocado por "\t" (tabulação), "|", etc.
+
+Columns = null
+
+Diz ao Power Query não fixar um número específico de colunas.
+
+Se fosse, por exemplo, Columns = 5, a função forçaria exatamente 5 colunas em cada linha (colocando null onde faltar).
+
+null significa: detecte automaticamente o número de colunas conforme o delimitador.
+
+Encoding = 1252
+
+Especifica o padrão de codificação de caracteres.
+
+1252 = Windows-1252 (Latin-1/ANSI) → usado em CSVs com acentuação típica do português (á, ã, ç, etc.).
+
+Alternativas comuns:
+
+65001 = UTF-8 (muito usado em sistemas modernos).
+
+28591 = ISO-8859-1 (Latin-1).
+
+Se você notar “caracteres estranhos” (� ou símbolos no lugar de acentos), provavelmente precisa trocar este valor.
+
+QuoteStyle = QuoteStyle.Csv
+
+Define como tratar aspas (") dentro do CSV.
+
+QuoteStyle.Csv → segue as regras padrão de arquivos CSV:
+
+Texto entre aspas é tratado como um único campo, mesmo que contenha o delimitador.
+
+Exemplo:
+
+"Rua A; nº 100";São Paulo
+
+
+é lido como duas colunas (endereço + cidade), e não três.
+
+Se usar QuoteStyle.None, as aspas seriam tratadas como caracteres normais.
+
+✅ Resultado:
+Esse código converte o binário do CSV em uma tabela estruturada, com colunas separadas por ;, codificação Windows-1252, e respeitando as regras de aspas.
+
+Quer que eu monte um exemplo prático mostrando como essa tabela sai antes/depois de aplicar o Csv.Document com e sem esses parâmetros (principalmente Delimiter e QuoteStyle)?
+
+Você disse:
+sim
+Power Query Assistant disse:
+
+Perfeito 🚀 Vou te mostrar um exemplo prático de como o Csv.Document interpreta os dados dependendo dos parâmetros.
+
+📝 Exemplo de conteúdo CSV (binário em [Content])
+"Nome";"Idade";"Cidade"
+"João";25;"São Paulo"
+"Ana; Maria";30;"Rio de Janeiro"
+"José";;"Belo Horizonte"
+
+
+⚠️ Observa:
+
+O delimitador é ;.
+
+A coluna Nome tem uma célula "Ana; Maria" com ponto e vírgula dentro do texto (precisa ser tratada pelas aspas).
+
+A linha do José tem uma coluna em branco.
+
+🔎 Caso 1 – Usando Csv.Document(_[Content], [Delimiter = ";"]) (sem QuoteStyle.Csv)
+
+Resultado (errado):
+
+Column1	Column2	Column3	Column4
+"Nome"	"Idade"	"Cidade"	null
+"João"	25	"São Paulo"	null
+"Ana	Maria"	30	"Rio de Janeiro"
+"José"		"Belo Horizonte"	null
+
+👉 Problema: O campo "Ana; Maria" foi cortado em duas colunas, porque o Power Query não respeitou as aspas.
+
+🔎 Caso 2 – Usando Csv.Document(_[Content], [Delimiter = ";", QuoteStyle = QuoteStyle.Csv])
+
+Resultado (correto):
+
+Column1	Column2	Column3
+Nome	Idade	Cidade
+João	25	São Paulo
+Ana; Maria	30	Rio de Janeiro
+José	null	Belo Horizonte
+
+✅ Agora:
+
+"Ana; Maria" fica inteiro em uma única célula.
+
+O valor faltante na Idade de José vira null.
+
+Cabeçalhos vieram na primeira linha (podemos depois usar Table.PromoteHeaders).
+
+🔎 Encoding (1252 vs 65001)
+
+Se o arquivo estivesse em UTF-8 e você usasse Encoding = 1252, poderia ver isto:
+
+SÃ£o Paulo
+
+
+Em vez de:
+
+São Paulo
+
+
+Trocar para Encoding = 65001 (UTF-8) resolveria.
+
+✅ Conclusão
+
+Delimiter → define onde cortar.
+
+QuoteStyle.Csv → garante que valores entre aspas não sejam cortados.
+
+Encoding → garante que os acentos e caracteres especiais fiquem corretos.
+
+Columns = null → deixa o Power Query detectar automaticamente quantas colunas tem cada linha.
+
+👉 Quer que eu adapte seu código para já aplicar o Table.PromoteHeaders (para transformar a primeira linha dos CSVs nos nomes de coluna) antes de adicionar a coluna NomeArquivo?
+
+
+
+
+
+
+
+

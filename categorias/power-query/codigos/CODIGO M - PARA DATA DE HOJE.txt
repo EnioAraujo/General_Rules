@@ -1,0 +1,3 @@
+hoje = Date.From(DateTime.FixedLocalNow())
+
+ontem = Date.AddDays(Date.From(DateTime.LocalNow()), -1)

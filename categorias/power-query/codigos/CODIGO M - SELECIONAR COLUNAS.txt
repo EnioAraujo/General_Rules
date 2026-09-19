@@ -1,0 +1,5 @@
+= let
+A = Table.ColumnNames(CabecalhosPromovidos),
+B = List.Select(A, each Text.StartsWith(_, "Column", Comparer.OrdinalIgnoreCase))
+in
+B

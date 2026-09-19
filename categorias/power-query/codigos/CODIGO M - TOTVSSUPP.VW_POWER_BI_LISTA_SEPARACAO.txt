@@ -1,0 +1,7 @@
+let
+    Fonte = Sql.Databases("192.168.102.154"),
+    LOGIXPRD = Fonte{[Name="LOGIXPRD"]}[Data],
+    dbo_TOTVSSUPP.VW_POWER_BI_LISTA_SEPARACAO = LOGIXPRD{[Schema="dbo",Item="TOTVSSUPP.VW_POWER_BI_LISTA_SEPARACAO"]}[Data],
+    #"Linhas Filtradas" = Table.SelectRows(dbo_TOTVSSUPP.VW_POWER_BI_LISTA_SEPARACAO, each ([NOM_DEPOSIT] = "SOUZA CRUZ") and ([STATUS] = "EM SEPARAÇÃO" or [STATUS] = "ONDA GERADA"))
+in
+    #"Linhas Filtradas"

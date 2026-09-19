@@ -1,0 +1,82 @@
+let
+    // Conecta ao SharePoint e navega até a pasta específica
+    Fonte = SharePoint.Contents(SHP_CODUDI, [ApiVersion = 15])
+        {[Name = "Documentos Partilhados"]}[Content]
+        {[Name = "PROJETO - SEP REVENDA"]}[Content]
+        {[Name = "03 - ARQUIVOS CSV"]}[Content][Content],
+
+    // Adiciona o nome do arquivo à tabela
+    ArquivosComNome = let
+colnome = Table.AddColumn(conbinartabelas, "NomeArquivo", each [Name]),
+conbinartabelas = Table.Combine(Fonte)
+in
+conbinartabelas,
+    Transformacoes01 = let 
+A = Table.AddColumn(ArquivosComNome, "NomeArquivo", each [Name])[Content],
+B = Table.Combine(
+            A),
+C = Table.SelectRows(B, each Text.Start([Name],8) = "VL06O_CO" )
+
+
+in C,
+    Transformacoes02 = let
+
+TabelasComNome = List.Transform(
+        Table.ToRecords(Transformacoes01),
+        each
+            let
+                dadosArquivo = try Csv.Document(
+                                    _[Content],
+                                    [Delimiter = ";", Columns = null, Encoding = 65001, QuoteStyle = QuoteStyle.Csv]
+                                ) otherwise null,
+                nomeArquivo = _[Name]
+            in
+                if dadosArquivo <> null then
+                    Table.AddColumn(dadosArquivo, "NomeArquivo", each nomeArquivo, type text)
+                else
+                    null
+    ),
+
+tabelas = Table.Combine(TabelasComNome)
+
+in
+tabelas,
+    Transformacoes03 = let
+
+renamecols = Table.RenameColumns(Transformacoes02,{{"Column1","Fornecimento"},
+{"Column2","Data do picking"},
+{"Column3","Remessas (de/até)"},
+{"Column4","Documento de compras"},
+{"Column5","Tipo de remessa"},
+{"Column6","Status processamento"},
+{"Column7","Centro"},
+{"Column8","Local expedição/recebimento"},
+{"Column9","Emissor da ordem"},
+{"Column10","Depósito"},
+{"Column11","Cidade recebedor ordem"},
+{"Column12","Nome do recebedor da mercadoria"},
+{"Column13","Material"},
+{"Column14","Denominação"},
+{"Column15","Qtd.real em UGE"},
+{"Column16","UM básica"}}),
+
+reordercols = Table.ReorderColumns(renamecols,{"NomeArquivo", "Fornecimento", "Data do picking", "Remessas (de/até)", "Documento de compras", "Tipo de remessa", "Status processamento", "Centro", "Local expedição/recebimento", "Emissor da ordem", "Depósito", "Cidade recebedor ordem", "Nome do recebedor da mercadoria", "Material", "Denominação", "Qtd.real em UGE", "UM básica"}),
+
+dataarquivo = 
+let
+data = Table.TransformColumns(reordercols,
+{{
+ "NomeArquivo",each Text.BetweenDelimiters(_,"VL06O_CO_","_"),type text
+}}
+),
+substituir = Table.ReplaceValue(data,".","/",Replacer.ReplaceText,{"NomeArquivo"}),
+tipodata = Table.TransformColumnTypes(substituir,{{"NomeArquivo",type date}})
+in
+tipodata
+
+in
+
+dataarquivo
+
+in
+Transformacoes03

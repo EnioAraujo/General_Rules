@@ -1,0 +1,67 @@
+Sub AtualizarEGuardarPlanilhaSharePoint()
+    Dim wb As Workbook
+    Dim caminhoArquivo As String
+    Dim caminhoNovoArquivo As String
+    Dim nomeNovoArquivo As String
+    Dim dataAtual As String
+    Dim horaAtual As String
+    Dim conexoesAtualizadas As Boolean
+ 
+    ' Definir o caminho do arquivo original no SharePoint
+    caminhoArquivo = "https://supportelogistica2.sharepoint.com/sites/ARQUIVOS_UTEIS/Documentos%20Partilhados/HISTORICO_OC_BI/HISTORICO_SALDO.xlsb"
+ 
+    ' Desabilitar alertas e atualizações automáticas
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+ 
+    ' Abrir o arquivo sem exibir a janela
+    Set wb = Workbooks.Open(caminhoArquivo, UpdateLinks:=True)
+ 
+    ' Inicializar a variável de controle
+    conexoesAtualizadas = False
+ 
+    ' Atualizar todas as conexões de dados da planilha
+    On Error Resume Next
+    wb.RefreshAll
+    DoEvents
+ 
+    ' Verificar se as conexões foram atualizadas corretamente
+    Application.Wait (Now + TimeValue("00:00:30")) ' Pausa de 30 segundos
+ 
+    If Err.Number = 0 Then
+        conexoesAtualizadas = True
+    Else
+        MsgBox "Erro ao atualizar conexões de dados. Verifique e tente novamente.", vbExclamation
+        wb.Close SaveChanges:=False
+        Exit Sub
+    End If
+    On Error GoTo 0
+ 
+    ' Se as conexões foram atualizadas, proceder com o salvamento
+    If conexoesAtualizadas Then
+        ' Definir a data e hora atuais no formato desejado
+        dataAtual = Format(Date, "dd.mm.yyyy")
+        horaAtual = "HR" & Format(Time, "hhmm")
+ 
+        ' Definir o caminho e o nome do novo arquivo no SharePoint
+        caminhoNovoArquivo = "https://supportelogistica2.sharepoint.com/sites/ARQUIVOS_UTEIS/Documentos%20Partilhados/HISTORICO_OC_BI/"
+        nomeNovoArquivo = caminhoNovoArquivo & dataAtual & "_" & horaAtual & ".xlsx"
+ 
+        ' Salvar uma cópia do arquivo atualizado no formato .xlsx diretamente no SharePoint
+        wb.SaveAs Filename:=nomeNovoArquivo, FileFormat:=xlOpenXMLWorkbook
+ 
+        ' Fechar o arquivo
+        wb.Close SaveChanges:=False
+ 
+        MsgBox "Planilha atualizada e salva com sucesso no SharePoint!", vbInformation
+    End If
+ 
+    ' Reativar alertas e atualizações automáticas
+    Application.ScreenUpdating = True
+    Application.DisplayAlerts = True
+ 
+    ' Limpar variáveis
+    Set wb = Nothing
+End Sub
+
+

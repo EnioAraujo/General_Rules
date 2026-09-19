@@ -1,0 +1,92 @@
+let
+    Fonte = Table.Buffer(PICKING_ESTEIRA_AGRUPADO),
+    
+    ColunasReordenadas = Table.ReorderColumns(Fonte,{"Fornecimento", "Data do picking", "Remessas (de/até)", "Documento de compras", "Tipo de remessa", "Status processamento", "Centro", "Local expedição/recebimento", "Emissor da ordem", "Depósito", "Cidade recebedor ordem", "Nome do recebedor da mercadoria", "Material", "Denominação", "Qtd.real em UGE", "UM básica"}),
+    
+    #"Consultas Mescladas" = let
+join = Table.NestedJoin(ColunasReordenadas, {"Material"}, SALDO_AGRUPADO_ITEM, {"ITEM_DEPOSIT"}, "SALDO AGRUPADO", JoinKind.Inner),
+exp = Table.ExpandTableColumn(join, "SALDO AGRUPADO", {"EAN_REDUZ", "QTD RESERVADA", "QTD DISPONIVEL"}, {"EAN_REDUZ", "QTD RESERVADA", "QTD DISPONIVEL"})
+in
+exp,
+    
+    ValorSubstituído = Table.ReplaceValue(#"Consultas Mescladas",null,0,Replacer.ReplaceValue,{ "QTD DISPONIVEL"}),
+    ColunasRenomeadas = Table.RenameColumns(ValorSubstituído,{ {"QTD DISPONIVEL", "QTD DISPONIVEL LOGIX"}}),
+    
+    ColDIF_DISPONIVEL = Table.AddColumn(ColunasRenomeadas,"DIF_DISPONIVEL", each ([QTD DISPONIVEL LOGIX] - [Qtd.real em UGE]), type number),
+    ColStatusDifDisp = Table.AddColumn(ColDIF_DISPONIVEL,"STATUS_DIF_DISPONIVEL",
+each if [DIF_DISPONIVEL] > 0 then "ATENDE_TOTAL"
+else if ([QTD DISPONIVEL LOGIX] = [Qtd.real em UGE]) then "ATENDE_TOTAL"
+else if ([QTD DISPONIVEL LOGIX] = 0) then "NÃO_ATENDE_TOTAL" 
+else if ([QTD DISPONIVEL LOGIX] < [Qtd.real em UGE]) and ([DIF_DISPONIVEL] < 0) then "ATENDE_PARCIAL"
+else "NÃO_ATENDE_TOTAL", type text),
+    
+    ColProcessamento01 = Table.AddColumn(ColStatusDifDisp,"PROCESSAMENTO_01", each 
+      if ([QTD DISPONIVEL LOGIX] >= [Qtd.real em UGE]) then [Qtd.real em UGE] 
+        else if ([QTD DISPONIVEL LOGIX] < [Qtd.real em UGE]) then [QTD DISPONIVEL LOGIX]
+        else if [DIF_DISPONIVEL] < 0 then [QTD DISPONIVEL LOGIX]
+             else [Qtd.real em UGE],type number),
+    ColProcessamento02 = Table.AddColumn(ColProcessamento01,"PROCESSAMENTO_02", each 
+        // SE O SALDO DISP FOR MAIOR IGUAL A QTD PEDIDA,TRAZER QTD PEDIDA
+      if ([STATUS_DIF_DISPONIVEL] = "ATENDE_TOTAL") then 0
+        // SE O SALDO DISP FOR MENOR QUE A QTD PEDIDA TRAZER QTD PEDIDA MENOS QTD DISP
+        else if ([STATUS_DIF_DISPONIVEL] = "ATENDE_PARCIAL") then Number.Abs([DIF_DISPONIVEL])
+        //SENÃO TRAZER QUANTIDADE PEDIDA
+             else [Qtd.real em UGE],type number),
+    ColValidaçãoQuantidades = Table.AddColumn(ColProcessamento02, "VALIDACAO_QTD",
+        each if ([PROCESSAMENTO_01]+[PROCESSAMENTO_02]) = [Qtd.real em UGE] 
+        then "OK" else "NOK",type text),
+    
+    // NOVAS COLUNAS DE RECLASSIFICAÇÃO (ABORDAGEM ALTERNATIVA)
+    EncontrarMelhorReclass = (ean_reduz as text, quantidade_necessaria as number) as record =>
+        let
+            // Obter referência direta à tabela SALDO_AGRUPADO_ITEM
+            TabelaSaldo = SALDO_AGRUPADO_ITEM,
+            
+            // Filtrar itens com mesmo EAN_REDUZ
+            ItensMesmoEAN = Table.SelectRows(TabelaSaldo, each [EAN_REDUZ] = ean_reduz),
+            
+            // Adicionar coluna temporária para ordenação
+            ItensComOrdem = Table.AddColumn(ItensMesmoEAN, "OrdemTemp", each [QTD DISPONIVEL]),
+            
+            // Ordenar pela coluna temporária (abordagem mais simples)
+            ItensOrdenados = Table.Sort(ItensComOrdem, {{"OrdemTemp", Order.Descending}}),
+            
+            // Remover coluna temporária
+            ItensFinais = Table.RemoveColumns(ItensOrdenados, {"OrdemTemp"}),
+            
+            // Procurar primeiro item com saldo suficiente
+            ItemComSaldo = 
+                let
+                    FiltrarItensComSaldo = Table.SelectRows(ItensFinais, each [QTD DISPONIVEL] >= quantidade_necessaria and [QTD DISPONIVEL] > 0),
+                    ItemEncontrado = if Table.IsEmpty(FiltrarItensComSaldo) then null else FiltrarItensComSaldo{0}
+                in
+                    ItemEncontrado,
+            
+            // Se não encontrou item com saldo suficiente, procurar o item com maior saldo disponível
+            ItemMaiorSaldo = if ItemComSaldo <> null then ItemComSaldo else 
+                if Table.IsEmpty(ItensFinais) then null else ItensFinais{0},
+            
+            // Retornar resultado final
+            ResultadoFinal = if ItemMaiorSaldo = null then 
+                [ITEM_DEPOSIT = "", DEN_ITEM = ""] 
+            else 
+                [ITEM_DEPOSIT = ItemMaiorSaldo[ITEM_DEPOSIT], DEN_ITEM = ItemMaiorSaldo[DEN_ITEM]]
+        in
+            ResultadoFinal,
+    
+    // Adicionar colunas de reclassificação
+    AdicionarColunasReclass = Table.AddColumn(ColValidaçãoQuantidades, "DadosReclass", 
+        each 
+            if [PROCESSAMENTO_02] > 0 and [EAN_REDUZ] <> null then 
+                EncontrarMelhorReclass([EAN_REDUZ], [PROCESSAMENTO_02])
+            else 
+                [ITEM_DEPOSIT = "", DEN_ITEM = ""],
+        type record),
+    
+    // Expandir os dados de reclassificação
+    ExpandirReclass = Table.ExpandRecordColumn(AdicionarColunasReclass, "DadosReclass", 
+        {"ITEM_DEPOSIT", "DEN_ITEM"}, {"ITEM_RECLASS", "DESC_ITEM_RECLASS"}),
+    
+ColunasReordenadas1 = Table.ReorderColumns(ExpandirReclass,{"Fornecimento", "Data do picking", "Remessas (de/até)", "Documento de compras", "Tipo de remessa", "Status processamento", "Centro", "Local expedição/recebimento", "Emissor da ordem", "Depósito", "Cidade recebedor ordem", "Nome do recebedor da mercadoria", "Material", "Denominação", "Qtd.real em UGE", "UM básica", "EAN_REDUZ", "QTD RESERVADA", "QTD DISPONIVEL LOGIX", "DIF_DISPONIVEL", "STATUS_DIF_DISPONIVEL", "PROCESSAMENTO_01", "VALIDACAO_QTD", "ITEM_RECLASS", "DESC_ITEM_RECLASS", "PROCESSAMENTO_02"})
+in
+    ColunasReordenadas1

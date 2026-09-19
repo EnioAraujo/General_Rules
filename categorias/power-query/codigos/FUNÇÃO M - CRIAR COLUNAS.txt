@@ -1,0 +1,36 @@
+= let
+
+// (INICIO) CRIAÇÃO DE VARIAS COLUNAS PARA PADRONIZAR O ARQUIVO PARA PROCESSAMENTO NO LOGIX
+ColFornecimento = Table.AddColumn(ColunasRemovidas, "Fornecimento", each 
+    Text.PadStart(Text.From(Date.Day(DateTime.LocalNow())), 2, "0") & 
+    Text.PadStart(Text.From(Date.Month(DateTime.LocalNow())), 2, "0") & 
+    "_PKG_ANTECIPADO", type text),
+ColDatadpicking = Table.AddColumn(ColFornecimento,"Data do picking", each "01/01/1900", type nullable text),
+ColRemessasdeate = Table.AddColumn(ColDatadpicking,"Remessas (de/até)", each "01/01/1900", type nullable text),
+ColDocumentodecompras = Table.AddColumn(ColRemessasdeate,"Documento de compras", each "7384000000", type nullable text),
+ColTipoderemessa = Table.AddColumn(ColDocumentodecompras,"Tipo de remessa", each "ZLFB", type nullable text),
+ColStatusprocessamento = Table.AddColumn(ColTipoderemessa,"Status processamento", each " ", type nullable text),
+ColCentro = Table.AddColumn(ColStatusprocessamento,"Centro", each "BRBQ", type nullable text),
+ColLocalexpedicaoRecebimento = Table.AddColumn(ColCentro,"Local expedição/recebimento", each "BRBQ", type nullable text),
+ColEmissordaordem = Table.AddColumn(ColLocalexpedicaoRecebimento,"Emissor da ordem", each "50940000", type nullable text),
+ColDeposito = Table.AddColumn(ColEmissordaordem,"Depósito", each "BRBQ", type nullable text),
+ColCidaderecebedorordem = Table.AddColumn(ColDeposito,"Cidade recebedor ordem", each "UBERLANDIA", type nullable text),
+ColNomedoRecebedordaMercadoria = Table.AddColumn(ColCidaderecebedorordem,"Nome do recebedor da mercadoria", each "BRBQ", type nullable text),
+// (FIM) COLUNAS CRIADAS
+
+//RENOMEIA 2 COLUNAS PARA O PADRÃO
+RenameColItem = Table.RenameColumns(ColNomedoRecebedordaMercadoria,{{"DESCRIÇÃO DO ITEM","Denominação"},{"VOL_PEDIDO","Qtd.real em UGE"}}),
+
+//REMOVE COLUNAS QUE NÃO SERÃO MAIS USADAS
+RemoveCols = Table.RemoveColumns(RenameColItem,{"SUB_CATEGORIA","DRIVE"}),
+
+// REORDENA A POSIÇÃO DAS COLUNAS PARA FICAREM NO PADRÃO DA VL06O
+ReordenarColunas = Table.ReorderColumns(RemoveCols,{"Fornecimento",
+"Data do picking","Remessas (de/até)","Documento de compras","Tipo de remessa","Status processamento","Centro","Local expedição/recebimento","Emissor da ordem","Depósito","Cidade recebedor ordem",
+"Nome do recebedor da mercadoria","Material","Denominação","Qtd.real em UGE","UM básica"})
+
+in
+ReordenarColunas
+
+
+

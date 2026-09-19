@@ -1,0 +1,10 @@
+let
+    Fonte = DateTime.LocalNow(), // DATA E HORA DO DIA, POREM TRAZ COM 3 HORAS A MAIS
+    PARA_TABELA = #table(1, {{Fonte}}), // PARA TABELA
+    NOMECOLALTERADO = Table.RenameColumns(PARA_TABELA,{{"Column1", "Data"}}), //RENOMEIA COLUNA 1, PARA O NOME DATA
+    TIPOALTERADO= Table.TransformColumnTypes(NOMECOLALTERADO,{{"Data", type datetimezone}}), // ALTERA I TIPO DO DADO PARA DATA & HORA
+    COLHORACERTAADD= Table.AddColumn(TIPOALTERADO, "Hora certa", each DateTimeZone.SwitchZone([Data],-3)), // SUBTRAI 3 HORAS DO DATA,TRAZENDO A HORA CORRETA
+    TIPOALTERADO1 = Table.TransformColumnTypes(COLHORACERTAADD,{{"Hora certa", type datetimezone}}), //ALTERA I TIPO DO DADO PARA DATA & HORA
+    COLDATAREMOVIDA = Table.RemoveColumns(TIPOALTERADO1,{"Data"})
+in
+    COLDATAREMOVIDA

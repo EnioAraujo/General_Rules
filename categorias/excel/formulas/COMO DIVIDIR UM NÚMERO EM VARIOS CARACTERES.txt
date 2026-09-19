@@ -1,0 +1,24 @@
+Para dividir o número 300 em três caracteres no Excel, você pode usar uma das seguintes fórmulas:
+
+1. Usando a função LEFT, MID ou RIGHT:
+```
+LEFT(300,1)   = 3
+MID(300,2,1)  = 0
+RIGHT(300,1)  = 0
+```
+
+2. Usando TEXT e concatenação:
+```
+=TEXT(TRUNC(300/100),"0") & TEXT(MOD(TRUNC(300/10),10),"0") & TEXT(MOD(300,10),"0")
+```
+
+3. Método simples de extração de dígitos:
+```
+=INT(300/100)     (primeiro dígito: 3)
+=INT(MOD(300,100)/10)  (segundo dígito: 0)
+=MOD(300,10)      (terceiro dígito: 0)
+```
+
+Cada um desses métodos vai te dar os três caracteres do número 300: 3, 0 e 0. Escolha o que for mais conveniente para o seu caso específico no Excel.
+
+Dica: Se precisar de uma solução mais flexível para outros números, recomendo o método 2 ou 3, pois funcionam para qualquer número de três dígitos.

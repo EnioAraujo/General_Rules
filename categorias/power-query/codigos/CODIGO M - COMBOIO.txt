@@ -1,0 +1,16 @@
+let
+    Fonte = SharePoint.Files("https://bat.sharepoint.com/sites/FillRate-RedespachobyDataAnalytics", [ApiVersion = 15]),
+    #"Linhas Filtradas" = Table.SelectRows(Fonte, each ([Name] = "01_Controle comboio_012025.xlsx" or [Name] = "12_Controle comboio_122024.xlsx")),
+    #"Arquivos Ocultos Filtrados1" = Table.SelectRows(#"Linhas Filtradas", each [Attributes]?[Hidden]? <> true),
+    #"Invocar Função Personalizada1" = Table.AddColumn(#"Arquivos Ocultos Filtrados1", "Transformar Arquivo (2)", each #"Transformar Arquivo (2)"([Content])),
+    #"Colunas Renomeadas1" = Table.RenameColumns(#"Invocar Função Personalizada1", {"Name", "Nome da Origem"}),
+    #"Outras Colunas Removidas1" = Table.SelectColumns(#"Colunas Renomeadas1", {"Nome da Origem", "Transformar Arquivo (2)"}),
+    #"Coluna de Tabela Expandida1" = Table.ExpandTableColumn(#"Outras Colunas Removidas1", "Transformar Arquivo (2)", Table.ColumnNames(#"Transformar Arquivo (2)"(#"Arquivo de Amostra (2)"))),
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Coluna de Tabela Expandida1",{{"Nome da Origem", type text}, {"Embarque (F.O)", type any}, {"Data Embarque", type date}, {"Destino", type text}, {"Transportadora", type text}, {"Tipo Carreta", type text}, {"Placa Cavalo", type text}, {"Placa Carreta", type text}, {"Motorista", type text}, {"LOCAL", type text}, {"Horario Apresentação Portaria ", type datetime}, {"Horario de solicitação de CTE", type any}, {"Horario de Recebimento de CTE", type datetime}, {"Entrega Documentação - Apisul", type datetime}, {"Horario de Saída", type any}}),
+    #"Colunas Removidas" = Table.RemoveColumns(#"Tipo Alterado",{"Nome da Origem"}),
+    #"Colunas Reordenadas" = Table.ReorderColumns(#"Colunas Removidas",{"Data Embarque", "Embarque (F.O)", "Destino", "Transportadora", "Tipo Carreta", "Placa Cavalo", "Placa Carreta", "Motorista", "LOCAL", "Horario Apresentação Portaria ", "Horario de solicitação de CTE", "Horario de Recebimento de CTE", "Entrega Documentação - Apisul", "Horario de Saída"}),
+    #"Tipo Alterado1" = Table.TransformColumnTypes(#"Colunas Reordenadas",{{"Embarque (F.O)", type text}, {"Horario Apresentação Portaria ", type time}, {"Horario de solicitação de CTE", type time}, {"Horario de Recebimento de CTE", type time}, {"Entrega Documentação - Apisul", type time}, {"Horario de Saída", type time}}),
+    #"Linhas Filtradas1" = Table.SelectRows(#"Tipo Alterado1", each ([Data Embarque] <> null)),
+    #"Colunas Removidas1" = Table.RemoveColumns(#"Linhas Filtradas1",{"Transportadora", "Placa Cavalo", "Placa Carreta", "Motorista", "LOCAL"})
+in
+    #"Colunas Removidas1"

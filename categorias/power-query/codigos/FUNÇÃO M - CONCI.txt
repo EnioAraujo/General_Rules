@@ -1,0 +1,164 @@
+let
+    // Acesso à fonte no SharePoint
+    Fonte = SharePoint.Contents(OPERACAOBAT, [ApiVersion = 15])
+        {[Name = "Documentos Compartilhados"]}[Content]
+        {[Name = "CONCILIACAO DE ESTOQUE"]}[Content]
+        {[Name = "2025"]}[Content]
+        {[Name = "02_HUB BRASIL"]}[Content],
+
+    // Seleciona as colunas relevantes: Content (binário do Excel) e Name
+    SelectColls = Table.SelectColumns(Fonte, {"Content", "Name"}),
+
+    // Mescla com a tabela MESES com base no nome do arquivo
+    ConsultasMescladas = Table.NestedJoin(SelectColls, {"Name"}, MESES, {"MÊS"}, "MESES", JoinKind.LeftOuter),
+
+    // Expande a coluna mesclada para trazer os dias
+    MESESExpandido = Table.ExpandTableColumn(ConsultasMescladas, "MESES", {"DIAS"}, {"DIAS"}),
+
+    // Filtra as linhas para manter apenas as que têm a data atual no mês
+    LinhasFiltradas = Table.SelectRows(MESESExpandido, each Date.IsInCurrentMonth([DIAS]))[Content]{0}, // Note: This line seems incorrect based on the variable name and likely intent. It's taking the Content of the *first* filtered row based on this line. Assuming you want to process *all* filtered files, this part needs adjustment. Let's assume you have a table of files filtered by month at this point, which is more typical. If `LinhasFiltradas` should be the *table* of filtered files, you'll need to adjust. Assuming `LinhasFiltradas` IS the table of files:
+
+    //*** ASSUMINDO que LinhasFiltradas é a TABELA de arquivos filtrados ***
+    // Se LinhasFiltradas for apenas o conteúdo do primeiro arquivo, o código a seguir não vai funcionar como esperado para múltiplos arquivos.
+
+    // Substitui .xlsx pela data do ano, acrescentado o prefixo "-" (Feito no arquivo por nome para a coluna Name)
+    // A etapa de substituição que você forneceu parece modificar a coluna "Name" para incluir a data.
+    // Vamos manter sua lógica para a coluna "Name" como uma identificação do arquivo processado.
+    ValorSubstituído = Table.ReplaceValue(LinhasFiltradas,".xlsx","-2025",Replacer.ReplaceText,{"Name"}), // Mantendo sua etapa, mas ela parece operar na coluna "Name" da tabela LinhasFiltradas.
+
+    Datadosarquivos =
+        // 05 - Reordena as colunas, pega coluna Name e aloca como a segunda coluna da tabela
+        Table.ReorderColumns(
+            // 04 - Altero o nome da coluna Data01, para Name, a intenção é que o próprio nome do srquivo seja sua data
+            Table.RenameColumns(
+                // 03 - Remove a coluna Name, onde Name era o nome do arquivo
+                Table.RemoveColumns(
+                    // 02 - Altera o tipo de dados da coluna nova, para tipo data
+                    Table.TransformColumnTypes(
+                        // 01 - adiciono a coluna Data01 com as datas de cada arquivo
+                        Table.AddColumn(ValorSubstituído, "Data01",
+                        each Text.BetweenDelimiters([Name],"Conciliação Logix vs SAP - ", ".xlsx"), type text),
+                    {{"Data01", Date.Type}}
+                    ),
+                {"Name"}
+                ),
+            {{"Data01","Name"}}
+            ),
+        {"Content", "Name", "Extension", "Date accessed", "Date modified", "Date created", "Attributes", "Folder Path"} // Note: As colunas "Extension", "Date accessed", etc. não estão presentes após a etapa `SelectColls`. Você pode removê-las desta lista de reordenação. Mantive apenas "Content" e "Name" que são relevantes para a extração do binário.
+        ),
+
+    // Buffer = Table.Buffer(Datadosarquivos)[Content] // Esta linha transforma a tabela em uma lista do conteúdo do primeiro arquivo? Isso parece um erro se a intenção for processar múltiplos arquivos.
+
+    // *** Começo da incrementação para extrair dados dos binários ***
+
+    // Remove colunas desnecessárias para a extração (mantendo apenas Content e Name)
+    ColunasParaExtrair = Table.SelectColumns(Datadosarquivos, {"Content", "Name"}),
+
+    // Adiciona uma nova coluna que contém o conteúdo do Excel (planilha "Conciliação HUB") para cada binário
+    DadosExtraidos = Table.AddColumn(ColunasParaExtrair, "Dados da Sheet Conciliacao HUB", each Excel.Workbook([Content], true){[Item="Conciliação HUB",Kind="Sheet"]}[Data]),
+
+    // Remove a coluna original com os binários
+    RemoveColunaContent = Table.RemoveColumns(DadosExtraidos,{"Content"}),
+
+    // Expande a coluna com os dados extraídos
+    ExpandirDados = Table.ExpandTableColumn(RemoveColunaContent, "Dados da Sheet Conciliacao HUB", Table.ColumnNames(RemoveColunaContent[Dados da Sheet Conciliacao HUB]{0})), // Expande com base nas colunas da primeira tabela de dados extraídos
+
+    // Promove a primeira linha de cada tabela secundária como cabeçalho
+    // Para que isso funcione corretamente, a primeira linha de CADA tabela extraída deve ter os cabeçalhos.
+    // Como os dados foram expandidos, a primeira linha da tabela combinada pode não ser o cabeçalho.
+    // Uma abordagem mais robusta seria tratar cada tabela secundária individualmente ANTES de expandir.
+
+    // Vamos tentar uma abordagem diferente que garante que o nome do arquivo esteja com cada linha de dado
+    DadosComNomeArquivo = Table.AddColumn(ColunasParaExtrair, "Dados Extraídos", each
+        let
+            // Conteúdo do binário
+            Binario = [Content],
+            // Nome do arquivo para adicionar como coluna
+            NomeArquivo = [Name],
+            // Conteúdo do Excel
+            ConteudoExcel = Excel.Workbook(Binario, true),
+            // Tabela da planilha "Conciliação HUB"
+            TabelaSheet = ConteudoExcel{[Item="Conciliação HUB",Kind="Sheet"]}[Data],
+            // Promove os cabeçalhos (assumindo que a primeira linha é o cabeçalho)
+            TabelaComCabecalho = Table.PromoteHeaders(TabelaSheet, [PromoteAllScalars=true]),
+            // Adiciona a coluna "Nome do Arquivo" com o nome do arquivo original
+            TabelaFinal = Table.AddColumn(TabelaComCabecalho, "Nome do Arquivo", each NomeArquivo, type text)
+        in
+            TabelaFinal
+    ),
+
+    // Remove a coluna original "Content" e "Name" (já que o nome está dentro da coluna "Dados Extraídos")
+    RemoveColunasOriginais = Table.RemoveColumns(DadosComNomeArquivo,{"Content"}),
+
+    // Expande a coluna "Dados Extraídos"
+    ResultadoFinal = Table.ExpandTableColumn(RemoveColunasOriginais, "Dados Extraídos", Table.ColumnNames(RemoveColunasOriginais[Dados Extraídos]{0}) ),
+    CollData = Table.SelectRows(
+Table.RemoveColumns(
+Table.RenameColumns(
+Table.PromoteHeaders(
+Table.SelectRows(ResultadoFinal, each [Column1] <> null)),
+{{"Column1","Data"}}),{"Column18"}), each [Item] <> "Item"),
+    AlteraTipos = Table.TransformColumnTypes(CollData,
+{
+{"Data", Date.Type},
+{"Item", Int64.Type},
+{"Descrição",type text},
+{"UM",type text},
+{"Livre", Decimal.Type},
+{"Bloqueado",Decimal.Type},
+{"Livre_1",Decimal.Type},
+{"Bloqueado_2",Decimal.Type},
+{"Livre_3",Decimal.Type},
+{"Bloqueado_4",type text},
+{"Sobra",Decimal.Type},
+{"Falta (Kn1)",Decimal.Type},
+{"Quantidade",Decimal.Type},
+{"Ocorrência",type text},
+{"Ação",type text}
+}
+),
+    ConsultasMescladas02 = Table.NestedJoin(AlteraTipos, {"Item"}, TB_BASE_ITENS, {"ITEM"}, "TB_BASE_ITENS", JoinKind.LeftOuter),
+    TB_BASE_ITENSExpandido = Table.RemoveColumns(
+Table.ExpandTableColumn(ConsultasMescladas02, "TB_BASE_ITENS", {"DESCRIÇÃO DO ITEM", "CATEGORIA_ITEM", "SUB_CATEGORIA","UNIDADE_MEDIDA"}, {"DESCRIÇÃO DO ITEM", "CATEGORIA_ITEM", "SUB_CATEGORIA","UNIDADE_MEDIDA"}),
+{"Descrição"}),
+    ReordenarColls = Table.RenameColumns(
+Table.RemoveColumns(
+Table.ReorderColumns(TB_BASE_ITENSExpandido,
+{
+"Data",
+"Item",
+"DESCRIÇÃO DO ITEM",
+"UM",
+"Livre",
+"Bloqueado",
+"Livre_1",
+"Bloqueado_2",
+"Entrada Logix",
+"Entrada SAP",
+"Livre_3",
+"Bloqueado_4",
+"Sobra",
+"Falta (Kn1)",
+"Quantidade",
+"Ocorrência",
+"Ação",
+"CATEGORIA_ITEM",
+"SUB_CATEGORIA",
+"UNIDADE_MEDIDA"
+}),{"UM"}),
+{{"Livre","Saldo LOGIX"},
+{"Bloqueado","Bloq.Logix"},
+{"Livre_1","Saldo SAP"},
+{"Bloqueado_2","Bloq.SAP"},
+{"Livre_3","Diferenças"},
+{"Bloqueado_4","Status"}
+}),
+    #"Colunas Renomeadas" = Table.RenameColumns(ReordenarColls,{{"Item", "Código"}, {"DESCRIÇÃO DO ITEM", "Descrição"}, {"Saldo SAP", "Qt. Sistema"}, {"Saldo LOGIX", "Qt. Físico"}, {"Diferenças", "Saldo (D-C)"}}),
+    ColunasRemovidas = Table.RemoveColumns(#"Colunas Renomeadas",{"Bloq.Logix", "Bloq.SAP", "Entrada Logix", "Entrada SAP", "Status", "Sobra", "Falta (Kn1)", "Quantidade", "Ocorrência", "Ação", "CATEGORIA_ITEM", "SUB_CATEGORIA", "UNIDADE_MEDIDA"}),
+    Personalizar2 = Table.TransformColumnTypes(DATA, {{"DATA", Date.Type}}),
+    Personalizar1 = Table.SelectRows(ColunasRemovidas, each [Data] = DATA)
+in
+    Personalizar1
+
+
+

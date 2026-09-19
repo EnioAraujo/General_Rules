@@ -1,0 +1,11 @@
+= let 
+// TRAZ A TABELA ANTERIOR
+TabelaBase = LinhasFiltradas1,
+// LISTA OS NOMES DA TABELA
+Listar_nomes = Table.ColumnNames(TabelaBase),
+//PEGA O NOME DA COLUNA QUE PRECISA SER ALTERADO, NESSE CASO É A PRIMEIRA COLUNA, SE A POSIÇÃO DELA MUDAR, ALTERE PARA O NUMERO CORRESPONDENTE À POSIÇÃO
+Nome = Listar_nomes{0},
+//RENOMEIA A COLUNA PARA DATA
+Renomear = Table.RenameColumns(TabelaBase, {{Nome,"Data"}})
+in
+Renomear

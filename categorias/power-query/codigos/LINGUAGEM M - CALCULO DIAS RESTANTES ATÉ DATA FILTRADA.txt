@@ -1,0 +1,22 @@
+DiasRestantesAcumulado = 
+      // nesta variável é feita a divisão entre horasrestantes por media de uso
+var A = DIVIDE([HorasRestantesAcumulado],[MediadeUso_acumulado])
+     // Esta formula traz o dias restantes para uso relativo ao uso acumulado, se for filtrado a data Ex: 10/02/2026 será calculado valores do dia 01/02/2026 até 10/02/2026, trazendo o 
+     //os dias restantes até a data 10/02/2026
+var B = CALCULATE(
+    
+    A,
+    FILTER(
+        //Retira qualquer filtro relativo a data
+        ALL(FT_RELATORIO_USO[Data]),
+        // filtra na coluna Data o valor menor ou igual a data máxima, que seria a data filtrada
+        FT_RELATORIO_USO[Data] <= MAX(FT_RELATORIO_USO[Data])
+    )
+)
+RETURN
+B
+//IF([Hr restantes] < 0, 0, [Hr restantes])
+
+
+
+

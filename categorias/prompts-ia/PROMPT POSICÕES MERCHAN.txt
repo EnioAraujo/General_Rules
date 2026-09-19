@@ -1,0 +1,23 @@
+Chat, tenho esse range de posições de estoque 
+
+4 CC 1 1
+4 CC 3 1
+4 CC 5 1
+4 CC 7 1
+4 CC 11 1
+4 CC 13 1
+4 CC 15 1
+4 CC 17 1
+4 CC 19 1
+4 CC 21 1
+4 CC 23 1
+4 CC 25 1
+4 CC 27 1
+4 CC 29 1
+
+aja como um analista de dados e me ajude a solucionar um problema
+
+no meu estoque tenho peças que ultrapassam o limite da posição de estoque e acabam ocupando fisicamente 
+2 posições de estoque, mas sistemicamente só ocupam 1
+
+as posições são em pares, 4 CC 1 1 & 4 CC 3 1 são pares, qual ideia você teria para resolver este problema

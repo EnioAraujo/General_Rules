@@ -1,0 +1,15 @@
+let
+
+BinariaImagem = (Fonte_Binaria as binary) as text =>
+
+let
+
+Base64 = "data:image/jpeg;base64, " & Binary.ToText(Fonte_Binaria,BinaryEncoding.Base64)
+
+in
+
+Base64
+
+in
+
+BinariaImagem

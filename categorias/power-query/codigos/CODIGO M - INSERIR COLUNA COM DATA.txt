@@ -1,0 +1,102 @@
+let
+   Fonte = let
+    // Navegar direto com caminho completo
+    CaminhoCompleto = PASTA_REDE,
+    
+    ArquivosPasta = Folder.Files(CaminhoCompleto),
+    
+    // Filtrar apenas .xlsm começando com P
+    Filtrado = Table.SelectRows(ArquivosPasta, each
+        [Extension] = ".xlsm" and
+        Text.Start([Name], 1) = "P"
+    )in
+    Filtrado,
+    Personalizar2 = Table.Combine(List.Transform(Fonte[Content], each Excel.Workbook(_))),
+    ColunasRemovidas = Table.RemoveColumns(Personalizar2,{"Content", "Extension", "Date accessed", "Date modified", "Date created", "Attributes", "Folder Path"}),
+    LinhasFiltradas = Table.SelectRows(ColunasRemovidas, each ([Name] <> "PROGRAMAÇÃO_DIARIA_MODELO.xlsm") and ([Name] <> "PROGRAMAÇÃO_MODELO.xlsm")),
+    PromoteHeaders = Table.PromoteHeaders(LinhasFiltradas, [PromoteAllScalars=true]),
+    RenomearColuna = Table.RenameColumns(PromoteHeaders, {"PROGRAMAÇÃO_DIARIA_02012026.xlsm","DATA"}),
+    TipoAlterado = Table.TransformColumnTypes(RenomearColuna,{{"DATA", type text}, {"EMBARQUE", type text}, {"Origem", type text}, {"STO", type text}, {"CATEGORIA", type text}, {"F.O", type any}, {"Planta", type text}, {"Localidade", type text}, {"TIPO", type text}, {"Comboio", type text}, {"Prioridade", type any}, {"CAIXAS", type any}, {"M³", type any}, {"Bonif (cxs)", type any}, {"Bonif (m³)", type any}, {"Mercha (cxs)", type any}, {"Mercha (m³)", type any}, {"Parc (cxs)", type any}, {"Parc (m³)", type any}, {"Outros (cxs)", type any}, {"Outros (m³)", type any}, {"TOTAL CX", type any}, {"CIGARRO CX", type any}, {"TOTAL M³", type any}, {"CIGARRO M³", type any}, {"TOTAL CX2", type any}, {"CIGARRO CX3", type any}}),
+    ValorSubstituido = let
+A = Table.ReplaceValue(TipoAlterado,"-","",Replacer.ReplaceText,{"DATA"}),
+B = Table.ReplaceValue(A,"_","",Replacer.ReplaceText,{"DATA"}),
+C = Table.ReplaceValue(B," ","",Replacer.ReplaceText,{"DATA"}),
+D = Table.ReplaceValue(B," ","",Replacer.ReplaceText,{"DATA"})
+in
+C,
+    ColunaData = // Extrai a data que esta entre "PROGRAMAÇÃODIARIA" e ".xlsm"
+let
+A = Table.TransformColumns(ValorSubstituido, {
+    {"DATA", each
+        let
+            Valor = _,
+            Resultado = 
+                if Text.Contains(Valor, "PROGRAMAÇÃODIARIA") then
+                    Text.BetweenDelimiters(Valor, "PROGRAMAÇÃODIARIA", ".xlsm")
+                
+                
+                else
+                    Valor
+        in
+            Resultado
+    , type text}
+})
+in
+A,
+    ColunaData01 = // Extrai a data que esta entre o nome do arquivo 
+// Extrai a data que esta entre "PROGRAMAÇÃO" e ".xlsm"
+// Extrai a data que esta entre "PROGRAMAÇÃO" e ".xlsm"
+let
+A = Table.TransformColumns(ColunaData, {
+    {"DATA", each
+        let
+            Valor = _,
+            Resultado = 
+                if Text.Contains(Valor, "PROGRAMAÇÃO") then
+                    Text.BetweenDelimiters(Valor, "PROGRAMAÇÃO", ".xlsm")
+                else
+                    Valor
+        in
+            Resultado
+    , type text}
+})
+in
+A,
+    TratarDatas = let
+// traz o dia da coluna DATA
+B = Table.AddColumn(ColunaData01,"DIA",each Text.Start([DATA],2)),
+// traz o MES da coluna DATA
+C = Table.AddColumn(B,"MES",each Text.Middle([DATA],2,2)),
+// traz o ANO da coluna DATA
+D = Table.AddColumn(C,"ANO",each Text.End([DATA],4)),
+// CONCATENA OS TRES VALORES COM / ENTRE ELES E ASSIM CRIANDO A COLUNA Data NO FORMATO "DD/MM/AAAA"
+Coldata = Table.AddColumn(D,"Data", each Text.Combine({[DIA],[MES],[ANO]},"/"),type text),
+// remove as coluna que não serão usadas
+Removecols = Table.RemoveColumns(Coldata,{"DIA","MES","ANO","DATA"}),
+// altera o tipo da coluna Data para tipo data, do modo anterior não aceita mudar otipo, apenas usando TransformColumnTypes
+alterartipoptexto = Table.TransformColumnTypes(Removecols,{{"Data",type date}} )
+in
+alterartipoptexto,
+    LinhasFiltradas0 = //filtra valores campos vazios "null" para não quebrar a query 
+Table.SelectRows(TratarDatas, each Date.IsInCurrentWeek([Data]) and [EMBARQUE] <> "EMBARQUE" ),
+    Filtra2dias = let
+        Hoje = Date.From(DateTime.LocalNow()),
+        Ontem = Date.AddDays(Hoje, -2),
+        Filtro = Table.SelectRows(
+            LinhasFiltradas0, 
+            each 
+                (Date.From([Data]) >= Ontem)
+                
+                
+                          )
+    in
+        Filtro,
+    PreenchidoAbaixo = Table.FillDown(Filtra2dias,{"EMBARQUE"}),
+    Personalizar1 = let 
+A = Table.AddColumn(PreenchidoAbaixo, "STO2", each if [STO] = null then [CATEGORIA] else [STO], type text ),
+B = Table.RemoveColumns(A, "STO" ),
+C = Table.RenameColumns(B,{"STO2","STO"})
+in
+C
+in
+    Personalizar1

@@ -1,0 +1,114 @@
+
+= Table.AddColumn(TipoAlterado, "JOIN_EAN_ITEM", each Text.Combine({[EAN_REDUZ], Text.From([ITEM], "pt-BR")}, "-"), type text)
+
+
+Table.AddColumn(PASSO ANTERIOR, "NOME_NOVA_COLUNA", each Text.Combine({COLUNA01, Text.From(COLUNA02, "pt-BR")}"neste caso era tipo número, então alterou o tipo para texto", "DELIMITADOR(ENTRE ASPAS)"), type text)
+
+
+
+
+= let
+join = Table.NestedJoin(ColValidaçãoQuantidades, {"JOIN_EAN_ITEM"}, ColValidaçãoQuantidades, {"JOIN_EAN_ITEM"},"ColunasReordenadas1", JoinKind.LeftOuter),
+expand = Table.ExpandTableColumn(join,"ColunasReordenadas1",{"DIF_SALDO_DISPONIVEL"},{"DIF_SALDO_DISPONIVEL_02"}),
+
+saldo1 = Table.AddColumn(expand,"SALDO_DISPONIVEL_02", 
+each if [DIF_SALDO_DISPONIVEL_02] > 0 then [DIF_SALDO_DISPONIVEL_02] else 0),
+
+removecol = Table.RemoveColumns(saldo1,{"DIF_SALDO_DISPONIVEL_02"})
+in
+removecol
+
+
+
+
+
+
+
+
+
+
+
+= let
+group = Table.Group(ColValidaçãoQuantidades,{"INIC_ITEM","EAN_REDUZ","Material","Denominação"},{{"QTD",each List.Sum([DIF_SALDO_DISPONIVEL]), type number}}),
+
+//SE O VALOR DE QTD, FOR MENOR QUE 0, TRAZER 0 SENÃO, TRAZER O VALOR DA COLUNA QUANTIDADE
+valid = Table.AddColumn(group,"SALDO_DISPONIVEL_02",each if [QTD] < 0 then 0 else [QTD], type number),
+
+//REMOVE A COLUNA QUANTIDADE
+removecol = Table.RemoveColumns(valid,{"QTD"}),
+
+//REMOVE A AS LINHAS CUJA QUANTIDADE É IGUAL A 0
+selectRows = Table.SelectRows(removecol,each [SALDO_DISPONIVEL_02] <> 0),
+
+//CLASSIFICA AS 2 COLUNAS EM ORDEM DO MAIOR PAR O MENOR
+classificar = 
+Table.Sort(selectRows,{
+{"INIC_ITEM",Order.Descending},
+{"SALDO_DISPONIVEL_02",Order.Descending}
+})
+in
+classificar
+
+= let
+group = Table.Group(ColValidaçãoQuantidades,{"INIC_ITEM","EAN_REDUZ","Material","Denominação"},{{"QTD",each List.Sum([DIF_SALDO_DISPONIVEL]), type number}}),
+
+//SE O VALOR DE QTD, FOR MENOR QUE 0, TRAZER 0 SENÃO, TRAZER O VALOR DA COLUNA QUANTIDADE
+valid = Table.AddColumn(group,"SALDO_DISPONIVEL_02",each if [QTD] < 0 then 0 else [QTD], type number),
+
+//REMOVE A COLUNA QUANTIDADE
+removecol = Table.RemoveColumns(valid,{"QTD"}),
+
+//REMOVE A AS LINHAS CUJA QUANTIDADE É IGUAL A 0
+selectRows = Table.SelectRows(removecol,each [SALDO_DISPONIVEL_02] <> 0),
+
+//CLASSIFICA AS 2 COLUNAS EM ORDEM DO MAIOR PAR O MENOR
+classificar = 
+Table.Sort(selectRows,{
+{"INIC_ITEM",Order.Descending},
+{"SALDO_DISPONIVEL_02",Order.Descending}
+})
+in
+classificar
+
+
+
+
+
+
+
+= let
+Fonte02 = ColValidaçãoQuantidades,
+reclass01 = Table.NestedJoin(ColValidaçãoQuantidades, {"EAN_REDUZ"}, ColDifDisponivel02, {"EAN_REDUZ"},"ColunasReordenadas1", JoinKind.LeftOuter),
+expand = Table.ExpandTableColumn(reclass01,"ColunasReordenadas1",{"Material","Denominação","SALDO_DISPONIVEL_02"},{"ITEM_RECLASS_01","DESCRICAO_02","SALDO_DISPONIVEL_02"}),
+
+saldoreclass = Table.AddColumn(expand,"ITEM_RECLASS", each 
+List.Max([SALDO_DISPONIVEL_02]))
+in
+saldoreclass
+
+
+
+= Table.SelectRows(ColunasRemovidas, each ([PROCESSAMENTO_02] <> 0))
+
+
+
+
+= Table.SelectRows(#"Colunas Removidas", each 
+[CONCAT] = "FRACIONADO_NÃO" or 
+[CONCAT] = "FRACIONADO_SIM" or
+[CONCAT] ="CAIXA_FECHADA_NÃO" or
+[CONCAT] ="CX_FCH_COM_FRACAO_NÃO" or
+[CONCAT] ="CX_FCH_COM_FRACAO_SIM"
+)
+
+
+Table.SelectRows(Fonte, each 
+[STATUS_DIF_DISPONIVEL] = "ATENDE_TOTAL" or 
+[STATUS_DIF_DISPONIVEL] = "ATENDE_PARCIAL"
+)
+
+= Table.SelectRows(Fonte, each 
+[STATUS_DIF_DISPONIVEL] = "NÃO_ATENDE_TOTAL" or 
+[STATUS_DIF_DISPONIVEL] = "ATENDE_PARCIAL"
+)
+

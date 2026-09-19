@@ -1,0 +1,7 @@
+let
+    Fonte = PostgreSQL.Database("192.168.102.172", "dw_supplog"),
+    Personalizar1 = Fonte{[Schema="dw",Item="tab_pec_roteirizacao_geral_logi"]}[Data],
+    LinhasFiltradas = Table.SelectRows(Personalizar1, each ([NOME_DEPOSITANTE] = "SOUZA CRUZ LTDA") and Date.IsInCurrentMonth([DATA_INCLUSAO])),
+    SelectCols = Table.SelectColumns(LinhasFiltradas,{"FILIAL_SC", "SITUACAO", "DESC_SITUACAO", "PEDIDO", "NOTA_FISCAL", "SERIE", "DATA_INCLUSAO", "CIDADE_DESTINATARIO", "ESTADO_DESTINATARIO", "NOME_TRANSPORTADORA", "LISTA", "PLANO", "ONDA", "last_updated"})
+in
+    SelectCols

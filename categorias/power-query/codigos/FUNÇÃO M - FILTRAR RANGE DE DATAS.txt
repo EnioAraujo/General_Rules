@@ -1,0 +1,1 @@
+([DATA_PRESENCA] >= List.First(RangeStart) and [DATA_PRESENCA] <= List.Last(RangeEnd))

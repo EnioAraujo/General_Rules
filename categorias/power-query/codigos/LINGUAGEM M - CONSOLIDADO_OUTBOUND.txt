@@ -1,0 +1,13 @@
+let
+    Fonte = sheetCOMBOIO,
+    #"Coluna Duplicada" = Table.DuplicateColumn(Fonte, "Embarque (F.O)", "Embarque (F.O) - Copiar"),
+    #"Primeiros caracteres extraídos" = Table.TransformColumns(#"Coluna Duplicada", {{"Embarque (F.O) - Copiar", each Text.Start(_, 2), type text}}),
+    #"Duplicatas Removidas" = Table.Distinct(#"Primeiros caracteres extraídos"),
+    #"Linhas Filtradas" = Table.SelectRows(#"Duplicatas Removidas", each ([#"Embarque (F.O) - Copiar"] = "47" or [#"Embarque (F.O) - Copiar"] = "61" or [#"Embarque (F.O) - Copiar"] = "41")),
+    #"Coluna Duplicada1" = Table.DuplicateColumn(#"Linhas Filtradas", "Embarque (F.O)", "Embarque (F.O) - Copiar - Copiar"),
+    #"Últimos caracteres extraídos" = Table.TransformColumns(#"Coluna Duplicada1", {{"Embarque (F.O) - Copiar - Copiar", each Text.End(_, 2), type text}}),
+    #"Linhas Filtradas1" = Table.SelectRows(#"Últimos caracteres extraídos", each ([#"Embarque (F.O) - Copiar - Copiar"] <> "-2")),
+    LinhasAgrupadas = Table.Group(#"Linhas Filtradas1", {"Data", "Carregado em qual Turno ?"}, {{"QTD. EMB", each Table.RowCount(_), Int64.Type}}),
+    #"Linhas Classificadas" = Table.Sort(LinhasAgrupadas,{{"Data", Order.Ascending}})
+in
+    #"Linhas Classificadas"

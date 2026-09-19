@@ -1,0 +1,68 @@
+let
+    // 1. Conecta ao Exchange
+    Origem = SharePoint.Contents(Fonte_Sharepoint, [ApiVersion = 15])
+{[ Name = "Documentos Partilhados"]}[Content]
+{[ Name = "DASH OCUPACAO BI"]}[Content],
+    Personalizar1 = Origem{[ Name = "HISTORICO OCUPACAO"]}[Content],
+    AlteraTipoParaData = Table.TransformColumnTypes(Personalizar1,{{"Name", type date}}),
+    FiltraPastaMesCorrente = Table.SelectRows(AlteraTipoParaData, each Date.IsInCurrentMonth([Name])),
+    OutrasColunasRemovidas = Table.SelectColumns(FiltraPastaMesCorrente,{"Date created", "Name", "Content"})[Content]{0},
+    LinhasFiltradas = Table.SelectRows(OutrasColunasRemovidas, let latest = List.Max(OutrasColunasRemovidas[Date created]) in each [Date created] = latest),
+    Binario = LinhasFiltradas[Content],
+    // 6. Lê o CSV definindo que são 12 colunas
+    ListTransform = let
+        A = Binario{0},
+        B = Csv.Document(A, [Delimiter=",", Columns=14, Encoding=65001, QuoteStyle=QuoteStyle.None])
+    in
+        B,
+        
+    // 7. Remove linhas totalmente em branco
+    LinhasFiltradas1 = Table.SelectRows(ListTransform, each ([Column1] <> null and [Column1] <> "")),
+    
+    // 8. Como não há cabeçalhos, nós mesmos renomeamos manualmente as 12 colunas
+    TabelaFinal = Table.RenameColumns(LinhasFiltradas1, {
+        {"Column1", "Estoque"},
+        {"Column2", "Restrição"},
+        {"Column3", "Endereço"},
+        {"Column4", "Produto"},
+        {"Column5", "Descrição"},
+        {"Column6", "Und."},
+        {"Column7", "Validade"},
+        {"Column8", "Lote"},
+        {"Column9", "Saldo"},
+        {"Column11", "Bloqueado"},
+        {"Column10", "Reservado"},
+        {"Column13", "Reserva Provisória"},
+        {"Column14", "Data Recebimento"},
+        {"Column12", "Disponível"}
+    }),
+    #"Colunas Reordenadas" = Table.ReorderColumns(TabelaFinal,{"Estoque", "Restrição", "Endereço", "Produto", "Descrição", "Und.", "Data Recebimento", "Validade", "Lote", "Saldo", "Bloqueado", "Reservado", "Reserva Provisória", "Disponível"}),
+    
+    // 9. Adiciona coluna ITEM
+    AddColItem = let 
+        A = Table.AddColumn(#"Colunas Reordenadas","ITEM", each Text.Start([Produto],8), type text)
+    in
+        A,
+        
+    // 10. Altera os tipos (agora que os nomes estão corretos)
+    TipoAlterado1 = Table.TransformColumnTypes(AddColItem,{{"Disponível", type number}, {"Bloqueado", type number}, {"Reservado", type number}, {"Saldo", type number}, {"Validade", type date}, {"ITEM", Int64.Type}, {"Data Recebimento", type datetime},{"Reserva Provisória", type number}}),
+    
+    // 11. Ajusta o Endereço
+    ReplaceValue = Table.TransformColumns(TipoAlterado1, {{"Endereço", each if _ = "E 4 BLO 13 0" then "4 BLO 13 0" else _ , type text}}),
+    
+    // 12. Mescla com Capacidade
+    MesclaCapacidade = let
+        A = Table.NestedJoin(ReplaceValue, {"Endereço"}, TB_CAPACIDADE, {"ENDERECO_2"}, "TB_CAPACIDADE", JoinKind.LeftOuter),
+        B = Table.ExpandTableColumn(A, "TB_CAPACIDADE", {"CODIGO_ENDERECO", "TP_POSICAO", "TP_ESTOQUE", "CAT_POSICAO", "RUA2", "FUNCAO_POSICAO"}, {"CODIGO_ENDERECO", "TP_POSICAO", "TP_ESTOQUE", "CAT_POSICAO", "RUA2", "FUNCAO_POSICAO"}),
+        C = Table.SelectRows(B, each ([TP_ESTOQUE] = "BLOCADO" or [TP_ESTOQUE] = "COD UDI" or [TP_ESTOQUE] = "GERAL" or [TP_ESTOQUE] = "HUB BRASIL" or [TP_ESTOQUE] = "SINISTRO") and ([TP_POSICAO] <> "SEPARACAO"))
+    in
+        C,
+        
+    // 13. Mescla com Itens
+    MesclaTbItens = let
+        A = Table.NestedJoin(MesclaCapacidade, {"ITEM"}, DIM_TB_BASE_ITENS, {"ITEM"}, "DIM_TB_BASE_ITENS", JoinKind.LeftOuter),
+        B = Table.ExpandTableColumn(A, "DIM_TB_BASE_ITENS", {"CATEGORIA", "SUB_CATEGORIA", "POS_OCUP"}, {"CATEGORIA", "SUB_CATEGORIA", "POS_OCUP"})
+    in
+        B
+in
+    MesclaTbItens

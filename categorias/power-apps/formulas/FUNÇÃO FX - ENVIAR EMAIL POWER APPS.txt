@@ -1,0 +1,29 @@
+Set(
+    _emailRecipientString;
+    Concat(ENIO_SALES; EMAIL & ";")
+);;
+
+Office365Outlook.SendEmail(
+    _emailRecipientString;
+    TextEmailSubject1.Text;
+    "Segue reporte:<br><br>" &
+    "<b>Data e Hora do Ocorrido:</b> " & DateValue5.SelectedDate & "<br>" &
+    "<b>Local da Ocorrência:</b> " & Dropdown1.Selected.Tipo_ARM & "<br>" &
+    "<b>Supervisor/Responsável pela Operação:</b> " & Supervisor_DataCard4.Default & "<br>" &
+    "<b>Causa provável do ocorrido:</b> " & DataCardValue29.Text & "<br>" &
+    "<b>Descrição breve do ocorrido:</b> " & 'Descrição breve_DataCard3'.Default & "<br>" &
+    "<b>Matrícula do Colaborador:</b> " & Matrícula_DataCard3.Default & "<br>" &
+    "<b>Nome do colaborador:</b> " & 'Nome do colaborador_DataCard3'.Default & "<br>" &
+    "<b>Função do Colaborador:</b> " & 'Função do Colaborador_DataCard3'.Default & "<br>" &
+    "<b>Possível Causa Raiz:</b> " & 'Possível Causa Raiz_DataCard3'.Default & "<br><br>" &
+    "Atenciosamente";
+    {
+        IsHtml: true;
+        Importance: "Normal"
+    }
+);;
+
+ResetForm(Form1);;
+Back(ScreenTransition.Cover)
+
+                                                                           

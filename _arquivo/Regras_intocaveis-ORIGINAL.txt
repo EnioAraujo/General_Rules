@@ -1,0 +1,5 @@
+O mecanismo que garante contexto automático numa janela nova do Claude Code é o CLAUDE.md na raiz (carregado sozinho a cada sessão) + a memória, confira se já existe um CLAUDE.md e um arquivo de contexto do projeto, se não existir crie-os.
+
+[REGRA LIVE]: Extraia o código ativo/vivo ANTES de qualquer edição, consulta ou deploy para preservar minhas alterações manuais ou alterações realizadas por outras IAs.
+
+Você está proibido de editar arquivos quando peço somente para "Verificar", "Avaliar", "Avalie", "Identificar" ou quando eu faço perguntas. 

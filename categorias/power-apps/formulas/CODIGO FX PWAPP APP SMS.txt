@@ -1,0 +1,24 @@
+"
+" & "Segue reporte," & "." & "
+
+" & "Data e Hora do Ocorrido : " & DateValue5.SelectedDate
+  & "Local da Ocorrência : " & Dropdown1.SelectedText.Tipo_ARM
+  & "Supervisor/Responsável pela Operação : " & Supervisor_DataCard4.Default & "
+" & "Causa provável do ocorrido : " & DataCardValue29.Text
+  & "Descrição breve do ocorrido: " & Item_2.Default & "
+" & "Matrícula do Colaborador : " & 'Card_Qtd. Cxs Item 2'.Default & "
+__________________
+
+ " & "Nome do colaborador: " & Item_3.Default & "
+" & "Função do Colaborador : " & 'Card_Qtd. Cxs Item 3'.Default & "
+_______________
+
+" & "Possível Causa Raiz: " & 'Card_Motivo do Corte'.Default & "
+
+
+
+" & "At.te"
+
+
+
+

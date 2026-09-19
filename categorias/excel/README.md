@@ -1,6 +1,8 @@
 # Categoria: Excel
 
-Ainda sem regras/skills registradas. Quando houver regras de trabalho com Excel (fórmulas, VBA,
-Power Query dentro do Excel, formatação, planilhas de controle etc.), criar arquivos aqui seguindo
-o padrão `REGRAS-<ASSUNTO>.md` e adicionar a entrada correspondente no [README.md](../../README.md)
-da raiz.
+| Arquivo | Conteúdo |
+|---|---|
+| [`REGRAS-EXCEL-POWERQUERY.md`](./REGRAS-EXCEL-POWERQUERY.md) | Metodologia para planilhas com Power Query embutido (query como fonte de verdade, separação transformação/apresentação, rastreabilidade sem git). |
+| [`formulas/`](./formulas/) | Fórmulas de planilha soltas (data, conversão, concatenação, telefone). |
+| [`macros/`](./macros/) | Macros VBA (QR code, reclassificação, criação de CSV/pastas, atualização de saldo). |
+

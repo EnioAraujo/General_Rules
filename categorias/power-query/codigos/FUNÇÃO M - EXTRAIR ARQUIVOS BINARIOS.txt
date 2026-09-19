@@ -1,0 +1,69 @@
+1 - PARA PEGAR UMA ABA ESPECÍFICA ENTRE VARIOS ARQUIVOS
+
+Table.Combine(
+    List.Transform(
+        sheetCOMBOIO_[Content],
+        each
+            let
+                wb = Excel.Workbook(_, true),
+                aba = Table.SelectRows(wb, each [Name] = "Comboio") // digite o nome da sheet
+            in
+                if Table.IsEmpty(aba) then #table({}, {}) else aba{0}[Data]
+    )
+)
+__________________________________________________
+
+2 - PARA VARIOS BINARIOS
+
+Table.Combine( //combina as tabelas 
+List.Transform(
+        ListaBin,
+        each
+            let
+                // transforma cada arquivo binario em tabela
+                wb = Excel.Workbook(_, true),
+                tabela = wb[Data]{0} // Pega primeira tabela
+
+            in
+                wb))
+
+USADA COM ESTA OUTRA FUNÇÃO
+
+Table.Combine(
+Table.SelectColumns(
+Table.SelectRows(CombinaTabelas, each [Kind] = "Table" and [Name] = "PRODUTIVIDADE1"),
+{"Data"})[Data])
+
+
+3 - Funcional _________________________________________________
+
+Table.Combine(
+Table.Combine(
+        List.Transform(
+            SelectColumns[Content], // Assume que a coluna com os binários se chama "Content"
+            each
+                Excel.Workbook(_, true) // Transforma o binário em uma tabela
+        )
+    )[Data])
+
+
+
+4 - Funcional para arquivos CSVs_________________________
+
+= Table.Combine(
+List.Transform(SelecionaColunaContent, 
+each Csv.Document(_,[Delimiter=",", Encoding=1252])))
+
+
+
+5 - Funcional para 1 arquivo CSV separados por " , "____________________-
+
+Csv = Csv.Document(Fonte,[Delimiter=";", Columns=20, Encoding=1252, QuoteStyle=QuoteStyle.None])
+
+
+
+6 - Funcional para 1 arquivo CSV separados por " ; "____________________-
+
+Table.Combine(
+List.Transform(ArquivosComNome, 
+each Csv.Document(_,[Delimiter=";", Encoding=1252])))

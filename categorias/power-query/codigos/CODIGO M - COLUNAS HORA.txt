@@ -1,0 +1,28 @@
+= let
+
+A = Table.AddColumn(ColNumAdicionada,
+            "HORA_INICIAL",
+                each if 
+                  [TURNO] = "1ª TURNO" then #time(5, 21, 0)
+                  else if
+                  [TURNO] = "2ª TURNO" then #time(13, 41, 0)
+                  else if
+                  [TURNO] = "3ª TURNO" then #time(22, 1, 0)
+                  else 
+                  #time(7, 0, 0)
+, type time),
+
+B = Table.AddColumn(A,
+            "HORA_FINAL",
+                each if 
+                  [TURNO] = "1ª TURNO" then #time(13, 40, 0)
+                  else if
+                  [TURNO] = "2ª TURNO" then #time(5, 20, 0)
+                  else if
+                  [TURNO] = "3ª TURNO" then #time(22, 0, 0)
+                  else 
+                  "16:48:00", type time)
+
+in
+
+B

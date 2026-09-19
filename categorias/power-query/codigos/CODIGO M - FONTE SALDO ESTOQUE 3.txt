@@ -1,0 +1,81 @@
+= Sql.Database("192.168.102.154", "logixprd", [
+        Query =
+        "SELECT
+    E.ENDERECO,
+    E.DES_ENDERECO,
+    E.ITEM,
+    E.ITEM_DEPOSIT,
+    E.DEN_ITEM,
+    E.SKU,
+    E.DES_TIP_ESTOQUE,
+    E.DES_RESTRICAO,
+    E.QTD_REGULARIZADA,
+    E.QTD_SALDO_FISICO,
+    E.QTD_RESERVA_NORMAL,
+    E.QTD_RESERVA_PROVIS,
+    E.QTD_SALDO_DISPONIVEL,
+    E.PALETE,
+    E.CTR_ENT_SAI_VEIC_DOCUM,
+    E.NUM_LOTE,
+    E.DES_FUNCAO,
+    E.DES_FUNCAO_COPIA,
+    E.NUM_PECA,
+    E.IDEN_ESTOQUE_AGRUPADA,
+    E.DAT_HOR_PRODUCAO,
+    E.DAT_HOR_VALIDADE,
+    E.DAT_RECEBIMENTO,
+    E.DEN_SITUA_QTD,
+    E.IES_SITUA_QTD,
+    E.SALDO_BLOQUEADO,
+    E.SALDO_RESERVADO,
+    NFS.NOTA_FISCAL
+FROM 
+    (
+        -- DADOS DA TABELA FATO (VW_TT_ESTOQUE) COM AS LIMPEZAS DO POWER QUERY INTEGRADAS
+        SELECT
+            RTRIM(LTRIM(ENDERECO))                            AS ENDERECO,
+            RTRIM(LTRIM(DES_ENDERECO))                        AS DES_ENDERECO,
+            REPLACE(RTRIM(LTRIM(ITEM)), 'N', '')              AS ITEM, 
+            RTRIM(LTRIM(ITEM_DEPOSIT))                        AS ITEM_DEPOSIT,
+            RTRIM(LTRIM(DEN_ITEM))                            AS DEN_ITEM,
+            RTRIM(LTRIM(SKU))                                 AS SKU,
+            RTRIM(LTRIM(DES_TIP_ESTOQUE))                     AS DES_TIP_ESTOQUE,
+            RTRIM(LTRIM(DES_RESTRICAO))                       AS DES_RESTRICAO,
+            RTRIM(LTRIM(NUM_PECA))                       AS NUM_PECA,            
+            CAST(QTD_REGULARIZADA    AS FLOAT)                AS QTD_REGULARIZADA,
+            CAST(QTD_SALDO_FISICO    AS FLOAT)                AS QTD_SALDO_FISICO,
+            CAST(QTD_RESERVA_NORMAL  AS FLOAT)                AS QTD_RESERVA_NORMAL,
+            CAST(QTD_RESERVA_PROVIS  AS FLOAT)                AS QTD_RESERVA_PROVIS,
+            CAST(QTD_SALDO_DISPONIVEL AS FLOAT)               AS QTD_SALDO_DISPONIVEL,
+            RTRIM(LTRIM(PALETE))                              AS PALETE,
+            ISNULL(RTRIM(LTRIM(CTR_ENT_SAI_VEIC_DOCUM)), '-') AS CTR_ENT_SAI_VEIC_DOCUM, 
+            ISNULL(RTRIM(LTRIM(NUM_LOTE)), 'SEM LOTE')        AS NUM_LOTE, 
+            RTRIM(LTRIM(DES_FUNCAO))                          AS DES_FUNCAO,
+            REPLACE(RTRIM(LTRIM(DES_FUNCAO)), 'PICKING', 'ARMAZEM') AS DES_FUNCAO_COPIA, 
+            RTRIM(LTRIM(IDEN_ESTOQUE_AGRUPADA))               AS IDEN_ESTOQUE_AGRUPADA,
+            CAST(DAT_HOR_PRODUCAO AS DATETIME)                AS DAT_HOR_PRODUCAO,
+            CAST(DAT_HOR_VALIDADE AS DATETIME)                AS DAT_HOR_VALIDADE,
+            CAST(DAT_RECEBIMENTO AS DATETIME)                 AS DAT_RECEBIMENTO,
+            RTRIM(LTRIM(DEN_SITUA_QTD))                       AS DEN_SITUA_QTD,
+            RTRIM(LTRIM(IES_SITUA_QTD))                       AS IES_SITUA_QTD,
+            
+            -- Lógicas matemáticas que antes travavam o Power Query:
+            CASE WHEN RTRIM(LTRIM(DEN_SITUA_QTD)) = 'IMPEDIDO' THEN CAST(QTD_SALDO_FISICO AS FLOAT) ELSE 0 END AS SALDO_BLOQUEADO,
+            CASE WHEN RTRIM(LTRIM(DEN_SITUA_QTD)) = 'LIBERADO' THEN CAST(QTD_RESERVA_NORMAL AS FLOAT) ELSE 0 END AS SALDO_RESERVADO
+            
+        FROM totvssupp.VW_TT_ESTOQUE
+        WHERE COD_EMPRESA = '04'
+          AND DEPOSIT IN ('033009911001887', '033009911046988')
+    ) AS E
+LEFT JOIN 
+    (
+        -- DADOS DAS NOTAS FISCAIS (VW_TT_WMS_EST_LOT_END)
+        SELECT DISTINCT 
+            RTRIM(LTRIM(PALETE)) AS PALETE, 
+            CAST(NUM_NF AS VARCHAR) + '-' + CAST(SER_NF AS VARCHAR) AS NOTA_FISCAL
+        FROM totvssupp.VW_TT_WMS_EST_LOT_END
+        WHERE COD_EMPRESA = '04' 
+          AND DEPOSIT IN ('033009911046988','033009911001887')
+    ) AS NFS
+ON E.PALETE = NFS.PALETE"
+    ])

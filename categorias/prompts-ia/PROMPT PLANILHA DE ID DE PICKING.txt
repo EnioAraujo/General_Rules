@@ -1,0 +1,2 @@
+
+Preciso que para cada célula da coluna "A" começando de "A2" da tabela "BASE_ENDECOS" da planilha "BASE WMS6234" que contenha informações , seja copiado o dado da celula, colado na célula "B5" da planilha "IDENTIFICAÇÃO", imprima e pule para proxima celula da tabela "BASE_ENDECOS", até finalizar a impressão de todos os códigos do range da tabela

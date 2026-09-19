@@ -1,0 +1,178 @@
+let
+    // Fonte principal de dados
+    Fonte = Table.Buffer(PICKING_ESTEIRA_AGRUPADO),
+    
+    // Reordenar colunas
+    ColunasReordenadas = Table.ReorderColumns(Fonte,{"Fornecimento", "Data do picking", "Remessas (de/até)", "Documento de compras", "Tipo de remessa", "Status processamento", "Centro", "Local expedição/recebimento", "Emissor da ordem", "Depósito", "Cidade recebedor ordem", "Nome do recebedor da mercadoria", "Material", "Denominação", "Qtd.real em UGE", "UM básica"}),
+    
+    // Garantir que temos EAN_REDUZ para o JOIN
+    #"Garantir Coluna EAN_REDUZ na Tabela Principal" = 
+        if List.Contains(Table.ColumnNames(ColunasReordenadas), "EAN_REDUZ") then ColunasReordenadas else
+        Table.AddColumn(ColunasReordenadas, "EAN_REDUZ", each [Material], type text),
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Garantir Coluna EAN_REDUZ na Tabela Principal",{{"Material", type text}}),
+
+    // MESCLAGEM: Material da tabela principal COM ITEM_DEPOSIT da EAN_AGRUPADO
+    #"Consultas Mescladas" = Table.NestedJoin(#"Tipo Alterado", {"Material"}, EAN_AGRUPADO, {"Item"}, "SALDO AGRUPADO", JoinKind.LeftOuter) // JOIN CORRETO é EAN_REDUZ da principal COM Item da EAN_AGRUPADO
+        // Expande as colunas da EAN_AGRUPADO
+,
+    Personalizar1 = Table.ExpandTableColumn(#"Consultas Mescladas", "SALDO AGRUPADO", {"Item", "EAN_REDUZ", "ListaItensDoEAN_Ordenada", "SALDO_TOTAL_EAN"}, {"Item_MESCLADO_EAN", "EAN_REDUZ_MESCLADO_EAN", "ListaItensDoEAN_Ordenada", "SALDO_TOTAL_EAN"}),
+    
+    // Filtrar apenas linhas onde encontramos correspondência
+    #"Filtrar apenas linhas com item correspondente na EAN_AGRUPADO" = Table.SelectRows(Personalizar1, each [Item_MESCLADO_EAN] <> null and [Item_MESCLADO_EAN] <> ""),
+
+    // Substituir nulos em SALDO_TOTAL_EAN por 0
+    ValorSubstituídoTotal = Table.ReplaceValue(#"Filtrar apenas linhas com item correspondente na EAN_AGRUPADO", null, 0, Replacer.ReplaceValue, {"SALDO_TOTAL_EAN"}),
+    
+    // Renomear colunas para clareza
+    ColunasRenomeadas = Table.RenameColumns(ValorSubstituídoTotal,{
+        {"Item_MESCLADO_EAN", "Item_MESCLADO_EAN"}, 
+        {"EAN_REDUZ_MESCLADO_EAN", "EAN_REDUZ_MESCLADO_EAN"},
+        {"ListaItensDoEAN_Ordenada", "ListaItensDoEAN_Ordenada"},
+        {"SALDO_TOTAL_EAN", "SALDO_TOTAL_EAN"}
+    }),
+    
+    // SE QTD DISPONIVEL LOGIX é a coluna de saldo do item original vinda da EAN_AGRUPADO
+    #"Renomeado QTD_DISPONIVEL_para_LOGIX" = Table.RenameColumns(ColunasRenomeadas,{{"SALDO_TOTAL_EAN", "QTD DISPONIVEL LOGIX"}}), // <<< Usa a QTD DISPONIVEL vinda da EAN_AGRUPADO
+        
+    ColDIF_DISPONIVEL = Table.AddColumn(#"Renomeado QTD_DISPONIVEL_para_LOGIX","DIF_DISPONIVEL", each ([QTD DISPONIVEL LOGIX] - [Qtd.real em UGE]), type number),
+
+    ColStatusDifDisp = Table.AddColumn(ColDIF_DISPONIVEL,"STATUS_DIF_DISPONIVEL",
+        each 
+            if [QTD DISPONIVEL LOGIX] >= [Qtd.real em UGE] then "ATENDE_TOTAL"
+            else if [QTD DISPONIVEL LOGIX] > 0 then "ATENDE_PARCIAL"
+            else "NÃO_ATENDE_TOTAL", 
+        type text
+    ),
+    
+    ColProcessamento01 = Table.AddColumn(ColStatusDifDisp,"PROCESSAMENTO_01", each 
+        if [QTD DISPONIVEL LOGIX] >= [Qtd.real em UGE] then [Qtd.real em UGE]
+        else if [QTD DISPONIVEL LOGIX] > 0 then [QTD DISPONIVEL LOGIX]
+        else 0, 
+        type number
+    ),
+
+    ColProcessamento02 = Table.AddColumn(ColProcessamento01, "PROCESSAMENTO_02", each 
+        if [STATUS_DIF_DISPONIVEL] = "ATENDE_TOTAL" then 0 
+        else if [STATUS_DIF_DISPONIVEL] = "ATENDE_PARCIAL" then [Qtd.real em UGE] - [PROCESSAMENTO_01] 
+        else [Qtd.real em UGE], 
+        type number
+    ),
+
+    ColValidaçãoQuantidades = Table.AddColumn(ColProcessamento02, "VALIDACAO_QTD",
+        each if ([PROCESSAMENTO_01] + [PROCESSAMENTO_02]) = [Qtd.real em UGE] then "OK" else "NOK",
+        type text
+    ),
+    
+   GerenciarReclassificacao = (ean_para_buscar_em_EAN as text, quantidade_necessaria as number, material_original_requested as text, lista_de_todos_itens_ordenados_para_ean as list) as record => 
+
+        // --- Declaração da função recursiva AlocarSaldos FORA do 'let' principal da GerenciarReclassificacao, mas DENTRO de outro 'let' ---
+        let
+            AlocarSaldos = (saldo_restante as number, lista_itens as list, itens_alocados as list) =>
+                if saldo_restante <= 0 or List.IsEmpty(lista_itens) then
+                    itens_alocados 
+                else
+                    let
+                        ItemAtual = lista_itens{0}, 
+                        ItemDisponivel = ItemAtual[QTD DISPONIVEL],
+                        quantidadeASuprirDesteItem = if saldo_restante > ItemDisponivel then ItemDisponivel else if saldo_restante < 0 then 0 else saldo_restante,
+                        NovoSaldoRestante = saldo_restante - quantidadeASuprirDesteItem,
+                        ItemAlocado = ItemAtual & [QuantidadeAlocada = quantidadeASuprirDesteItem],
+                        NovaListaItens = List.RemoveFirstN(lista_itens, 1)
+                    in
+                        AlocarSaldos(NovoSaldoRestante, NovaListaItens, List.Combine({itens_alocados, {ItemAlocado}})),
+
+            // --- Lógica Principal de GerenciarReclassificacao Começa AQUI ---
+            ItensDoEANSelecionado = try List.Select(lista_de_todos_itens_ordenados_para_ean, each [EAN_REDUZ] = ean_para_buscar_em_EAN) otherwise {},
+            
+            ItensDisponiveisParaReclass = 
+                if material_original_requested = null or material_original_requested = "" or Table.IsEmpty(ItensDoEANSelecionado) then 
+                    ItensDoEANSelecionado 
+                else 
+                    List.Select(ItensDoEANSelecionado, each [Item] <> material_original_requested), 
+            
+            // --- Chamada da função recursiva AlocarSaldos ---
+            ItensAlocados = AlocarSaldos(quantidade_necessaria, ItensDisponiveisParaReclass, {}),
+
+            ExtracaoItens = List.Transform(ItensAlocados, each [
+                ITEM_RECLASS = if [QuantidadeAlocada] > 0 then [Item] else "",
+                DESC_ITEM_RECLASS = if [QuantidadeAlocada] > 0 then [Descricao] else "",
+                QTD_SALDO_ITEM_RECLASS = if [QuantidadeAlocada] > 0 then [QuantidadeAlocada] else 0
+            ]),
+
+            Item1 = if List.Count(ExtracaoItens) > 0 then ExtracaoItens{0} else [ITEM_RECLASS = "", DESC_ITEM_RECLASS = "", QTD_SALDO_ITEM_RECLASS = 0],
+            Item2 = if List.Count(ExtracaoItens) > 1 then ExtracaoItens{1} else [ITEM_RECLASS = "", DESC_ITEM_RECLASS = "", QTD_SALDO_ITEM_RECLASS = 0],
+            Item3 = if List.Count(ExtracaoItens) > 2 then ExtracaoItens{2} else [ITEM_RECLASS = "", DESC_ITEM_RECLASS = "", QTD_SALDO_ITEM_RECLASS = 0],
+            
+            SomaQtdAlocada = Item1[QTD_SALDO_ITEM_RECLASS] + Item2[QTD_SALDO_ITEM_RECLASS] + Item3[QTD_SALDO_ITEM_RECLASS],
+            SaldoFinalRestante = quantidade_necessaria - SomaQtdAlocada,
+
+            ResultadoRecord = [
+                ITEM_RECLASS = Item1[ITEM_RECLASS],
+                DESC_ITEM_RECLASS = Item1[DESC_ITEM_RECLASS],
+                QTD_SALDO_ITEM_RECLASS = Item1[QTD_SALDO_ITEM_RECLASS],
+                
+                ITEM_RECLASS_02 = Item2[ITEM_RECLASS],
+                DESC_ITEM_RECLASS_02 = Item2[DESC_ITEM_RECLASS],
+                QTD_SALDO_ITEM_RECLASS_02 = Item2[QTD_SALDO_ITEM_RECLASS],
+                
+                ITEM_RECLASS_03 = Item3[ITEM_RECLASS],
+                DESC_ITEM_RECLASS_03 = Item3[DESC_ITEM_RECLASS],
+                QTD_SALDO_ITEM_RECLASS_03 = Item3[QTD_SALDO_ITEM_RECLASS],
+                
+                QUANTIDADE_FALTANTE_FINAL = SaldoFinalRestante
+            ]
+        in
+            ResultadoRecord,
+    
+    // Adiciona coluna que chama a função GerenciarReclassificacao
+    AdicionarColunasReclass = Table.AddColumn(ColValidaçãoQuantidades, "DadosReclass", 
+        each 
+            // Condições: [PROCESSAMENTO_02] > 0 E temos EAN_REDUZ_MESCLADO_EAN E temos o Material original.
+            if [PROCESSAMENTO_02] > 0 and [EAN_REDUZ_MESCLADO_EAN] <> null and [EAN_REDUZ_MESCLADO_EAN] <> "" and [Material] <> null and [Material] <> "" then 
+                GerenciarReclassificacao([EAN_REDUZ_MESCLADO_EAN], [PROCESSAMENTO_02], [Material], [ListaItensDoEAN_Ordenada]) 
+            else 
+                [ITEM_RECLASS = "", DESC_ITEM_RECLASS = "", QTD_SALDO_ITEM_RECLASS = 0,
+                 ITEM_RECLASS_02 = "", DESC_ITEM_RECLASS_02 = "", QTD_SALDO_ITEM_RECLASS_02 = 0,
+                 ITEM_RECLASS_03 = "", DESC_ITEM_RECLASS_03 = "", QTD_SALDO_ITEM_RECLASS_03 = 0,
+                 QUANTIDADE_FALTANTE_FINAL = 0], 
+        type record
+    ),
+    
+    ExpandirReclass = Table.ExpandRecordColumn(AdicionarColunasReclass, "DadosReclass", 
+        {"ITEM_RECLASS", "DESC_ITEM_RECLASS", "QTD_SALDO_ITEM_RECLASS",
+         "ITEM_RECLASS_02", "DESC_ITEM_RECLASS_02", "QTD_SALDO_ITEM_RECLASS_02",
+         "ITEM_RECLASS_03", "DESC_ITEM_RECLASS_03", "QTD_SALDO_ITEM_RECLASS_03",
+         "QUANTIDADE_FALTANTE_FINAL"},
+        {"ITEM_RECLASS", "DESC_ITEM_RECLASS", "QTD_SALDO_ITEM_RECLASS",
+         "ITEM_RECLASS_02", "DESC_ITEM_RECLASS_02", "QTD_SALDO_ITEM_RECLASS_02",
+         "ITEM_RECLASS_03", "DESC_ITEM_RECLASS_03", "QTD_SALDO_ITEM_RECLASS_03",
+         "QUANTIDADE_FALTANTE_FINAL"}),
+
+          // --- DEFINIR TIPOS DAS COLUNAS DE RECLASSIFICAÇÃO ---
+    // Corrigindo a conversão para os tipos esperados.
+    // Assumimos que ITEM_RECLASS e DESC_ITEM_RECLASS devem ser Text.
+    // QTD_SALDO_ITEM_RECLASS deve ser Number.
+    #"Ajuste de Tipos das Colunas Reclass" = Table.TransformColumnTypes(ExpandirReclass,{
+        {"ITEM_RECLASS", type number}, 
+        {"DESC_ITEM_RECLASS", type text}, 
+        {"QTD_SALDO_ITEM_RECLASS", type number},
+        
+        {"ITEM_RECLASS_02", type number}, 
+        {"DESC_ITEM_RECLASS_02", type text}, 
+        {"QTD_SALDO_ITEM_RECLASS_02", type number},
+        
+        {"ITEM_RECLASS_03", type number}, 
+        {"DESC_ITEM_RECLASS_03", type text}, 
+        {"QTD_SALDO_ITEM_RECLASS_03", type number},
+        
+        // QUANTIDADE_FALTANTE_FINAL é um número
+        {"QUANTIDADE_FALTANTE_FINAL", type number}
+    })
+in
+    #"Ajuste de Tipos das Colunas Reclass" // Retorna a última etapa com os tipos definidos
+
+
+
+
+
+

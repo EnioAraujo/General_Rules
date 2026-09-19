@@ -1,0 +1,6 @@
+triggerBody()['entity']?['Power BI values'][0]?['IndiceMin']
+
+
+
+
+outputs("ConsultaLoops")?['body/firstTableRows']?[0]?['[LoopsNecessarios]']

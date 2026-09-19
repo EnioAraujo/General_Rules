@@ -1,0 +1,22 @@
+CarregaDados = Table.AddColumn(Removecols, "Dados", each
+            try
+                Excel.Workbook([Content]){[Name = "HUB Inbound"]}[Data]
+            otherwise
+                null
+        ),
+        
+        // Expandir dados
+        DadosExpandidos = Table.ExpandTableColumn(
+            CarregaDados,
+            "Dados",
+            if Table.RowCount(CarregaDados) > 0 then
+                Table.ColumnNames(CarregaDados{0}[Dados])
+            else
+                {},
+            if Table.RowCount(CarregaDados) > 0 then
+                Table.ColumnNames(CarregaDados{0}[Dados])
+            else
+                {}
+        )
+    in
+        DadosExpandidos

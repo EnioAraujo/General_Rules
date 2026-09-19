@@ -1,0 +1,139 @@
+DOCUMENTAÇÃO DA MACRO DE PROCESSAMENTO DE SALDOS
+
+================================================================================
+RESUMO GERAL
+================================================================================
+Esta macro processa saldos de itens entre duas planilhas:
+- Planilha "Base": Contém o cadastro completo de itens com saldos
+- Planilha "Distribuição": Contém itens que precisam ter seus saldos distribuídos
+
+================================================================================
+FLUXO DE PROCESSAMENTO
+================================================================================
+
+1. CONFIGURAÇÃO INICIAL
+   - Define as planilhas de trabalho (Base e Distribuição)
+   - Inicializa variáveis de controle
+   - Configura a interface (desativa atualização de tela, eventos, etc.)
+
+2. PROCESSAMENTO PRINCIPAL
+   Para cada linha da planilha "Distribuição":
+   a) Verifica se a linha não está vazia
+   b) Coleta dados do item atual (EAN reduzido, diferença necessária)
+   c) Pesquisa na planilha "Base" por itens com o mesmo EAN
+
+3. PESQUISA NA PLANILHA BASE
+   Para cada item encontrado com o EAN correspondente:
+   a) Verifica se INIC_ITEM é maior ou igual ao item atual
+   b) Coleta saldo e outras informações do item
+
+4. TOMADA DE DECISÃO
+   Critérios de seleção (prioridade):
+   - Primeiro verifica se algum item ATENDE à diferença necessária
+   - Se atende: escolhe o mais novo (maior INIC_ITEM) com maior saldo
+   - Se não atende: escolhe o melhor disponível seguindo mesma lógica
+
+5. REGRA DE PRIORIDADE
+   Ordem de preferência:
+   1. Itens que atendem à diferença necessária
+   2. Entre itens candidatos: maior INIC_ITEM (mais recente)
+   3. Critério de desempate: maior saldo disponível
+
+6. GRAVAÇÃO DOS RESULTADOS
+   Na planilha "Distribuição", preenche as colunas:
+   - EAN_RDZ_CORRESPONDENTE01 (coluna E)
+   - ITEM_CORRESPONDENTE01 (coluna F)  
+   - DESCRICAO_CORRESPONDENTE01 (coluna G)
+   - SALDO_ITEM_CORRESPONDENTE01 (coluna H)
+
+================================================================================
+CONDIÇÕES ESPECÍFICAS
+================================================================================
+
+CONDIÇÃO 1 - Item atende à diferença (saldo >= diferenca)
+   - Verifica: INIC_ITEM >= item atual E saldo >= diferença
+   - Prioriza: Maior INIC_ITEM, depois maior saldo
+   - Variáveis atualizadas: maiorInicItemAtende, maiorSaldoAtende
+
+CONDIÇÃO 2 - Item não atende à diferença (saldo < diferenca)
+   - Usado apenas quando nenhum item atende completamente
+   - Verifica: INIC_ITEM >= item atual E saldo < diferença
+   - Prioriza: Maior INIC_ITEM, depois maior saldo
+   - Variáveis atualizadas: maiorInicItem, maiorSaldo
+
+================================================================================
+CRITÉRIOS DE COMPARAÇÃO
+================================================================================
+
+1. CRITÉRIO PRINCIPAL: INIC_ITEM
+   - Apenas itens com INIC_ITEM >= ao item atual são considerados
+   - Itens mais novos têm prioridade
+
+2. CRITÉRIO SECUNDÁRIO: SALDO
+   - Em caso de empate de INIC_ITEM, o de maior saldo é escolhido
+   - Quando nenhum item atende, o de maior saldo disponível é selecionado
+
+3. VALIDAÇÃO DE DADOS
+   - Apenas itens com o MESMO EAN reduzido são comparados
+   - Itens com INIC_ITEM menor são ignorados
+   - Linhas vazias são puladas
+
+================================================================================
+EXEMPLO PRÁTICO
+================================================================================
+
+CENÁRIO:
+Item Distribuição: EAN 123, Diferença necessária: 100 unidades
+
+Itens encontrados na Base com EAN 123:
+- Item A: INIC_ITEM 20230101, Saldo 50 unidades
+- Item B: INIC_ITEM 20230102, Saldo 80 unidades  
+- Item C: INIC_ITEM 20230102, Saldo 120 unidades
+
+PROCESSO:
+1. Item C atende à diferença (120 >= 100) → Selecionado
+2. Item C é mais novo que A e tem maior saldo que B (mesma data)
+3. Resultado: Item C é escolhido
+
+================================================================================
+TRATAMENTO DE EXCEÇÕES
+================================================================================
+
+CASOS ESPECIAIS:
+1. Nenhum item encontrado com o EAN → Campos ficam em branco
+2. Todos os itens têm saldo zero → Melhor disponível é selecionado
+3. Itens com INIC_ITEM menor → Ignorados na comparação
+4. Empate total → Primeiro item encontrado é selecionado
+
+================================================================================
+COLUNAS UTILIZADAS
+================================================================================
+
+PLANILHA BASE:
+- Coluna 4: EAN do item
+- Coluna 5: INIC_ITEM (data de início)  
+- Coluna 6: Código do item
+- Coluna 7: Descrição do item
+- Coluna 10: Saldo disponível
+
+PLANILHA DISTRIBUIÇÃO:
+- Coluna 2: EAN reduzido (critério de busca)
+- Coluna 3: Diferença necessária
+- Colunas 5-8: Recebem os resultados da busca
+
+================================================================================
+VARIÁVEIS PRINCIPAIS
+================================================================================
+
+- maiorInicItemAtende: INIC_ITEM do melhor item que atende
+- maiorSaldoAtende: Saldo do melhor item que atende  
+- maiorInicItem: INIC_ITEM do melhor item disponível (não atende)
+- maiorSaldo: Saldo do melhor item disponível (não atende)
+- eanReduz: EAN reduzido do item atual sendo processado
+- diferenca: Quantidade necessária do item atual
+
+================================================================================
+FIM DO PROCESSAMENTO
+================================================================================
+Macro completa ao finalizar todas as linhas da planilha Distribuição
+Restaura configurações originais do Excel (eventos, tela, cálculos)

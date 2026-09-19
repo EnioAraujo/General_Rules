@@ -1,0 +1,21 @@
+#"Consultas Mescladas2" = Table.NestedJoin(#"Colunas Reordenadas9", {"ITEM_DEPOSIT"}, TB_CONVERSAO, {"SKU"}, "TB_CONVERSAO", JoinKind.LeftOuter),
+    #"TB_CONVERSAO Expandido" = Table.ExpandTableColumn(#"Consultas Mescladas2", "TB_CONVERSAO", {"UNIDADE BASE NA CAIXA", "PACOTES/CARTELAS NA CAIXA", "UNIDADES NO PACOTE", "MENOR UNIDADE"}, {"UNIDADE BASE NA CAIXA", "PACOTES/CARTELAS NA CAIXA", "UNIDADES NO PACOTE", "MENOR UNIDADE"}),
+    #"Personalização Adicionada" = Table.AddColumn(#"TB_CONVERSAO Expandido", "SALDO_REAL", each ([QTD_SALDO_FISICO]-[QTD_RESERVA_NORMAL])+[QTD_BLOQUEADO]),
+    #"Tipo Alterado7" = Table.TransformColumnTypes(#"Personalização Adicionada",{{"SALDO_REAL", type number}}),
+    //#"Tipo Alterado7" = Table.TransformColumnTypes(#"Personalização Adicionada",{{"SHELF_LIFE", Int64.Type}})
+    CONV = Table.AddColumn(#"Tipo Alterado7", "CONVERSAO", each [SALDO_REAL]/[MENOR UNIDADE]),
+    #"Tipo Alterado8" = Table.TransformColumnTypes(CONV,{{"CONVERSAO", Int64.Type}}),
+    #"Valor Substituído2" = Table.ReplaceValue(#"Tipo Alterado8",null,0,Replacer.ReplaceValue,{"CONVERSAO"}),
+    CAIXAS = Table.AddColumn(#"Valor Substituído2", "CAIXAS", each Int64.From(Text.BeforeDelimiter(Text.From([CONVERSAO]/[UNIDADE BASE NA CAIXA]), ","))),
+    #"Tipo Alterado9" = Table.TransformColumnTypes(CAIXAS,{{"CAIXAS", Int64.Type}}),
+    #"Valor Substituído3" = Table.ReplaceValue(#"Tipo Alterado9",null,0,Replacer.ReplaceValue,{"CAIXAS"}),
+    PACOTES = Table.AddColumn(#"Valor Substituído3", "PACOTES", each Int64.From(Text.BeforeDelimiter(Text.From((([CONVERSAO]/[UNIDADE BASE NA CAIXA]) - [CAIXAS]) * [PACOTES.CARTELAS NA CAIXA]), ","))),
+    #"Tipo Alterado10" = Table.TransformColumnTypes(PACOTES,{{"PACOTES", Int64.Type}}),
+    MAÇOS = Table.AddColumn(#"Tipo Alterado10", "MÇS/UND", each Int64.From(Text.BeforeDelimiter(Text.From(((([CONVERSAO]/[UNIDADE BASE NA CAIXA]) - [CAIXAS]) * [#"PACOTES.CARTELAS NA CAIXA"] - [PACOTES]) * [UNIDADES NO PACOTE]), ","))),
+    #"Tipo Alterado11" = Table.TransformColumnTypes(MAÇOS,{{"MÇS/UND", Int64.Type}}),
+    #"Colunas Removidas7" = Table.RemoveColumns(#"Tipo Alterado11",{"UNIDADE BASE NA CAIXA", "PACOTES/CARTELAS NA CAIXA", "UNIDADES NO PACOTE", "MENOR UNIDADE"})
+in
+    //#"Tipo Alterado7"
+    //#"Colunas Reordenadas9"
+    //#"Valor Substituído2"
+#"Colunas Removidas7"

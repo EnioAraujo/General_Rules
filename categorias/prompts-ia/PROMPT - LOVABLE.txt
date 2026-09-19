@@ -1,0 +1,21 @@
+Chat, crie um prompt para uma IA especializada em criação de aplicativos web, com o contexto abaixo.
+
+Preciso de um aplicativo para criação de apresentações, as apresentações serão exibidas em uma TV, ligada a um computador.
+
+1 - O app deve permitir o upload de imagens,links do power bi e vídeos, para isso o app deverá ter conexão com o supabase.
+2 - Para cada um dos tres tipos de ativos que será usado para a apresentação, preciso que seja configurado um tempo de exibição em minutos para cada.
+3 - A caixa de texto com nomes das imagens, links e vídeos, deve suportar quebra de linha, para não estrapolar o tamanho do controle.
+4 - A pagina web deve atualizar de forma automática, em minutos sendo configuravel, sendo assim ao final da exibição de todos os ativos, a página é atualizada e exibição recomeçará do priemeiro ativo, e assim por diante.
+5 - Construa o código aprova de erros.
+6 - Por conter conexão com banco de dados, o app deve me permitir compartilhar o link da apresentação para que qualquer pessoa consiga acessar de qualquer lugar.
+7 - Atenção a cada bloco de código construído para que não o que não haja falha na excecução do app.
+
+
+
+
+
+
+
+List.Sum([OCUP_2END])
+
+Caixas Sobrando
