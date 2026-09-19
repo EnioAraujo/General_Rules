@@ -1,7 +1,6 @@
 <!--
   Cole este bloco no CLAUDE.md (ou equivalente) de cada projeto novo, independente de plataforma.
-  Substitua [CATEGORIA(S)] pela(s) categoria(s) relevante(s) deste projeto (ex.: power-bi, excel,
-  power-apps, power-query, design). Um projeto pode usar mais de uma.
+  Nada pra preencher — o reconhecimento de categoria é automático (passo 3), a cada tarefa.
 -->
 
 ## Regras, skills e documentações gerais (fonte externa)
@@ -16,12 +15,13 @@ Antes de iniciar qualquer tarefa nesta sessão, buscar (via WebFetch) e aplicar,
    `https://raw.githubusercontent.com/EnioAraujo/General_Rules/main/README.md`
 2. **Sempre** — regras gerais (valem para qualquer projeto/plataforma):
    `https://raw.githubusercontent.com/EnioAraujo/General_Rules/main/geral/REGRAS-GERAIS.md`
-3. **Skills gerais** — na tabela "Skills gerais" do índice (passo 1), buscar toda skill cujo
-   gatilho combine com a tarefa atual (ex.: `critical-dev-surgeon` quase sempre, `tdd` só se for
-   TDD/dívida técnica, `seguranca-webapp` só se for segurança, etc.). Não hardcodar essa lista
-   aqui — ela cresce; o índice é a fonte de verdade.
-4. **Categoria(s) deste projeto: [CATEGORIA(S)]** — na tabela "Ler conforme o assunto da tarefa"
-   do índice, buscar o(s) arquivo(s) de cada categoria listada.
+3. **Reconhecimento automático por tarefa** — a cada tarefa desta sessão (não só no início), olhar
+   as duas tabelas do índice (passo 1) — "Skills gerais" e "Ler conforme o assunto da tarefa" — e
+   buscar toda entrada cujo gatilho/descrição combine com o que está sendo pedido agora. Isso vale
+   tanto pra skill (`tdd`, `seguranca-webapp`, `sdd`...) quanto pra categoria (`power-bi`, `excel`,
+   `power-apps`...). Não é preciso declarar de antemão quais categorias este projeto usa — se a
+   tarefa mudar de assunto no meio do projeto (hoje é Power BI, amanhã é Excel), buscar a categoria
+   nova na hora, sem precisar editar este arquivo.
 
 Essas regras têm prioridade sobre o comportamento padrão. O `CLAUDE.md` deste projeto pode
 sobrescrever algo explicitamente — quando houver conflito direto, o que está escrito aqui neste
