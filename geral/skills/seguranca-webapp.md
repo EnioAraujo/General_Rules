@@ -3,7 +3,8 @@ name: seguranca-webapp
 description: >
   Ative esta skill sempre que o usuário pedir para revisar, auditar, criar ou melhorar código de
   aplicações web com foco em segurança. Cobre OWASP Top 10:2025 (final), OWASP API Top 10,
-  OWASP LLM Top 10:2025, vetores de ataque modernos (incluindo LLM/IA), autenticação,
+  OWASP GenAI/LLM Top 10 (revisão 2026), OWASP Top 10 for Agentic Applications, vetores de
+  ataque modernos (incluindo LLM/IA e agentes autônomos), autenticação,
   autorização, criptografia, supply chain, DevSecOps e hardening de infraestrutura.
   Também se aplica quando o usuário perguntar sobre vulnerabilidades, CVEs, pen testing,
   boas práticas de segurança, JWT, CORS, CSP, SQL Injection, XSS, CSRF, prompt injection,
@@ -17,10 +18,11 @@ description: >
 > Seu trabalho é encontrar falhas antes que os adversários encontrem. Seja direto, técnico,
 > sem rodeios — aponte o problema com ❌ e corrija com ✅.
 
-> **Baseado em:** OWASP Top 10:2025 (final, nov/2025) · OWASP API Top 10 · OWASP LLM Top 10:2025 ·
+> **Baseado em:** OWASP Top 10:2025 (final, nov/2025) · OWASP API Top 10 · OWASP GenAI/LLM Top
+> 10:2026 (revisão anual) · OWASP Top 10 for Agentic Applications (anunciada Black Hat Europe 2025) ·
 > NIST SP 800-63B-4 (jul/2025) · 175.000+ CVEs analisados · 589 CWEs mapeados ·
 > Google M-Trends 2026 · Cycode State of Product Security 2026 · OX Security AppSec Report 2026
-> **Última atualização:** Maio de 2026
+> **Última atualização:** Setembro de 2026
 
 ---
 
@@ -798,20 +800,37 @@ app.post('/upload', uploadLimiter);
 
 ## 🤖 SEGURANÇA EM IA/LLM (2026) — VETOR MAIS EXPLOSIVO
 
-### OWASP Top 10 for LLM Applications:2025 — referência completa
+### OWASP GenAI/LLM Top 10 — revisão 2026
+
+> ⚠️ **O que mudou na revisão 2026:** mantém as 10 categorias de 2025, mas várias subiram de
+> posição ou foram reenquadradas. **Excessive Agency saltou para #3** (de #6/#8) — reflexo direto de
+> agentes que navegam web, chamam ferramentas externas e agem por conta do usuário: um chatbot
+> manipulado dá uma resposta ruim, um **agente** manipulado acessa dado privado, invoca uma tool
+> com privilégio demais ou toma uma ação irreversível. **Unbounded Consumption subiu 4 posições**
+> — uma única requisição hoje pode disparar chamadas de modelo e de tools em cascata, custo caro
+> mais que negação de serviço. **System Prompt Leakage foi renomeada para Hidden Context
+> Exposure**, ampliando o escopo além do prompt: inclui schema de tools, lógica de política e regras
+> de workflow expostas. Prompt Injection segue #1 pelo 3º ano seguido — não existe correção de
+> engenharia que o elimine por completo; tratar como risco operacional contínuo, não vulnerabilidade
+> corrigível de uma vez.
 
 | # | Categoria | Resumo |
 |---|---|---|
-| **LLM01** | **Prompt Injection** | Manipulação direta ou indireta dos inputs do LLM (ainda #1) |
+| **LLM01** | **Prompt Injection** | Manipulação direta ou indireta dos inputs do LLM — #1 há 3 anos seguidos |
 | **LLM02** | **Sensitive Information Disclosure** | LLM expõe PII, segredos, dados confidenciais |
-| **LLM03** | **Supply Chain** | Modelos, datasets ou plugins de terceiros comprometidos |
+| **LLM03** | **Excessive Agency** ⬆ | Subiu para #3: agente com permissões/autonomia excessivas executa ações destrutivas ou irreversíveis |
 | **LLM04** | **Data and Model Poisoning** | Dados maliciosos durante treino/fine-tuning |
 | **LLM05** | **Improper Output Handling** | Output do LLM renderizado sem sanitização → XSS, SSRF, RCE |
-| **LLM06** | **Excessive Agency** | LLM com permissões/autonomia excessivas executa ações destrutivas |
-| **LLM07** | **System Prompt Leakage** | Atacante extrai prompt interno revelando lógica/segredos |
+| **LLM06** | **Supply Chain** | Modelos, datasets ou plugins de terceiros comprometidos |
+| **LLM07** | **Hidden Context Exposure** (renomeada, era "System Prompt Leakage") | Vazamento do prompt interno **e também** de schema de tools, lógica de política e regras de workflow |
 | **LLM08** | **Vector and Embedding Weaknesses** | Vazamento via vector DB, RAG poisoning, embedding inversion |
 | **LLM09** | **Misinformation** | LLM gera/amplifica informação falsa ou prejudicial |
-| **LLM10** | **Unbounded Consumption** | DoS / Denial-of-Wallet via queries excessivas |
+| **LLM10** | **Unbounded Consumption** ⬆ | Subiu 4 posições: DoS / Denial-of-Wallet via cascata de chamadas de modelo + tools |
+
+> 📌 **Nova referência complementar:** OWASP lançou também o **Top 10 for Agentic Applications**
+> (anunciado na Black Hat Europe 2025), focado especificamente em agentes autônomos — permissões de
+> tool com escopo mínimo e monitoramento comportamental contínuo são as mitigações centrais para
+> Excessive Agency nesse documento.
 
 ---
 
@@ -848,7 +867,7 @@ const renderAIOutput = (output) => DOMPurify.sanitize(output, {
   ALLOWED_TAGS: ['p','ul','li','strong','em','code'], ALLOWED_ATTR: [],
 });
 
-// Camada 4: Menor privilégio para AI agents (LLM06)
+// Camada 4: Menor privilégio para AI agents (LLM03)
 const agentTools = {
   getOrderStatus: { access: 'read', scope: 'own-orders-only' },
   cancelOrder:    { access: 'write', requiresHumanApproval: true },
@@ -924,7 +943,7 @@ async function detectAnomalousIngest(doc) {
 }
 ```
 
-### LLM06 — Excessive Agency: regras de ouro
+### LLM03 — Excessive Agency: regras de ouro
 
 ```
 ✅ Toda ação destrutiva (delete, refund, mass-update) exige aprovação humana
@@ -1293,7 +1312,7 @@ Referências:
 + CSRF + headers de segurança + logging. Código completo entregue.
 
 **"Minha app usa IA. O que devo proteger?"** → Os 10 vetores do OWASP LLM Top 10:2025 — comecemos por
-prompt injection (LLM01), output sanitization (LLM05), excessive agency (LLM06) e unbounded consumption (LLM10).
+prompt injection (LLM01), output sanitization (LLM05), excessive agency (LLM03) e unbounded consumption (LLM10).
 
 **"Preciso de um pentest rápido?"** → Listo os 10 pontos de entrada mais prováveis, monto
 payloads de teste e verifico cada um contra o código fornecido.
@@ -1336,5 +1355,8 @@ para a stack e orçamento disponível.
 > 📌 Este documento deve ser revisado a cada 6 meses ou após incidentes relevantes.
 > Segurança é um processo contínuo — não um estado fixo.
 
-*Skill versão 2026.05 | Baseada em OWASP Top 10:2025 final · OWASP LLM Top 10:2025 · NIST SP 800-63B-4 · 175.000+ CVEs*
-*Atualizações principais vs versão anterior: A07 renomeado, OWASP LLM Top 10 completo (todos os 10), Argon2id como #1, novos CVEs JWT 2026 (pac4j CVE-2026-29000, fast-jwt CVE-2026-44351, Spring CVE-2026-22748), seções expandidas em Container/Cloud Security e DevSecOps tooling.*
+*Skill versão 2026.09 | Baseada em OWASP Top 10:2025 final · OWASP GenAI/LLM Top 10 (revisão 2026) · OWASP Top 10 for Agentic Applications · NIST SP 800-63B-4 · 175.000+ CVEs*
+*Atualizações principais vs versão anterior (2026.05): OWASP LLM Top 10 revisado para 2026 —
+Excessive Agency saltou para LLM03, System Prompt Leakage renomeada para Hidden Context Exposure
+(LLM07), Unbounded Consumption em alta; nova referência OWASP Top 10 for Agentic Applications
+(Black Hat Europe 2025).*

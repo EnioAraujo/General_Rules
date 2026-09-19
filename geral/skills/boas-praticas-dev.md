@@ -68,6 +68,21 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+## 5. Context Discipline
+
+**More context isn't safer context. Curate, don't maximize.**
+
+- Don't max out the context window "to be safe" — it pays a context-rot tax (degraded attention)
+  for insurance that doesn't exist. Load only what the current task needs.
+- Global conventions belong at the project root; domain-specific detail belongs nested at the
+  relevant directory level — not flattened into one growing file.
+- A monolithic instructions file (thousands of lines) is processed in full regardless of task.
+  Split by domain/file-type so only the relevant slice loads.
+- Prefer a small set of high-signal tools over exposing everything "in case it's needed" — the
+  same curation principle applies to tools as to context.
+- Treat tests as executable documentation: read existing tests first to learn expected behavior,
+  mocking strategy, and edge cases before writing new code against a codebase you don't fully know.
+
 ---
 
-**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, clarifying questions come before implementation rather than after mistakes, and context loaded per task shrinks instead of growing by default.

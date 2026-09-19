@@ -29,6 +29,7 @@ silêncio.
 | [`geral/skills/critical-dev-surgeon.md`](./geral/skills/critical-dev-surgeon.md) | Criar, modificar, revisar, depurar, refatorar ou otimizar algo que já está em funcionamento e tem dependências — qualquer plataforma. |
 | [`geral/skills/boas-praticas-dev.md`](./geral/skills/boas-praticas-dev.md) | Qualquer tarefa de código: pensar antes de codar, simplicidade, mudanças cirúrgicas, critério de sucesso verificável. |
 | [`geral/skills/tdd.md`](./geral/skills/tdd.md) | Escrever código com TDD (Red-Green-Refactor), ou varrer código existente por verbosidade/over-engineering/dívida técnica. |
+| [`geral/skills/sdd.md`](./geral/skills/sdd.md) | Desenvolver a partir de especificação formal (Spec-Driven Development) antes de codar — complementa o TDD. |
 | [`geral/skills/seguranca-webapp.md`](./geral/skills/seguranca-webapp.md) | Revisar, auditar, criar ou melhorar código de aplicação web com foco em segurança (OWASP Top 10, API, LLM, auth, criptografia, supply chain). |
 | [`geral/skills/corrigir-texto.md`](./geral/skills/corrigir-texto.md) | Corrigir/revisar texto em linguagem natural sem alterar tom ou intenção. |
 | [`geral/skills/design-copy.md`](./geral/skills/design-copy.md) | Engenharia reversa de uma interface web existente → `.md` de design system. |
