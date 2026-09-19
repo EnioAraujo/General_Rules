@@ -17,7 +17,11 @@ Antes de iniciar qualquer tarefa nesta sessão, buscar (via WebFetch) e aplicar,
    `https://raw.githubusercontent.com/EnioAraujo/General_Rules/main/geral/REGRAS-GERAIS.md`
 3. **Sempre** — skill de revisão técnica crítica:
    `https://raw.githubusercontent.com/EnioAraujo/General_Rules/main/geral/skills/critical-dev-surgeon.md`
-4. **Se a tarefa envolver [CATEGORIA(S)]** — buscar o(s) arquivo(s) de categoria correspondente(s)
+4. **Se a tarefa envolver TDD/testes ou varredura de dívida técnica**:
+   `https://raw.githubusercontent.com/EnioAraujo/General_Rules/main/geral/skills/tdd.md`
+5. **Se a tarefa envolver segurança de aplicação web** (revisão, auditoria, OWASP, auth, etc.):
+   `https://raw.githubusercontent.com/EnioAraujo/General_Rules/main/geral/skills/seguranca-webapp.md`
+6. **Se a tarefa envolver [CATEGORIA(S)]** — buscar o(s) arquivo(s) de categoria correspondente(s)
    listados no índice (passo 1), em
    `https://raw.githubusercontent.com/EnioAraujo/General_Rules/main/categorias/<categoria>/`
 

@@ -1,3 +1,12 @@
+---
+name: tdd
+description: >
+  Ative esta skill sempre que o usuário pedir para escrever código com TDD, criar testes antes da
+  implementação, ou pedir para identificar verbosidade/over-engineering/dívida técnica em código
+  existente. Cobre o ciclo Red-Green-Refactor e um checklist de varredura de dívida técnica.
+  Independente de linguagem ou stack.
+---
+
 # ✅ SKILL: Como Aplicar TDD (Test-Driven Development)
 
 ## 🎯 Objetivo da Skill
