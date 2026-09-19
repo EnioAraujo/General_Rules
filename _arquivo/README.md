@@ -15,23 +15,15 @@ para não perder histórico, mas não fazem parte do "cérebro" consultado pelos
   (nome de cliente, empresa e usuário de domínio Windows em texto claro). Uma versão genérica e
   parametrizada, sem esses dados, está em
   [`categorias/power-bi/scripts/inject-measure-TEMPLATE.ps1`](../categorias/power-bi/scripts/inject-measure-TEMPLATE.ps1).
-- `Regras_intocaveis-ORIGINAL.txt` — versão antiga/curta das regras REGRA LIVE e "proibido editar
-  em pedidos de leitura", já totalmente incorporadas em
-  [`geral/REGRAS-GERAIS.md`](../geral/REGRAS-GERAIS.md) (itens 1 e 2). Mantido só por histórico.
-- `contexto_excel-ORIGINAL.md` — metade era a mesma persona crítica de
-  [`critical-dev-surgeon`](../geral/skills/critical-dev-surgeon.md) (redundante); a metade
-  específica de Excel+Power Query foi extraída, generalizada (removidas as siglas de linha de
-  negócio do cliente original) e virou
-  [`categorias/excel/REGRAS-EXCEL-POWERQUERY.md`](../categorias/excel/REGRAS-EXCEL-POWERQUERY.md).
-- `skills-duplicadas/` — pacotes `.skill` (zip com `SKILL.md` dentro) cujo conteúdo já existe como
-  `.md` equivalente em `geral/skills/`, seja idêntico (`skill-powerapps-identico.skill`,
-  `frontend-design-pacote.skill`, `interface-design-pacote.skill`) seja uma versão mais antiga e
-  menos completa (`caveman-v-antiga.skill`, `seguranca-webapp-v-antiga.skill`). O `.md` em
-  `geral/skills/` é a versão de referência.
 
-⚠️ **Atenção:** este repositório é **público**. Os dois arquivos acima contêm nome de cliente,
-nome de empresa e nome de usuário de domínio em texto claro, e já estavam expostos nos commits
-anteriores a esta reorganização — mover os arquivos para cá não cria exposição nova, mas também
-não remove a que já existe no histórico do git. Se quiser eliminar esses dados do histórico, isso
-exige reescrever o histórico (`git filter-repo`/BFG + force-push) — ação destrutiva que só deve ser
-feita mediante pedido explícito.
+> Removidos desta pasta (conteúdo já 100% absorvido em outro lugar, sem perda): as versões antigas
+> em `.skill` já superadas pelos `.md` de referência em `geral/skills/`, `Regras_intocaveis.txt`
+> (coberto por `geral/REGRAS-GERAIS.md`) e `contexto_excel.md` (metade redundante com
+> `critical-dev-surgeon`, metade extraída para
+> [`categorias/excel/REGRAS-EXCEL-POWERQUERY.md`](../categorias/excel/REGRAS-EXCEL-POWERQUERY.md)).
+
+⚠️ **Atenção:** este repositório é **público**. Os dois arquivos que restam aqui contêm nome de
+cliente, nome de empresa e nome de usuário de domínio em texto claro, e já estavam expostos nos
+commits anteriores a esta reorganização — isso não é exposição nova, mas também não some sozinho.
+Eliminar esses dados do histórico do git exige reescrevê-lo (`git filter-repo`/BFG + force-push) —
+ação destrutiva que só deve ser feita mediante pedido explícito.
